@@ -47,16 +47,36 @@ export default function ProtocolosPage() {
     try {
       setAudioError(null);
       const engine = getAudioEngine();
-      engine.play(
-        step.frequencyHz,
-        step.waveform,
-        step.volume,
-        step.binaural ? { enabled: step.binaural.enabled, differenceHz: step.binaural.differenceHz } : undefined
-      );
+      // Ensure context is active before playing (handles browser suspension)
+      engine.ensureRunning().then(() => {
+        engine.play(
+          step.frequencyHz,
+          step.waveform,
+          step.volume,
+          step.binaural ? { enabled: step.binaural.enabled, differenceHz: step.binaural.differenceHz } : undefined
+        );
+      });
     } catch {
       setAudioError("No se pudo reproducir el audio. Verifica tu dispositivo de sonido.");
     }
   }, []);
+
+  // Re-engage audio when user returns to tab (browser suspends AudioContext in background)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (!document.hidden && protocolState === "playing" && currentStep) {
+        const engine = getAudioEngine();
+        engine.ensureRunning().then(() => {
+          // If engine reports not playing (browser killed oscillators), restart current step
+          if (!engine.getIsPlaying()) {
+            startStepAudio(currentStep);
+          }
+        });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [protocolState, currentStep, startStepAudio]);
 
   const advanceStep = useCallback(() => {
     if (!selectedProtocol) return;
@@ -76,13 +96,20 @@ export default function ProtocolosPage() {
     startStepAudio(selectedProtocol.steps[nextIndex]);
   }, [selectedProtocol, currentStepIndex, startStepAudio]);
 
-  // Timer tick
+  // Timer tick — with AudioContext health check
   useEffect(() => {
     if (protocolState !== "playing" || !currentStep) return;
 
     timerRef.current = setInterval(() => {
       const elapsed = pausedElapsedRef.current + (Date.now() - stepStartRef.current) / 1000;
       setStepElapsed(elapsed);
+
+      // Health check: if AudioContext was suspended by browser, resume it
+      const engine = getAudioEngine();
+      if (!engine.isContextActive() && engine.getIsPlaying()) {
+        engine.ensureRunning();
+      }
+
       if (elapsed >= currentStep.durationSeconds) {
         advanceStep();
       }

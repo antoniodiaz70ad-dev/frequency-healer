@@ -24,15 +24,71 @@ class AudioEngine {
   private currentBinauralDiff = 0;
   private lastError: string | null = null;
   private fadeOutTimer: ReturnType<typeof setTimeout> | null = null;
+  private keepAliveInterval: ReturnType<typeof setInterval> | null = null;
+  private visibilityHandler: (() => void) | null = null;
 
   private getContext(): AudioContext {
     if (!this.ctx || this.ctx.state === 'closed') {
       this.ctx = new AudioContext();
+      // Listen for browser-initiated suspension
+      this.ctx.onstatechange = () => {
+        if (this.ctx?.state === 'suspended' && this.isPlaying) {
+          this.ctx.resume();
+        }
+      };
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
     return this.ctx;
+  }
+
+  /**
+   * Keep AudioContext alive — browsers suspend it after ~2 min of no user gesture.
+   * This creates a silent "heartbeat" that prevents suspension.
+   */
+  private startKeepAlive() {
+    this.stopKeepAlive();
+
+    // Periodic resume check every 10 seconds
+    this.keepAliveInterval = setInterval(() => {
+      if (this.ctx && this.isPlaying) {
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        // Silent pulse: create a gain node at 0 volume to keep context active
+        try {
+          const silentOsc = this.ctx.createOscillator();
+          const silentGain = this.ctx.createGain();
+          silentGain.gain.setValueAtTime(0, this.ctx.currentTime);
+          silentOsc.connect(silentGain);
+          silentGain.connect(this.ctx.destination);
+          silentOsc.start();
+          silentOsc.stop(this.ctx.currentTime + 0.001);
+        } catch { /* context may be closing */ }
+      }
+    }, 10000);
+
+    // Resume audio when tab becomes visible again
+    if (typeof document !== 'undefined') {
+      this.visibilityHandler = () => {
+        if (!document.hidden && this.ctx && this.isPlaying && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      };
+      document.addEventListener('visibilitychange', this.visibilityHandler);
+    }
+  }
+
+  private stopKeepAlive() {
+    if (this.keepAliveInterval) {
+      clearInterval(this.keepAliveInterval);
+      this.keepAliveInterval = null;
+    }
+    if (this.visibilityHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this.visibilityHandler);
+      this.visibilityHandler = null;
+    }
   }
 
   private createCompressor(ctx: AudioContext): DynamicsCompressorNode {
@@ -138,6 +194,7 @@ class AudioEngine {
     }
 
     this.isPlaying = true;
+    this.startKeepAlive();
   }
 
   /** Stop with fade-out to prevent pops */
@@ -163,6 +220,7 @@ class AudioEngine {
     }
 
     this.isPlaying = false;
+    this.stopKeepAlive();
 
     // Disconnect after fade completes
     this.fadeOutTimer = setTimeout(() => {
@@ -194,6 +252,7 @@ class AudioEngine {
     this.analyser = null;
     this.compressor = null;
     this.isPlaying = false;
+    this.stopKeepAlive();
   }
 
   /** Change frequency with smooth ramp — updates both channels in binaural */
@@ -323,9 +382,22 @@ class AudioEngine {
     return frequency * (432 / 440);
   }
 
+  /** Check if AudioContext is running (not suspended/closed) */
+  isContextActive(): boolean {
+    return this.ctx !== null && this.ctx.state === 'running';
+  }
+
+  /** Force-resume a suspended context — call from UI on user gesture */
+  async ensureRunning(): Promise<void> {
+    if (this.ctx && this.ctx.state === 'suspended') {
+      await this.ctx.resume();
+    }
+  }
+
   /** Cleanup — call when component unmounts */
   destroy() {
     this.stopProtocol();
+    this.stopKeepAlive();
     if (this.fadeOutTimer) {
       clearTimeout(this.fadeOutTimer);
       this.fadeOutTimer = null;
