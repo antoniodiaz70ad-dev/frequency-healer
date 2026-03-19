@@ -13,6 +13,19 @@ export type OutputMode = 'speakers' | 'coils';
 
 export type HealingDomain = 'cuerpo' | 'alma' | 'espiritu';
 
+export interface EvidenceInfo {
+  label: string;
+  color: string;
+  icon: string;
+}
+
+export interface FrequencyPreset {
+  label: string;
+  hz: number;
+  waveform: Waveform;
+  color: string;
+}
+
 export interface FrequencyEntry {
   id: string;
   hz: number;
