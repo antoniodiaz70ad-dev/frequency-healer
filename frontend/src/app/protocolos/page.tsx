@@ -9,6 +9,23 @@ import { UI } from "@/lib/constants";
 
 type ProtocolState = "idle" | "playing" | "paused";
 
+/** Muestra la frecuencia principal de un paso.
+ *  Si es binaural, la frecuencia real es el differenceHz (ej: 10 Hz Alpha),
+ *  no la portadora (200 Hz). */
+function getDisplayFrequency(step: ProtocolStep): string {
+  if (step.binaural?.enabled) {
+    return `${step.binaural.differenceHz} Hz`;
+  }
+  return `${step.frequencyHz} Hz`;
+}
+
+function getDisplayFrequencyLabel(step: ProtocolStep): string {
+  if (step.binaural?.enabled) {
+    return `${step.binaural.differenceHz} Hz (binaural)`;
+  }
+  return `${step.frequencyHz} Hz`;
+}
+
 export default function ProtocolosPage() {
   const [selectedProtocol, setSelectedProtocol] = useState<Protocol | null>(null);
   const [protocolState, setProtocolState] = useState<ProtocolState>("idle");
@@ -229,11 +246,11 @@ export default function ProtocolosPage() {
             <div className="flex items-center gap-4 p-3 rounded-lg bg-[#0d1117] border border-[#1f2937] mb-4">
               <div className="flex-1">
                 <p className="text-sm text-white font-medium">
-                  Paso {currentStepIndex + 1}/{selectedProtocol.steps.length}: {currentStep.frequencyHz} Hz
+                  Paso {currentStepIndex + 1}/{selectedProtocol.steps.length}: {getDisplayFrequencyLabel(currentStep)}
                 </p>
                 <p className="text-xs text-gray-400">
                   {WAVEFORM_INFO[currentStep.waveform].label}
-                  {currentStep.binaural?.enabled && ` + Binaural ${currentStep.binaural.differenceHz} Hz`}
+                  {currentStep.binaural?.enabled && ` (portadora: ${currentStep.frequencyHz} Hz)`}
                   {" "}· Vol {Math.round(currentStep.volume * 100)}%
                 </p>
               </div>
@@ -362,7 +379,7 @@ export default function ProtocolosPage() {
               <div className="flex flex-wrap gap-1">
                 {protocol.steps.map((step, i) => (
                   <span key={i} className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-[#0d1117] text-gray-500 border border-[#1f293750]">
-                    {step.frequencyHz} Hz
+                    {getDisplayFrequency(step)}
                   </span>
                 ))}
               </div>
