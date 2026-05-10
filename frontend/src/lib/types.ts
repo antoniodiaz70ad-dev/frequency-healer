@@ -120,3 +120,25 @@ export interface UserPreferences {
   favorites: string[];      // frequency IDs
   recentFrequencies: string[];
 }
+
+// ─── Diario post-sesión ───────────────────────────────────────────────────
+
+export type VisualClarity = 'none' | 'partial' | 'full';
+
+export interface OBESessionLog {
+  id: string;
+  createdAt: number;
+  sessionDate: string;             // YYYY-MM-DD
+  focusLabel: string;              // "Focus 10", "369 Hz Tesla", "Custom"
+  durationMinutes: number;
+  paralysisAchieved: boolean;
+  vibrations: boolean;
+  separation: boolean;
+  visualClarity: VisualClarity;
+  lookedBack: boolean;
+  preEnergy: number;               // 1-10
+  postEnergy: number;              // 1-10
+  intention?: string;
+  notes: string;
+  tags: string[];
+}
