@@ -1,10 +1,18 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Waveform, OutputMode } from "@/lib/types";
+import { Waveform, OutputMode, FocusLevelPreset } from "@/lib/types";
 import { getAudioEngine, AudioEngine } from "@/lib/audioEngine";
 import { FREQUENCY_DATABASE, WAVEFORM_INFO, DOMAIN_INFO } from "@/lib/frequencies";
+import {
+  FOCUS_LEVEL_PRESETS,
+  SOLFEGGIO_CHORDS,
+  BAND_LABEL,
+} from "@/lib/focusLevels";
 import AudioVisualizer from "@/components/AudioVisualizer";
+import SafetyDisclaimerModal, {
+  hasAcceptedDisclaimer,
+} from "@/components/SafetyDisclaimerModal";
 
 const PRESETS = [
   { label: "528 Hz Milagro", hz: 528, waveform: "sine" as Waveform, color: "#fbbf24" },
@@ -17,7 +25,11 @@ const PRESETS = [
   { label: "880 Hz Inmune", hz: 880, waveform: "square" as Waveform, color: "#fb923c" },
 ];
 
+type Tab = "tone" | "hemi-sync";
+
 export default function GeneradorPage() {
+  const [tab, setTab] = useState<Tab>("tone");
+
   const [frequency, setFrequency] = useState(528);
   const [waveform, setWaveform] = useState<Waveform>("sine");
   const [volume, setVolume] = useState(50);
@@ -28,6 +40,13 @@ export default function GeneradorPage() {
   const [binauralDiff, setBinauralDiff] = useState(10);
   const [dwellTime, setDwellTime] = useState(0); // 0 = continuous
   const [dwellTimer, setDwellTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  // Hemi-Sync state
+  const [selectedChord, setSelectedChord] = useState<FocusLevelPreset>(FOCUS_LEVEL_PRESETS[0]);
+  const [chordVolume, setChordVolume] = useState(40);
+  const [pinkNoiseEnabled, setPinkNoiseEnabled] = useState(true);
+  const [chordDuration, setChordDuration] = useState(0); // 0 = preset default
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   const effectiveFreq = tuning432 ? AudioEngine.to432(frequency) : frequency;
 
@@ -40,7 +59,6 @@ export default function GeneradorPage() {
     });
     setIsPlaying(true);
 
-    // Dwell time auto-stop
     if (dwellTime > 0) {
       const timer = setTimeout(() => {
         engine.stop();
@@ -60,6 +78,30 @@ export default function GeneradorPage() {
     }
   }, [dwellTimer]);
 
+  const playChord = useCallback(() => {
+    const engine = getAudioEngine();
+    engine.playChord(selectedChord.layers, {
+      masterVolume: chordVolume / 100,
+      pinkNoiseGain: pinkNoiseEnabled ? selectedChord.pinkNoiseGain : 0,
+    });
+    setIsPlaying(true);
+
+    const minutes = chordDuration > 0 ? chordDuration : selectedChord.durationMinutes;
+    const timer = setTimeout(() => {
+      engine.stop();
+      setIsPlaying(false);
+    }, minutes * 60 * 1000);
+    setDwellTimer(timer);
+  }, [selectedChord, chordVolume, pinkNoiseEnabled, chordDuration]);
+
+  const requestPlayChord = useCallback(() => {
+    if (hasAcceptedDisclaimer()) {
+      playChord();
+    } else {
+      setShowDisclaimer(true);
+    }
+  }, [playChord]);
+
   const applyPreset = (hz: number, wf: Waveform) => {
     setFrequency(hz);
     setWaveform(wf);
@@ -68,16 +110,156 @@ export default function GeneradorPage() {
     }
   };
 
-  // Find matching frequency info
   const freqInfo = FREQUENCY_DATABASE.find((f) => Math.abs(f.hz - frequency) < 0.5);
 
   return (
     <div className="max-w-4xl animate-fade-in">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white mb-1">Generador de Tonos</h1>
-        <p className="text-sm text-gray-400">Genera frecuencias precisas para bocinas o bobinas electromagnéticas.</p>
+        <p className="text-sm text-gray-400">
+          Genera frecuencias precisas para bocinas o bobinas electromagnéticas.
+        </p>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-1 w-fit">
+        <button
+          onClick={() => {
+            if (isPlaying) handleStop();
+            setTab("tone");
+          }}
+          className={`px-4 py-2 text-xs rounded-lg transition-colors ${
+            tab === "tone" ? "bg-[#1f2937] text-white" : "text-gray-500 hover:text-white"
+          }`}
+        >
+          Tono Simple
+        </button>
+        <button
+          onClick={() => {
+            if (isPlaying) handleStop();
+            setTab("hemi-sync");
+          }}
+          className={`px-4 py-2 text-xs rounded-lg transition-colors ${
+            tab === "hemi-sync" ? "bg-[#1f2937] text-white" : "text-gray-500 hover:text-white"
+          }`}
+        >
+          🧠 Acordes Multicapa
+        </button>
+      </div>
+
+      {tab === "tone" ? (
+        <ToneTab
+          frequency={frequency}
+          setFrequency={setFrequency}
+          waveform={waveform}
+          setWaveform={setWaveform}
+          volume={volume}
+          setVolume={setVolume}
+          isPlaying={isPlaying}
+          outputMode={outputMode}
+          setOutputMode={setOutputMode}
+          tuning432={tuning432}
+          setTuning432={setTuning432}
+          binaural={binaural}
+          setBinaural={setBinaural}
+          binauralDiff={binauralDiff}
+          setBinauralDiff={setBinauralDiff}
+          dwellTime={dwellTime}
+          setDwellTime={setDwellTime}
+          effectiveFreq={effectiveFreq}
+          freqInfo={freqInfo}
+          handlePlay={handlePlay}
+          handleStop={handleStop}
+          applyPreset={applyPreset}
+        />
+      ) : (
+        <HemiSyncTab
+          selectedChord={selectedChord}
+          setSelectedChord={(c) => {
+            if (isPlaying) handleStop();
+            setSelectedChord(c);
+          }}
+          chordVolume={chordVolume}
+          setChordVolume={(v) => {
+            setChordVolume(v);
+            if (isPlaying) getAudioEngine().setVolume(v / 100);
+          }}
+          pinkNoiseEnabled={pinkNoiseEnabled}
+          setPinkNoiseEnabled={setPinkNoiseEnabled}
+          chordDuration={chordDuration}
+          setChordDuration={setChordDuration}
+          isPlaying={isPlaying}
+          onPlay={requestPlayChord}
+          onStop={handleStop}
+        />
+      )}
+
+      {showDisclaimer && (
+        <SafetyDisclaimerModal
+          onAccept={() => {
+            setShowDisclaimer(false);
+            playChord();
+          }}
+          onCancel={() => setShowDisclaimer(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ToneTabProps {
+  frequency: number;
+  setFrequency: (v: number | ((f: number) => number)) => void;
+  waveform: Waveform;
+  setWaveform: (v: Waveform) => void;
+  volume: number;
+  setVolume: (v: number) => void;
+  isPlaying: boolean;
+  outputMode: OutputMode;
+  setOutputMode: (v: OutputMode) => void;
+  tuning432: boolean;
+  setTuning432: (v: boolean) => void;
+  binaural: boolean;
+  setBinaural: (v: boolean) => void;
+  binauralDiff: number;
+  setBinauralDiff: (v: number) => void;
+  dwellTime: number;
+  setDwellTime: (v: number) => void;
+  effectiveFreq: number;
+  freqInfo: ReturnType<typeof FREQUENCY_DATABASE.find>;
+  handlePlay: () => void;
+  handleStop: () => void;
+  applyPreset: (hz: number, wf: Waveform) => void;
+}
+
+function ToneTab({
+  frequency,
+  setFrequency,
+  waveform,
+  setWaveform,
+  volume,
+  setVolume,
+  isPlaying,
+  outputMode,
+  setOutputMode,
+  tuning432,
+  setTuning432,
+  binaural,
+  setBinaural,
+  binauralDiff,
+  setBinauralDiff,
+  dwellTime,
+  setDwellTime,
+  effectiveFreq,
+  freqInfo,
+  handlePlay,
+  handleStop,
+  applyPreset,
+}: ToneTabProps) {
+  return (
+    <>
       {/* Visualizer */}
       <div className="mb-6">
         <AudioVisualizer isPlaying={isPlaying} color={freqInfo ? DOMAIN_INFO[freqInfo.domain[0]]?.color : "#60a5fa"} />
@@ -87,7 +269,7 @@ export default function GeneradorPage() {
       <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6 mb-6 text-center">
         <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-2">Frecuencia</p>
         <div className="flex items-center justify-center gap-4">
-          <button onClick={() => setFrequency((f) => Math.max(0.1, f - 1))} className="text-gray-500 hover:text-white text-2xl w-10 h-10 rounded-full border border-[#1f2937] flex items-center justify-center">−</button>
+          <button onClick={() => setFrequency((f: number) => Math.max(0.1, f - 1))} className="text-gray-500 hover:text-white text-2xl w-10 h-10 rounded-full border border-[#1f2937] flex items-center justify-center">−</button>
           <input
             type="number"
             value={frequency}
@@ -95,7 +277,7 @@ export default function GeneradorPage() {
             className="bg-transparent text-5xl md:text-6xl font-bold font-mono text-[#60a5fa] text-center w-48 md:w-64 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             step="0.01"
           />
-          <button onClick={() => setFrequency((f) => f + 1)} className="text-gray-500 hover:text-white text-2xl w-10 h-10 rounded-full border border-[#1f2937] flex items-center justify-center">+</button>
+          <button onClick={() => setFrequency((f: number) => f + 1)} className="text-gray-500 hover:text-white text-2xl w-10 h-10 rounded-full border border-[#1f2937] flex items-center justify-center">+</button>
         </div>
         <p className="text-sm text-gray-500 mt-1">Hz</p>
         {tuning432 && frequency !== effectiveFreq && (
@@ -108,7 +290,6 @@ export default function GeneradorPage() {
           </div>
         )}
 
-        {/* Frequency slider */}
         <div className="mt-4">
           <input
             type="range"
@@ -127,7 +308,6 @@ export default function GeneradorPage() {
 
       {/* Controls grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Waveform */}
         <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Forma de Onda</p>
           <div className="grid grid-cols-4 gap-2">
@@ -144,7 +324,6 @@ export default function GeneradorPage() {
           </div>
         </div>
 
-        {/* Volume */}
         <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Volumen: {volume}%</p>
           <input
@@ -163,7 +342,6 @@ export default function GeneradorPage() {
           </div>
         </div>
 
-        {/* Binaural */}
         <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500 uppercase tracking-wider">Binaural Beats</p>
@@ -183,9 +361,7 @@ export default function GeneradorPage() {
           )}
         </div>
 
-        {/* Settings */}
         <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 space-y-3">
-          {/* Output mode */}
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-400">Salida</p>
             <div className="flex gap-1 bg-[#0d1117] rounded-lg p-0.5">
@@ -193,14 +369,12 @@ export default function GeneradorPage() {
               <button onClick={() => setOutputMode("coils")} className={`text-xs px-3 py-1 rounded-md ${outputMode === "coils" ? "bg-[#1f2937] text-white" : "text-gray-500"}`}>🧲 Bobinas</button>
             </div>
           </div>
-          {/* 432 toggle */}
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-400">Afinación 432 Hz</p>
             <button onClick={() => setTuning432(!tuning432)} className={`w-10 h-5 rounded-full transition-colors ${tuning432 ? "bg-[#4ade80]" : "bg-[#374151]"}`}>
               <div className={`w-4 h-4 rounded-full bg-white transition-transform ${tuning432 ? "translate-x-5" : "translate-x-0.5"}`} />
             </button>
           </div>
-          {/* Dwell time */}
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-400">Temporizador</p>
             <select value={dwellTime} onChange={(e) => setDwellTime(Number(e.target.value))} className="bg-[#0d1117] border border-[#1f2937] rounded-md text-xs text-white px-2 py-1">
@@ -253,6 +427,236 @@ export default function GeneradorPage() {
           ))}
         </div>
       </div>
-    </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface HemiSyncTabProps {
+  selectedChord: FocusLevelPreset;
+  setSelectedChord: (c: FocusLevelPreset) => void;
+  chordVolume: number;
+  setChordVolume: (v: number) => void;
+  pinkNoiseEnabled: boolean;
+  setPinkNoiseEnabled: (v: boolean) => void;
+  chordDuration: number;
+  setChordDuration: (v: number) => void;
+  isPlaying: boolean;
+  onPlay: () => void;
+  onStop: () => void;
+}
+
+function HemiSyncTab({
+  selectedChord,
+  setSelectedChord,
+  chordVolume,
+  setChordVolume,
+  pinkNoiseEnabled,
+  setPinkNoiseEnabled,
+  chordDuration,
+  setChordDuration,
+  isPlaying,
+  onPlay,
+  onStop,
+}: HemiSyncTabProps) {
+  const effectiveDuration = chordDuration > 0 ? chordDuration : selectedChord.durationMinutes;
+
+  return (
+    <>
+      <div className="mb-6">
+        <AudioVisualizer isPlaying={isPlaying} color={selectedChord.color} />
+      </div>
+
+      {/* Selected chord card */}
+      <div
+        className="bg-[#111827] border rounded-xl p-6 mb-6"
+        style={{ borderColor: selectedChord.color + "40" }}
+      >
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">
+              Acorde seleccionado
+            </p>
+            <h2 className="text-xl font-bold text-white">{selectedChord.label}</h2>
+            <p className="text-xs text-gray-400 mt-1">{selectedChord.description}</p>
+          </div>
+          <div className="flex gap-1 flex-wrap justify-end">
+            {selectedChord.bands.map((b) => (
+              <span
+                key={b}
+                className="text-[10px] px-2 py-0.5 rounded-full border border-[#1f2937] text-gray-400"
+              >
+                {BAND_LABEL[b]}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Layer breakdown */}
+        <div className="mt-4 space-y-2">
+          <p className="text-[10px] uppercase tracking-widest text-gray-500">
+            Capas binaurales
+          </p>
+          {selectedChord.layers.map((layer, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between text-xs bg-[#0d1117] border border-[#1f2937] rounded-lg px-3 py-2"
+            >
+              <span className="font-mono text-gray-400">
+                Capa {i + 1}
+              </span>
+              <span className="font-mono text-white">
+                {layer.carrierHz} Hz / {layer.carrierHz + layer.beatHz} Hz
+              </span>
+              <span className="font-mono text-[#60a5fa]">
+                Δ {layer.beatHz.toFixed(1)} Hz
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+            Volumen: {chordVolume}%
+          </p>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={chordVolume}
+            onChange={(e) => setChordVolume(Number(e.target.value))}
+            className="w-full"
+          />
+        </div>
+
+        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs text-gray-500 uppercase tracking-wider">
+              Ruido rosa de fondo
+            </p>
+            <button
+              onClick={() => setPinkNoiseEnabled(!pinkNoiseEnabled)}
+              className={`w-10 h-5 rounded-full transition-colors ${pinkNoiseEnabled ? "bg-[#60a5fa]" : "bg-[#374151]"}`}
+            >
+              <div
+                className={`w-4 h-4 rounded-full bg-white transition-transform ${pinkNoiseEnabled ? "translate-x-5" : "translate-x-0.5"}`}
+              />
+            </button>
+          </div>
+          <p className="text-[10px] text-gray-600">
+            Capa de ruido ecualizado a la curva auditiva. Suaviza la transición y
+            enmascara distracciones del entorno.
+          </p>
+        </div>
+
+        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 md:col-span-2">
+          <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+            Duración: {effectiveDuration} min
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {[0, 15, 30, 45, 60, 90, 180].map((d) => (
+              <button
+                key={d}
+                onClick={() => setChordDuration(d)}
+                className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
+                  chordDuration === d
+                    ? "border-[#60a5fa] bg-[#60a5fa15] text-[#60a5fa]"
+                    : "border-[#1f2937] text-gray-500 hover:text-white"
+                }`}
+              >
+                {d === 0 ? `Default (${selectedChord.durationMinutes} min)` : `${d} min`}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-gray-600 mt-2">
+            Las dos duraciones canónicas en métodos de proyección son 90 min
+            (uso nocturno) y 180 min (inmersión profunda).
+          </p>
+        </div>
+      </div>
+
+      {/* Play / Stop */}
+      <div className="flex justify-center mb-8">
+        {!isPlaying ? (
+          <button
+            onClick={onPlay}
+            className="w-20 h-20 rounded-full text-white flex items-center justify-center text-3xl transition-all hover:scale-105 glow-active"
+            style={{ backgroundColor: selectedChord.color }}
+          >
+            ▶
+          </button>
+        ) : (
+          <button
+            onClick={onStop}
+            className="w-20 h-20 rounded-full bg-[#f87171] hover:bg-[#ef4444] text-white flex items-center justify-center text-2xl transition-all hover:scale-105"
+          >
+            ■
+          </button>
+        )}
+      </div>
+
+      {/* Focus Levels grid */}
+      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 mb-4">
+        <h3 className="font-bold text-white text-sm mb-3">Niveles de Enfoque</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {FOCUS_LEVEL_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedChord(p)}
+              className={`p-3 rounded-lg border text-left transition-all ${
+                selectedChord.id === p.id
+                  ? "bg-[#0d1117]"
+                  : "border-[#1f2937] hover:border-[#374151]"
+              }`}
+              style={
+                selectedChord.id === p.id
+                  ? { borderColor: p.color }
+                  : undefined
+              }
+            >
+              <p className="text-sm font-bold" style={{ color: p.color }}>
+                {p.label}
+              </p>
+              <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">
+                {p.description}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5">
+        <h3 className="font-bold text-white text-sm mb-3">Acordes Solfeggio</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          {SOLFEGGIO_CHORDS.map((p) => (
+            <button
+              key={p.id}
+              onClick={() => setSelectedChord(p)}
+              className={`p-3 rounded-lg border text-left transition-all ${
+                selectedChord.id === p.id
+                  ? "bg-[#0d1117]"
+                  : "border-[#1f2937] hover:border-[#374151]"
+              }`}
+              style={
+                selectedChord.id === p.id
+                  ? { borderColor: p.color }
+                  : undefined
+              }
+            >
+              <p className="text-sm font-bold" style={{ color: p.color }}>
+                {p.label}
+              </p>
+              <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-2">
+                {p.description}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
   );
 }

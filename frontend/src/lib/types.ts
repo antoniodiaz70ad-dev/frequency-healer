@@ -13,6 +13,26 @@ export type OutputMode = 'speakers' | 'coils';
 
 export type HealingDomain = 'cuerpo' | 'alma' | 'espiritu';
 
+export type BrainwaveBand = 'delta' | 'theta' | 'alpha' | 'beta' | 'gamma';
+
+export interface BinauralLayer {
+  carrierHz: number;
+  beatHz: number;
+  gain: number;
+  waveform: Waveform;
+}
+
+export interface FocusLevelPreset {
+  id: string;
+  label: string;
+  description: string;
+  bands: BrainwaveBand[];
+  layers: BinauralLayer[];
+  pinkNoiseGain: number;
+  color: string;
+  durationMinutes: number;
+}
+
 export interface FrequencyEntry {
   id: string;
   hz: number;
