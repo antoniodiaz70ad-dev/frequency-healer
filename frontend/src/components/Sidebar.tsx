@@ -8,6 +8,7 @@ const navItems = [
   { href: "/generador", label: "Generador", icon: "🔊" },
   { href: "/protocolos", label: "Protocolos", icon: "📋" },
   { href: "/biblioteca", label: "Biblioteca", icon: "📚" },
+  { href: "/diario", label: "Diario", icon: "📓" },
 ];
 
 export default function Sidebar() {
