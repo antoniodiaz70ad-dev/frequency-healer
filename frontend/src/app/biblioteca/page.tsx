@@ -3,7 +3,11 @@
 import { useState, useMemo, useCallback } from "react";
 import { FREQUENCY_DATABASE, CATEGORY_INFO, DOMAIN_INFO, WAVEFORM_INFO, searchFrequencies } from "@/lib/frequencies";
 import { getAudioEngine } from "@/lib/audioEngine";
-import { FrequencyEntry } from "@/lib/types";
+import { CommandCard, CommandPhase, FrequencyEntry } from "@/lib/types";
+import { COMMAND_CARDS, COMMAND_PHASES_ORDERED, PHASE_INFO } from "@/lib/commandCards";
+import CommandCardItem from "@/components/CommandCardItem";
+
+type Tab = "frecuencias" | "comandos";
 
 const EVIDENCE_INFO: Record<string, { label: string; color: string; icon: string }> = {
   verificada: { label: "Verificada", color: "#4ade80", icon: "✓" },
@@ -12,9 +16,12 @@ const EVIDENCE_INFO: Record<string, { label: string; color: string; icon: string
 };
 
 export default function BibliotecaPage() {
+  const [tab, setTab] = useState<Tab>("frecuencias");
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterDomain, setFilterDomain] = useState<string>("all");
+  const [filterPhase, setFilterPhase] = useState<CommandPhase | "all">("all");
+  const [commandSearch, setCommandSearch] = useState("");
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -48,15 +55,231 @@ export default function BibliotecaPage() {
   const categories = Object.keys(CATEGORY_INFO) as Array<keyof typeof CATEGORY_INFO>;
   const domains = Object.keys(DOMAIN_INFO) as Array<keyof typeof DOMAIN_INFO>;
 
+  const filteredCommands = useMemo(() => {
+    const q = commandSearch.trim().toLowerCase();
+    return COMMAND_CARDS.filter((c) => {
+      if (filterPhase !== "all" && c.phase !== filterPhase) return false;
+      if (!q) return true;
+      return (
+        c.title.toLowerCase().includes(q) ||
+        c.body.toLowerCase().includes(q) ||
+        c.whenToUse.toLowerCase().includes(q) ||
+        c.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    });
+  }, [commandSearch, filterPhase]);
+
+  const commandsByPhase = useMemo(() => {
+    const groups: Record<string, CommandCard[]> = {};
+    for (const phase of COMMAND_PHASES_ORDERED) {
+      groups[phase] = filteredCommands.filter((c) => c.phase === phase);
+    }
+    return groups;
+  }, [filteredCommands]);
+
   return (
     <div className="max-w-4xl animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Biblioteca de Frecuencias</h1>
+        <h1 className="text-2xl font-bold text-white mb-1">Biblioteca</h1>
         <p className="text-sm text-gray-400">
-          {FREQUENCY_DATABASE.length} frecuencias documentadas para sanaci&oacute;n.
+          Frecuencias documentadas y tarjetas operativas para sesiones binaurales profundas.
         </p>
       </div>
 
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-1 w-fit">
+        <button
+          onClick={() => setTab("frecuencias")}
+          className={`px-4 py-2 text-xs rounded-lg transition-colors ${
+            tab === "frecuencias" ? "bg-[#1f2937] text-white" : "text-gray-500 hover:text-white"
+          }`}
+        >
+          📚 Frecuencias ({FREQUENCY_DATABASE.length})
+        </button>
+        <button
+          onClick={() => setTab("comandos")}
+          className={`px-4 py-2 text-xs rounded-lg transition-colors ${
+            tab === "comandos" ? "bg-[#1f2937] text-white" : "text-gray-500 hover:text-white"
+          }`}
+        >
+          🪪 Tarjetas de Comando ({COMMAND_CARDS.length})
+        </button>
+      </div>
+
+      {tab === "comandos" ? (
+        <>
+          {/* Phase intro */}
+          <div className="mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-4">
+            <p className="text-sm text-gray-300 mb-2">
+              Memoriza estas tarjetas <strong className="text-white">antes</strong> de una sesión binaural profunda.
+              Una vez fuera del cuerpo la mente analítica está atenuada y no podrás
+              consultar la app — el material debe estar interiorizado.
+            </p>
+            <p className="text-xs text-gray-500">
+              Las tarjetas siguen el orden natural de una sesión: preparación →
+              inducción → salida → estabilización → exploración → post-sesión.
+            </p>
+          </div>
+
+          {/* Command search */}
+          <div className="mb-4">
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+              <input
+                type="text"
+                placeholder="Buscar tarjeta (claridad, snap-back, manos...)"
+                value={commandSearch}
+                onChange={(e) => setCommandSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[#111827] border border-[#1f2937] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#60a5fa] transition-colors"
+              />
+              {commandSearch && (
+                <button
+                  onClick={() => setCommandSearch("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Phase filters */}
+          <div className="flex gap-2 mb-6 flex-wrap">
+            <button
+              onClick={() => setFilterPhase("all")}
+              className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                filterPhase === "all"
+                  ? "border-[#60a5fa] bg-[#60a5fa15] text-[#60a5fa]"
+                  : "border-[#1f2937] text-gray-500 hover:text-white"
+              }`}
+            >
+              Todas
+            </button>
+            {COMMAND_PHASES_ORDERED.map((p) => {
+              const info = PHASE_INFO[p];
+              const active = filterPhase === p;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setFilterPhase(p)}
+                  className="text-xs px-3 py-1.5 rounded-full border transition-all"
+                  style={
+                    active
+                      ? {
+                          color: info.color,
+                          borderColor: info.color,
+                          backgroundColor: info.color + "15",
+                        }
+                      : { borderColor: "#1f2937", color: "#6b7280" }
+                  }
+                >
+                  {info.icon} {info.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="text-xs text-gray-500 mb-4">
+            {filteredCommands.length} tarjeta{filteredCommands.length === 1 ? "" : "s"}
+          </p>
+
+          {filterPhase === "all" && !commandSearch ? (
+            <div className="space-y-6">
+              {COMMAND_PHASES_ORDERED.map((phase) => {
+                const items = commandsByPhase[phase];
+                if (!items || items.length === 0) return null;
+                const info = PHASE_INFO[phase];
+                return (
+                  <div key={phase}>
+                    <div className="flex items-baseline gap-2 mb-3">
+                      <h2
+                        className="text-sm font-bold uppercase tracking-wider"
+                        style={{ color: info.color }}
+                      >
+                        {info.icon} {info.label}
+                      </h2>
+                      <span className="text-[10px] text-gray-600">
+                        {info.description}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {items.map((c) => (
+                        <CommandCardItem key={c.id} card={c} />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredCommands.map((c) => (
+                <CommandCardItem key={c.id} card={c} />
+              ))}
+            </div>
+          )}
+
+          {filteredCommands.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-3xl mb-2">🔍</p>
+              <p className="text-sm">No se encontraron tarjetas.</p>
+            </div>
+          )}
+        </>
+      ) : (
+        <FrequenciasTab
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          filterCategory={filterCategory}
+          setFilterCategory={setFilterCategory}
+          filterDomain={filterDomain}
+          setFilterDomain={setFilterDomain}
+          filteredFrequencies={filteredFrequencies}
+          handlePlayFrequency={handlePlayFrequency}
+          playingId={playingId}
+          expandedId={expandedId}
+          setExpandedId={setExpandedId}
+          categories={categories}
+          domains={domains}
+        />
+      )}
+    </div>
+  );
+}
+
+interface FrequenciasTabProps {
+  searchQuery: string;
+  setSearchQuery: (v: string) => void;
+  filterCategory: string;
+  setFilterCategory: (v: string) => void;
+  filterDomain: string;
+  setFilterDomain: (v: string) => void;
+  filteredFrequencies: FrequencyEntry[];
+  handlePlayFrequency: (f: FrequencyEntry) => void;
+  playingId: string | null;
+  expandedId: string | null;
+  setExpandedId: (v: string | null) => void;
+  categories: Array<keyof typeof CATEGORY_INFO>;
+  domains: Array<keyof typeof DOMAIN_INFO>;
+}
+
+function FrequenciasTab({
+  searchQuery,
+  setSearchQuery,
+  filterCategory,
+  setFilterCategory,
+  filterDomain,
+  setFilterDomain,
+  filteredFrequencies,
+  handlePlayFrequency,
+  playingId,
+  expandedId,
+  setExpandedId,
+  categories,
+  domains,
+}: FrequenciasTabProps) {
+  return (
+    <>
       {/* Search */}
       <div className="mb-4">
         <div className="relative">
@@ -261,6 +484,6 @@ export default function BibliotecaPage() {
           <p className="text-xs mt-1">Intenta con otros filtros o t&eacute;rminos de b&uacute;squeda.</p>
         </div>
       )}
-    </div>
+    </>
   );
 }

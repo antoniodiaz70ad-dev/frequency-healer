@@ -33,6 +33,26 @@ export interface FocusLevelPreset {
   durationMinutes: number;
 }
 
+export type CommandPhase =
+  | 'preparacion'
+  | 'induccion'
+  | 'salida'
+  | 'estabilizacion'
+  | 'exploracion'
+  | 'post';
+
+export interface CommandCard {
+  id: string;
+  phase: CommandPhase;
+  title: string;
+  whenToUse: string;
+  body: string;
+  why: string;
+  command?: string;
+  tags: string[];
+  source?: string;
+}
+
 export interface FrequencyEntry {
   id: string;
   hz: number;
