@@ -1,7 +1,10 @@
 import { notFound } from 'next/navigation';
 import { VOICE_ENABLED } from '@/lib/voice/feature';
+import PrivacyGate from '@/components/voice/PrivacyGate';
 import VoiceJourney from '@/components/voice/VoiceJourney';
 export default function VoicePage() {
   if (!VOICE_ENABLED) notFound();
-  return <VoiceJourney />;
+  const transcriptionEnabled = Boolean(process.env.VOICE_TRANSCRIPTION_URL && process.env.VOICE_TRANSCRIPTION_TOKEN);
+  const aiEnabled = process.env.VOICE_AI_ENABLED === 'true' && Boolean(process.env.VOICE_INTENT_URL && process.env.VOICE_INTENT_TOKEN);
+  return <PrivacyGate transcriptionEnabled={transcriptionEnabled} aiEnabled={aiEnabled}><VoiceJourney transcriptionEnabled={transcriptionEnabled} aiEnabled={aiEnabled} /></PrivacyGate>;
 }

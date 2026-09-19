@@ -6,19 +6,21 @@ import type { ParsedIntentionV1, SelfRatingV1 } from '@/lib/voice/types';
 import type { ProposalEdits } from '@/lib/voice/rules';
 import { getAudioEngine } from '@/lib/audioEngine';
 import { IntentFields, RatingFields, goalLabels, stateLabels } from './Fields';
+import VoiceCapture from './VoiceCapture';
 import SessionPlan from './SessionPlan';
 import styles from './voice.module.css';
 
-export default function VoiceJourney() {
+export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled = false }: { transcriptionEnabled?: boolean; aiEnabled?: boolean }) {
   const [flow] = useState(() => new VoiceOrchestrator());
   const state = useSyncExternalStore(flow.subscribe, flow.getState, () => 'idle');
+  const [useAI, setUseAI] = useState(false);
   const [words, setWords] = useState(''); const [intent, setIntent] = useState<ParsedIntentionV1 | null>(null);
   const [edits, setEdits] = useState<ProposalEdits>({}); const [experimental, setExperimental] = useState(false);
   const [before, setBefore] = useState<Partial<SelfRatingV1>>({}); const [after, setAfter] = useState<Partial<SelfRatingV1>>({});
   const [reflection, setReflection] = useState(''); const [error, setError] = useState(''); const [elapsed, setElapsed] = useState(0);
   const active = ['playing', 'marker_listening', 'starting'].includes(state);
   useEffect(() => {
-    const hidden = () => { if (document.hidden) flow.stop('hidden'); };
+    const hidden = () => { if (document.hidden && !['idle', 'reflection', 'saved', 'storage_error'].includes(flow.state)) flow.stop('hidden'); };
     const leave = () => flow.stop('pagehide');
     document.addEventListener('visibilitychange', hidden); window.addEventListener('pagehide', leave);
     return () => { document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', leave); flow.dispose(); };
@@ -37,7 +39,8 @@ export default function VoiceJourney() {
     <p role="status" aria-live="polite">{active ? 'Sesión en curso' : state === 'reflection' ? 'Sesión detenida. Reflexión opcional.' : 'Nada se reproduce sin tu confirmación.'}</p>
     {(error || flow.error) && <p role="alert" className={styles.error}>{error || flow.error}</p>}
     {state === 'idle' && <section><h2>Tu intención</h2><p>El flujo completo funciona por texto, sin micrófono ni IA.</p><button className={styles.primary} onClick={() => flow.move('review_transcript')}>Escribir intención</button></section>}
-    {['review_transcript', 'interpretation_error'].includes(state) && <section><h2>1. Revisa tus palabras</h2><form onSubmit={e => { e.preventDefault(); if (state === 'interpretation_error') flow.move('review_transcript'); flow.interpret(words); setIntent(flow.intent); }}><label>¿Qué quieres explorar?<textarea maxLength={500} value={words} onChange={e => setWords(e.target.value)} placeholder="Quiero explorar una decisión con claridad durante veinte minutos." required /></label><button type="submit">Continuar</button><button type="button" onClick={reset}>Cancelar</button></form></section>}
+    {['review_transcript', 'interpretation_error', 'requesting_permission', 'listening', 'transcribing', 'permission_denied', 'unsupported', 'transcription_error'].includes(state) && <section><h2>1. Revisa tus palabras</h2><VoiceCapture kind="intention" remoteEnabled={transcriptionEnabled} onPhase={p => flow.move(p)} onCancel={() => { flow.cancel(); flow.move('review_transcript'); }} onText={result => { if (result) setWords(result); if (flow.state !== 'review_transcript') { flow.cancel(); flow.move('review_transcript'); } }} /><form onSubmit={async e => { e.preventDefault(); if (state === 'interpretation_error') flow.move('review_transcript'); if (useAI) await flow.interpretRemote(words); else flow.interpret(words); setIntent(flow.intent); }}><label>¿Qué quieres explorar?<textarea maxLength={500} value={words} onChange={e => setWords(e.target.value)} placeholder="Quiero explorar una decisión con claridad durante veinte minutos." required /></label>{aiEnabled && <label className={styles.check}><input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />Enviar este texto al asistente remoto (opcional)</label>}<button type="submit" disabled={!['review_transcript', 'interpretation_error'].includes(state)}>Continuar</button><button type="button" onClick={reset}>Cancelar</button></form></section>}
+    {state === 'interpreting' && <section><p role="status">Estructurando la intención…</p><button onClick={reset}>Cancelar</button></section>}
     {state === 'review_intent' && intent && <section><h2>2. Revisa la intención y el diseño</h2><form onSubmit={e => { e.preventDefault(); setExperimental(false); flow.propose(intent, edits); }}>
       <IntentFields value={intent} onChange={setIntent} />
       <div className={styles.grid}>
@@ -59,6 +62,6 @@ export default function VoiceJourney() {
       <button onClick={() => { if (state === 'audio_error') flow.move('review_session'); flow.move('review_intent'); }}>Editar propuesta</button><button onClick={reset}>Cancelar</button>
     </section>}
     {active && proposal && <section><h2>{state === 'starting' ? 'Preparando audio…' : 'Exploración en curso'}</h2><progress className={styles.progress} aria-label="Progreso de la sesión" value={elapsed} max={proposal.schedule.durationSeconds * 1000} /><p>{Math.floor(elapsed / 60000)}:{String(Math.floor(elapsed / 1000) % 60).padStart(2, '0')} / {proposal.intent.durationMinutes} min</p><p>Micrófono apagado. Puedes detenerte en cualquier momento.</p><button className={styles.stop} onClick={() => flow.stop('user')}>Detener sesión</button></section>}
-    {state === 'reflection' && <section><h2>4. ¿Qué cambió desde el inicio?</h2><RatingFields title="Después de la sesión" value={after} onChange={setAfter} /><label>Reflexión opcional<textarea maxLength={500} value={reflection} onChange={e => setReflection(e.target.value)} /></label><p>Estas escalas describen tu percepción personal.</p><button onClick={reset}>Terminar sin guardar</button></section>}
+    {state === 'reflection' && <section><h2>4. ¿Qué cambió desde el inicio?</h2><RatingFields title="Después de la sesión" value={after} onChange={setAfter} /><VoiceCapture kind="reflection" remoteEnabled={transcriptionEnabled} onText={result => { if (result) setReflection(result); }} /><label>Reflexión opcional<textarea maxLength={500} value={reflection} onChange={e => setReflection(e.target.value)} /></label><p>Estas escalas describen tu percepción personal.</p><button onClick={reset}>Terminar sin guardar</button></section>}
   </div>;
 }

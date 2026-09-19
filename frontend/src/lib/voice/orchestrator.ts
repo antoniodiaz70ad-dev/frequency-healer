@@ -1,7 +1,7 @@
 import { HarmonicEngine } from '../harmonic/engine';
 import { RunScope, transition, type JourneyState } from './stateMachine';
 import { buildProposal, validateProposal, type ProposalEdits } from './rules';
-import { validateRatings } from './validation';
+import { validateRatings, parseIntentJSON } from './validation';
 import { parseLocalIntent } from './intentParser';
 import type { ParsedIntentionV1, VoiceSessionProposalV1, VoiceSessionRecordV1, SelfRatingV1 } from './types';
 
@@ -26,6 +26,22 @@ export class VoiceOrchestrator {
     if (!this.move('interpreting')) return;
     try { this.intent = parseLocalIntent(raw); this.error = ''; this.move('review_intent'); }
     catch (e) { this.error = (e as Error).message; this.move('interpretation_error'); }
+  }
+  async interpretRemote(raw: string) {
+    if (!this.move('interpreting')) return;
+    const { runId, signal } = this.runs.begin();
+    try {
+      const response = await fetch('/api/voice/interpret', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ transcript: raw }), signal });
+      if (!response.ok) throw new Error('Asistente no disponible.');
+      const intent = parseIntentJSON(await response.text());
+      if (!this.runs.current(runId)) return;
+      this.intent = intent; this.error = ''; this.move('review_intent');
+    } catch {
+      if (!this.runs.current(runId)) return;
+      this.error = 'El asistente no devolvió una intención válida. Revisa el formulario local.';
+      try { this.intent = parseLocalIntent(raw); } catch { this.intent = { ...parseLocalIntent('Exploración personal'), intention: raw.slice(0, 500) || 'Exploración personal' }; }
+      this.move('review_intent');
+    }
   }
   propose(intent: ParsedIntentionV1, edits: ProposalEdits = {}) {
     if (!this.move('building_session')) return;
