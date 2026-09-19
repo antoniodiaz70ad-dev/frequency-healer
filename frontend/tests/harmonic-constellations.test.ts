@@ -32,6 +32,8 @@ test('ratios: exact examples and unchanged named V1 frequencies across seeds', (
   assert.throws(() => ratioFrequency(432, { numerator: 5, denominator: 1 }));
   assert.throws(() => ratioFrequency(40, { numerator: 1, denominator: 2 }));
   assert.throws(() => ratioFrequency(2001, { numerator: 1, denominator: 2 }));
+  assert.equal(ratioFrequency(432, { numerator: 1e308, denominator: 1e308 }), 432);
+  assert.equal(ratioFrequency(432, { numerator: Number.MIN_VALUE, denominator: Number.MIN_VALUE }), 432);
 });
 
 test('ratio canonicalization: exact equivalence, without approximating decimals to familiar ratios', () => {
@@ -132,4 +134,8 @@ test('snapshot validation recomputes frequencies/signature/order; unknown genera
     { playbackOrder: [...result.playbackOrder!].reverse() }, { intention: 'not part of this contract' },
     { members: result.members.map((member, i) => i === 0 ? { ...member, frequencyHz: 433 } : member) },
   ]) await assert.rejects(validateConstellation({ ...result, ...patch }));
+  const mutable = JSON.parse(JSON.stringify(result)); mutable.members[0].frequencyHz = 433;
+  const validation = validateConstellation(mutable);
+  mutable.members[0].frequencyHz = 432; // Cannot repair the input after validation has begun.
+  await assert.rejects(validation);
 });
