@@ -1,0 +1,26 @@
+.workspace { max-width: 64rem; color: #e5e7eb; }
+.workspace h1 { font-size: 1.85rem; font-weight: 700; color: #fff; }
+.workspace h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: .8rem; }
+.workspace h3 { font-weight: 600; margin: .75rem 0; }
+.workspace p { margin: .6rem 0; line-height: 1.6; }
+.workspace section, .panel { padding: 1.25rem; margin: 1.2rem 0; border: 1px solid #334155; border-radius: 1rem; background: #111827; }
+.workspace label { display: flex; flex-direction: column; gap: .35rem; margin: .65rem 0; font-size: .9rem; }
+.workspace input:not([type=checkbox]), .workspace select, .workspace textarea { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #475569; border-radius: .5rem; padding: .65rem; color: #f8fafc; background: #030712; }
+.workspace textarea { min-height: 100px; resize: vertical; }
+.workspace input[type=checkbox] { width: 22px; height: 22px; accent-color: #22d3ee; flex-shrink: 0; }
+.workspace button, .workspace a.action { min-height: 44px; padding: .65rem 1rem; margin: .25rem .5rem .25rem 0; border: 1px solid #475569; border-radius: .65rem; background: #1e293b; font-weight: 600; cursor: pointer; }
+.workspace button[type=submit], .workspace .primary { background: #155e75; border-color: #22d3ee; color: white; }
+.workspace button:disabled { opacity: .5; cursor: not-allowed; }
+.workspace :is(button, a, input, select, textarea):focus-visible { outline: 3px solid #67e8f9; outline-offset: 3px; }
+.workspace .check { flex-direction: row; align-items: center; min-height: 44px; gap: .75rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .3rem 1rem; }
+.muted { color: #cbd5e1; font-size: .9rem; }
+.error { border-left: 3px solid #fca5a5; padding: .75rem; color: #fecaca; }
+.steps { padding-left: 1.5rem; list-style: decimal; }
+.steps li { padding: .45rem 0; overflow-wrap: anywhere; }
+.tag { display: inline-block; padding: .3rem .6rem; background: #164e63; border-radius: .5rem; font-size: .8rem; }
+.stop { position: sticky; bottom: .5rem; z-index: 20; background: #7f1d1d !important; border: 2px solid #fca5a5 !important; }
+.progress { width: 100%; height: .7rem; accent-color: #22d3ee; }
+.recording { font-weight: 700; border: 2px solid #fb7185; padding: .75rem; border-radius: .5rem; }
+.workspace pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+@media (prefers-reduced-motion: reduce) { .workspace *, .workspace *::before, .workspace *::after { animation: none !important; transition: none !important; } }
