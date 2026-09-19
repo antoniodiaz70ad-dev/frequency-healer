@@ -158,3 +158,24 @@ test('experiment/audio: logging does not alter programmed tones/times; stop clos
   lateCompletion(); assert.equal(record.status, 'interrupted'); assert.equal(record.completedAt, undefined);
   plain.stop(); for (const osc of plainContext.oscs) osc.onended?.();
 });
+
+test('experiment/audio: stop while resume is pending keeps the draft prepared and creates no late oscillators', async () => {
+  const context = new ContextMock(); let resume!: () => void;
+  context.resume = () => new Promise<void>(resolve => { resume = resolve; });
+  const engine = new HarmonicEngine(() => context as unknown as AudioContext);
+  let record = fixture();
+  const pending = engine.start(selected, () => { record = transitionExperiment(record, 'completed', ended); });
+  engine.dispose(); record = transitionExperiment(record, 'interrupted', ended); resume();
+  assert.equal(await pending, false); assert.equal(record.status, 'prepared'); assert.equal(record.startedAt, undefined);
+  assert.equal(context.oscs.length, 0); assert.equal(context.state, 'closed');
+});
+
+test('experiment/audio: only natural engine completion assigns completedAt', async () => {
+  const context = new ContextMock(), engine = new HarmonicEngine(() => context as unknown as AudioContext);
+  let record = fixture();
+  await engine.start(selected, () => { record = transitionExperiment(record, 'completed', ended); });
+  record = transitionExperiment(record, 'started', started);
+  context.oscs[0].onended!(); assert.equal(record.status, 'started');
+  context.oscs[1].onended!();
+  assert.equal(record.status, 'completed'); assert.equal(record.completedAt, ended); assert.equal(context.state, 'closed');
+});
