@@ -85,10 +85,15 @@ export class VoiceOrchestrator {
     if (command.type === 'stop_session' && !confirmStop) return 'confirm_stop';
     const marker = this.markerDraft ?? this.markerSnapshot();
     if (command.type === 'volume_relative') this.engine.setVolume(this.engine.getVolume() + command.delta);
+    if (this.record.markers.length >= 500) throw new Error('Límite de 500 marcadores por sesión.');
     this.record.markers.push({ ...marker, kind: command.type === 'none' ? 'observation' : 'command', note });
     this.markerDraft = null;
     if (command.type === 'stop_session') this.stop('voice_confirmed');
     return 'applied';
+  }
+  finishRecord(after: Partial<SelfRatingV1>, reflection: string, originalWords?: string) {
+    if (!this.record || !['reflection', 'storage_error'].includes(this.state)) throw new Error('No hay reflexión para guardar.');
+    return { ...this.record, after: validateRatings(after), reflection: text(reflection, 500, true), ...(originalWords === undefined ? {} : { originalWords: text(originalWords, 500, true) }) };
   }
   elapsedMs() { return this.record ? Math.min(this.proposal!.schedule.durationSeconds * 1000, Math.max(0, performance.now() - this.started)) : 0; }
   stop(reason = 'user') {

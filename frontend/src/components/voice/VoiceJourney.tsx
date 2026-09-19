@@ -3,10 +3,13 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { parseCommand } from '@/lib/voice/commands';
 import { VoiceOrchestrator } from '@/lib/voice/orchestrator';
 import { RATIOS, type RatioId } from '@/lib/harmonic/math';
-import type { ParsedIntentionV1, SelfRatingV1 } from '@/lib/voice/types';
+import type { ParsedIntentionV1, SelfRatingV1, VoiceSessionRecordV1 } from '@/lib/voice/types';
 import type { ProposalEdits } from '@/lib/voice/rules';
 import { getAudioEngine } from '@/lib/audioEngine';
 import { IntentFields, RatingFields, goalLabels, stateLabels } from './Fields';
+import { VoiceStore, SESSIONS_KEY, loadSettings, saveSettings } from '@/lib/voice/storage';
+import { SETTINGS_KEY } from '@/lib/voice/privacy';
+import VoiceHistory, { exportJSON } from './VoiceHistory';
 import VoiceCapture from './VoiceCapture';
 import SessionPlan from './SessionPlan';
 import styles from './voice.module.css';
@@ -14,6 +17,7 @@ import styles from './voice.module.css';
 export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled = false }: { transcriptionEnabled?: boolean; aiEnabled?: boolean }) {
   const [flow] = useState(() => new VoiceOrchestrator());
   const state = useSyncExternalStore(flow.subscribe, flow.getState, () => 'idle');
+  const [records, setRecords] = useState<VoiceSessionRecordV1[]>([]); const [memory, setMemory] = useState<VoiceSessionRecordV1[]>([]); const [storageError, setStorageError] = useState(''); const [keepOriginal, setKeepOriginal] = useState(false);
   const [marker, setMarker] = useState(''); const [markerMessage, setMarkerMessage] = useState('');
   const [useAI, setUseAI] = useState(false);
   const [words, setWords] = useState(''); const [intent, setIntent] = useState<ParsedIntentionV1 | null>(null);
@@ -21,6 +25,14 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
   const [before, setBefore] = useState<Partial<SelfRatingV1>>({}); const [after, setAfter] = useState<Partial<SelfRatingV1>>({});
   const [reflection, setReflection] = useState(''); const [error, setError] = useState(''); const [elapsed, setElapsed] = useState(0);
   const active = ['playing', 'marker_listening', 'starting'].includes(state);
+  useEffect(() => {
+    let alive = true;
+    const refresh = () => { if (!alive) return; try { setRecords(new VoiceStore(localStorage).load()); setKeepOriginal(loadSettings(localStorage).keepOriginal); setStorageError(''); } catch (e) { setStorageError((e as Error).message); } };
+    queueMicrotask(refresh);
+    const changed = (e: StorageEvent) => { if (e.key === SESSIONS_KEY || e.key === SETTINGS_KEY || e.key === null) refresh(); };
+    window.addEventListener('storage', changed);
+    return () => { alive = false; window.removeEventListener('storage', changed); };
+  }, []);
   useEffect(() => {
     const hidden = () => { if (document.hidden && !['idle', 'reflection', 'saved', 'storage_error'].includes(flow.state)) flow.stop('hidden'); };
     const leave = () => flow.stop('pagehide');
@@ -71,6 +83,17 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
       {parseCommand(marker).type === 'stop_session' && <button onClick={() => flow.applyMarker(marker, true)}>Confirmar detención por voz</button>}
       <p role="status">{markerMessage}</p><p>Marcadores: {flow.record?.markers.length ?? 0} · volumen {flow.engine.getVolume()}/100</p></>}
       <button className={styles.stop} onClick={() => flow.stop('user')}>Detener sesión</button></section>}
-    {state === 'reflection' && <section><h2>4. ¿Qué cambió desde el inicio?</h2><RatingFields title="Después de la sesión" value={after} onChange={setAfter} /><VoiceCapture kind="reflection" remoteEnabled={transcriptionEnabled} onText={result => { if (result) setReflection(result); }} /><label>Reflexión opcional<textarea maxLength={500} value={reflection} onChange={e => setReflection(e.target.value)} /></label><p>Estas escalas describen tu percepción personal.</p><button onClick={reset}>Terminar sin guardar</button></section>}
+    {['reflection', 'storage_error'].includes(state) && <section><h2>4. ¿Qué cambió desde el inicio?</h2><RatingFields title="Después de la sesión" value={after} onChange={setAfter} /><VoiceCapture kind="reflection" remoteEnabled={transcriptionEnabled} onText={result => { if (result) setReflection(result); }} /><label>Reflexión opcional<textarea maxLength={500} value={reflection} onChange={e => setReflection(e.target.value)} /></label><p>Estas escalas describen tu percepción personal. Al guardar se conserva la intención revisada, las escalas, los marcadores y esta reflexión; nunca el audio.</p>
+      <label className={styles.check}><input type="checkbox" checked={keepOriginal} onChange={e => { setKeepOriginal(e.target.checked); try { saveSettings(localStorage, e.target.checked); } catch (error) { setStorageError((error as Error).message); } }} />Guardar también mis palabras originales de intención (opcional)</label>
+      <button className={styles.primary} onClick={async () => {
+        const record = flow.finishRecord(after, reflection, keepOriginal ? words : undefined);
+        try { setRecords(await new VoiceStore(localStorage).save(record)); setMemory(rows => rows.filter(r => r.id !== record.id)); setStorageError(''); flow.move('saved'); setWords(''); }
+        catch (e) { setMemory(rows => [record, ...rows.filter(r => r.id !== record.id)]); setStorageError(`No se guardó en el dispositivo. Sesión disponible en memoria para exportar. ${(e as Error).message}`); flow.move('storage_error'); }
+      }}>Guardar sesión</button><button onClick={() => { if (flow.record) setMemory(rows => rows.filter(r => r.id !== flow.record!.id)); reset(); }}>Terminar sin guardar</button></section>}
+    {state === 'saved' && <section><p role="status">Sesión guardada en este dispositivo.</p><button onClick={reset}>Nueva exploración</button></section>}
+    {storageError && <p role="alert" className={styles.error}>{storageError}</p>}
+    <VoiceHistory records={[...memory, ...records.filter(r => !memory.some(m => m.id === r.id))]} rawExport={() => { try { exportJSON({ key: SESSIONS_KEY, original: localStorage.getItem(SESSIONS_KEY) }, 'frequency-healer-voice-original.json'); } catch { setStorageError('No se puede leer el almacenamiento. Exporta las sesiones visibles.'); } }} onDelete={async id => {
+      try { const store = new VoiceStore(localStorage); setRecords(id === null ? await store.clear() : await store.remove(id)); setMemory(rows => id === null ? [] : rows.filter(r => r.id !== id)); setStorageError(''); } catch (e) { setStorageError((e as Error).message); }
+    }} />
   </div>;
 }
