@@ -5,6 +5,7 @@ import { buildSchedule, RATIOS, type HarmonicConfig } from '@/lib/harmonic/math'
 import { getAudioEngine } from '@/lib/audioEngine';
 import SessionPlan from './SessionPlan';
 import ExperimentSession, { type ExperimentSessionHandle } from '../lab/ExperimentSession';
+import HarmonicExplorer from '../lab/HarmonicExplorer';
 import styles from './voice.module.css';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
@@ -32,6 +33,7 @@ export default function HarmonicLab() {
     <label>Volumen (0–100)<input type="number" min={0} max={100} value={config.uiVolume} onChange={e => edit({ uiVolume: Number(e.target.value) })} /></label>
     {config.ratioId === 'cascade-13-12' && <><label>Incrementos<input type="number" min={1} max={8} value={config.increments} onChange={e => edit({ increments: Number(e.target.value) })} /></label><label>Trayectoria<select value={config.direction} onChange={e => edit({ direction: e.target.value as HarmonicConfig['direction'] })}><option value="ascending">Ascendente</option><option value="descending">Descendente</option><option value="return">Expansión y retorno</option></select></label></>}
   </div></fieldset></section>
+    <HarmonicExplorer config={config} />
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
     {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}
     {schedule && <section><h2>Propuesta visible</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Al ocultar la pestaña, el audio se detiene.</p>
