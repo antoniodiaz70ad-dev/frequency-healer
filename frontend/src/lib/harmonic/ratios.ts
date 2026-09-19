@@ -20,8 +20,10 @@ export function validateRatio(value: unknown): HarmonicRatioV1 {
 export function ratioFrequency(seedFrequencyHz: number, value: HarmonicRatioV1): number {
   const ratio = validateRatio(value);
   frequency(seedFrequencyHz, 1, 1); // Validate the seed even when the ratio would bring it into range.
-  if (!Number.isFinite(seedFrequencyHz * ratio.numerator)) {
-    // Avoid intermediate overflow for finite operands such as 1e308 / 1e308.
+  const product = seedFrequencyHz * ratio.numerator;
+  if (!Number.isFinite(product) || product < 2 ** -1022) {
+    // Avoid intermediate overflow or loss of precision in subnormal products,
+    // e.g. 1e308 / 1e308 or Number.MIN_VALUE / Number.MIN_VALUE.
     // The ordinary path, including every named V1 ratio, retains the old evaluation order.
     return frequency(seedFrequencyHz, ratio.numerator / ratio.denominator, 1);
   }

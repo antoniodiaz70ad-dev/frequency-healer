@@ -34,6 +34,7 @@ test('ratios: exact examples and unchanged named V1 frequencies across seeds', (
   assert.throws(() => ratioFrequency(2001, { numerator: 1, denominator: 2 }));
   assert.equal(ratioFrequency(432, { numerator: 1e308, denominator: 1e308 }), 432);
   assert.equal(ratioFrequency(432, { numerator: Number.MIN_VALUE, denominator: Number.MIN_VALUE }), 432);
+  assert.equal(ratioFrequency(432.123456789, { numerator: Number.MIN_VALUE, denominator: Number.MIN_VALUE }), 432.123456789);
 });
 
 test('ratio canonicalization: exact equivalence, without approximating decimals to familiar ratios', () => {
