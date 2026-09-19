@@ -36,8 +36,9 @@ export function validateRecord(value: unknown): VoiceSessionRecordV1 {
     ...(v.reflection === undefined ? {} : { reflection: text(v.reflection, 500, true) }), ...(v.originalWords === undefined ? {} : { originalWords: text(v.originalWords, 500, true) }),
     technical: { actualDurationMs: duration, ...(tech.stopReason === undefined ? {} : { stopReason: text(tech.stopReason, 50) }) } };
 }
-export function loadRecords(storage: StorageLike): VoiceSessionRecordV1[] {
-  const raw = storage.getItem(SESSIONS_KEY); if (raw === null) return [];
+export function loadRecords(storage: StorageLike): VoiceSessionRecordV1[] { return parseRecords(storage.getItem(SESSIONS_KEY)); }
+function parseRecords(raw: string | null): VoiceSessionRecordV1[] {
+  if (raw === null) return [];
   try { const rows = JSON.parse(raw); if (!Array.isArray(rows) || rows.length > 100) throw new Error(); const records = rows.map(validateRecord); if (new Set(records.map(r => r.id)).size !== records.length) throw new Error(); return records; }
   catch { throw new Error('Historial de voz inválido. No se sobrescribió. Exporta el contenido original antes de repararlo.'); }
 }
@@ -49,7 +50,7 @@ export class VoiceStore {
   constructor(private storage: StorageLike, private lock: Lock = browserLock) {}
   load() { return loadRecords(this.storage); }
   private mutate(change: (rows: VoiceSessionRecordV1[]) => VoiceSessionRecordV1[]) {
-    return this.lock(() => { const rows = this.load(); const original = this.storage.getItem(SESSIONS_KEY); const next = change(rows);
+    return this.lock(() => { const original = this.storage.getItem(SESSIONS_KEY); const rows = parseRecords(original); const next = change(rows);
       if (this.storage.getItem(SESSIONS_KEY) !== original) throw new Error('Otra pestaña cambió el historial. Vuelve a intentar.');
       this.storage.setItem(SESSIONS_KEY, JSON.stringify(next)); return next;
     });

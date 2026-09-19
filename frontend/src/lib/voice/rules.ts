@@ -2,14 +2,14 @@ import { buildSchedule, type HarmonicConfig, type RatioId } from '../harmonic/ma
 import type { VoiceGoal, VoiceSessionProposalV1 } from './types';
 import { dictionaries } from './i18n';
 import { validateIntent } from './validation';
-const RULES: Record<VoiceGoal, { progression: RatioId[]; rationale: string }> = {
-  clarity: { progression: ['major-third', 'fourth', 'fifth', 'root'], rationale: 'Recorrido ascendente y retorno a la raíz.' },
-  focus: { progression: ['root', 'fifth', 'root', 'fifth'], rationale: 'Estructura simple, estable y repetible.' },
-  relaxation: { progression: ['minor-third', 'fourth', 'root'], rationale: 'Intervalos cercanos e intensidad inicial suave.' },
-  reflection: { progression: ['major-third', 'fourth', 'root'], rationale: 'Progresión breve y retorno.' },
-  creative_exploration: { progression: [], rationale: 'Trayectoria experimental 13/12 de expansión y retorno.' },
-  sleep_preparation: { progression: ['minor-third', 'root'], rationale: 'Diseño mínimo y volumen bajo; no promete sueño.' },
-  custom: { progression: ['root', 'fifth', 'root'], rationale: 'Configuración neutral; revisa todos los parámetros.' },
+const RULES: Record<VoiceGoal, { progression: RatioId[] }> = {
+  clarity: { progression: ['major-third', 'fourth', 'fifth', 'root'] },
+  focus: { progression: ['root', 'fifth', 'root', 'fifth'] },
+  relaxation: { progression: ['minor-third', 'fourth', 'root'] },
+  reflection: { progression: ['major-third', 'fourth', 'root'] },
+  creative_exploration: { progression: [] },
+  sleep_preparation: { progression: ['minor-third', 'root'] },
+  custom: { progression: ['root', 'fifth', 'root'] },
 };
 export type ProposalEdits = Partial<Pick<HarmonicConfig, 'baseHz' | 'uiVolume' | 'mode' | 'ratioId' | 'increments' | 'direction'>>;
 export function buildProposal(value: unknown, edits: ProposalEdits = {}): VoiceSessionProposalV1 {

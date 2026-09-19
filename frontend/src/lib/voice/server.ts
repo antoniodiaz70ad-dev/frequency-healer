@@ -1,11 +1,14 @@
 import 'server-only';
+import { isSameOrigin, readBounded } from './serverBoundary';
 import { VOICE_ENABLED } from './feature';
 import { AUDIO_MIMES, MAX_AUDIO_BYTES, validateVoiceBlob } from './capture';
 import { object, parseIntentJSON, text } from './validation';
 const buckets = new Map<string, { count: number; reset: number }>();
 function guard(request: Request) {
   if (!VOICE_ENABLED) return new Response(null, { status: 404 });
-  if (request.headers.get('origin') !== new URL(request.url).origin) return Response.json({ error: 'Origen no admitido.' }, { status: 403 });
+  // Next may normalize request.url to an internal hostname behind its proxy.
+  // Compare the browser origin with the actual routed Host, never a client-provided URL.
+  if (!isSameOrigin(request)) return Response.json({ error: 'Origen no admitido.' }, { status: 403 });
   const now = Date.now();
   for (const [key, entry] of buckets) if (entry.reset < now) buckets.delete(key);
   // Only the trusted platform proxy can set x-vercel-forwarded-for. Local use shares one bucket.
@@ -13,13 +16,6 @@ function guard(request: Request) {
   const bucket = buckets.get(key) ?? { count: 0, reset: now + 60000 };
   if (++bucket.count > 10 || buckets.size > 1000) return Response.json({ error: 'Espera un minuto y vuelve a intentar.' }, { status: 429 });
   buckets.set(key, bucket);
-}
-async function readBounded(stream: ReadableStream<Uint8Array> | null, limit: number) {
-  if (!stream) throw new Error('Missing body');
-  const reader = stream.getReader(); const chunks: Uint8Array[] = []; let total = 0;
-  try { while (true) { const { done, value } = await reader.read(); if (done) break; total += value.length; if (total > limit) { await reader.cancel(); throw new Error('Body too large'); } chunks.push(value); } }
-  finally { reader.releaseLock(); }
-  const buffer = new Uint8Array(total); let offset = 0; for (const chunk of chunks) { buffer.set(chunk, offset); offset += chunk.length; } return buffer;
 }
 async function provider(url: string, token: string, body: BodyInit, signal: AbortSignal, json = false) {
   if (new URL(url).protocol !== 'https:') throw new Error('HTTPS required');
