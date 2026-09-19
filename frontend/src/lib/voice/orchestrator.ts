@@ -1,9 +1,10 @@
 import { HarmonicEngine } from '../harmonic/engine';
 import { RunScope, transition, type JourneyState } from './stateMachine';
 import { buildProposal, validateProposal, type ProposalEdits } from './rules';
-import { validateRatings, parseIntentJSON } from './validation';
+import { parseCommand } from './commands';
+import { validateRatings, parseIntentJSON, text } from './validation';
 import { parseLocalIntent } from './intentParser';
-import type { ParsedIntentionV1, VoiceSessionProposalV1, VoiceSessionRecordV1, SelfRatingV1 } from './types';
+import type { ParsedIntentionV1, VoiceSessionProposalV1, VoiceSessionRecordV1, SelfRatingV1, SessionMarkerV1 } from './types';
 
 export class VoiceOrchestrator {
   state: JourneyState = 'idle';
@@ -14,6 +15,7 @@ export class VoiceOrchestrator {
   readonly runs = new RunScope();
   private listeners = new Set<() => void>();
   private started = 0;
+  private markerDraft: SessionMarkerV1 | null = null;
   constructor(readonly engine = new HarmonicEngine()) {}
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
   getState = () => this.state;
@@ -63,6 +65,31 @@ export class VoiceOrchestrator {
       this.move('playing');
     } catch (e) { if (this.runs.current(runId)) { this.error = (e as Error).message; this.move('audio_error'); } }
   }
+  markerSnapshot(): SessionMarkerV1 {
+    if (!this.record || !this.proposal || !['playing', 'marker_listening'].includes(this.state)) throw new Error('No hay sesión activa.');
+    return { id: crypto.randomUUID(), offsetMs: this.elapsedMs(), wallClockCreatedAt: new Date().toISOString(), kind: 'custom',
+      harmonicSnapshot: { ...this.engine.snapshot(), baseHz: this.proposal.harmonicConfig.baseHz, ratioId: this.proposal.harmonicConfig.ratioId } };
+  }
+  async beginMarkerCapture() {
+    if (!this.move('marker_listening')) return false;
+    this.markerDraft = this.markerSnapshot();
+    return this.engine.duck();
+  }
+  endMarkerCapture() {
+    if (this.state !== 'marker_listening') return;
+    this.engine.restore(); this.move('playing');
+  }
+  applyMarker(raw: string, confirmStop = false) {
+    if (this.state !== 'playing' || !this.record) return;
+    const note = text(raw), command = parseCommand(note);
+    if (command.type === 'stop_session' && !confirmStop) return 'confirm_stop';
+    const marker = this.markerDraft ?? this.markerSnapshot();
+    if (command.type === 'volume_relative') this.engine.setVolume(this.engine.getVolume() + command.delta);
+    this.record.markers.push({ ...marker, kind: command.type === 'none' ? 'observation' : 'command', note });
+    this.markerDraft = null;
+    if (command.type === 'stop_session') this.stop('voice_confirmed');
+    return 'applied';
+  }
   elapsedMs() { return this.record ? Math.min(this.proposal!.schedule.durationSeconds * 1000, Math.max(0, performance.now() - this.started)) : 0; }
   stop(reason = 'user') {
     if (!['starting', 'playing', 'marker_listening'].includes(this.state)) { this.cancel(); return; }
@@ -76,7 +103,7 @@ export class VoiceOrchestrator {
   }
   cancel() {
     if (['playing', 'marker_listening', 'starting'].includes(this.state)) { this.stop(); return; }
-    this.runs.cancel(); this.engine.stop(); this.record = null; this.error = ''; this.move('idle');
+    this.runs.cancel(); this.engine.stop(); this.record = null; this.markerDraft = null; this.error = ''; this.move('idle');
   }
   dispose() { this.runs.cancel(); this.engine.dispose(); }
 }
