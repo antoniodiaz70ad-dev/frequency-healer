@@ -57,6 +57,11 @@ export default function VoiceCapture({ kind, remoteEnabled, onText, onPhase, bef
       onKeyUp={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); release(); } }} onBlur={() => { if (held.current) cancel(); }}>
       {phase === 'listening' ? 'Grabando — suelta para terminar' : phase === 'transcribing' ? 'Transcribiendo…' : 'Mantén presionado para hablar'}
     </button>
+    <details><summary>Alternativa accesible: grabar con dos pulsaciones</summary>
+      <p className={styles.muted}>Pulsa Iniciar y después Terminar. Se aplican los mismos límites de tiempo; Cancelar descarta la captura.</p>
+      <button type="button" disabled={phase !== null} onClick={() => void begin()}>Iniciar grabación</button>
+      <button type="button" disabled={phase !== 'listening'} onClick={release}>Terminar grabación</button>
+    </details>
     {phase && <><p role="status" className={phase === 'listening' ? styles.recording : ''}>{phase === 'listening' ? `● Micrófono activo · ${elapsed.toFixed(0)} s / ${kind === 'intention' ? 60 : 30} s` : phase === 'requesting_permission' ? 'Solicitando micrófono…' : 'Micrófono apagado. Transcribiendo…'}</p><button type="button" onClick={cancel}>Cancelar captura</button></>}
     {error && <p role="alert" className={styles.error}>{error}</p>}
     <p className={styles.muted}>{remoteEnabled ? 'Solo esta captura se envía al proveedor configurado. Revisa la transcripción antes de continuar.' : 'Sin transcripción remota configurada. Puedes grabar; el audio se descarta y puedes escribir el texto.'}</p>

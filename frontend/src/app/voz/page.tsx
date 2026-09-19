@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { notFound } from 'next/navigation';
 import { VOICE_ENABLED } from '@/lib/voice/feature';
 import PrivacyGate from '@/components/voice/PrivacyGate';
@@ -6,5 +7,6 @@ export default function VoicePage() {
   if (!VOICE_ENABLED) notFound();
   const transcriptionEnabled = Boolean(process.env.VOICE_TRANSCRIPTION_URL && process.env.VOICE_TRANSCRIPTION_TOKEN);
   const aiEnabled = process.env.VOICE_AI_ENABLED === 'true' && Boolean(process.env.VOICE_INTENT_URL && process.env.VOICE_INTENT_TOKEN);
-  return <PrivacyGate transcriptionEnabled={transcriptionEnabled} aiEnabled={aiEnabled}><VoiceJourney transcriptionEnabled={transcriptionEnabled} aiEnabled={aiEnabled} /></PrivacyGate>;
+  const processingVersion = createHash('sha256').update([process.env.VOICE_PROCESSING_VERSION ?? 'v1', process.env.VOICE_TRANSCRIPTION_URL ?? '', process.env.VOICE_INTENT_URL ?? ''].join('|')).digest('hex').slice(0, 16);
+  return <PrivacyGate processingVersion={processingVersion} transcriptionEnabled={transcriptionEnabled} aiEnabled={aiEnabled}><VoiceJourney transcriptionEnabled={transcriptionEnabled} aiEnabled={aiEnabled} /></PrivacyGate>;
 }

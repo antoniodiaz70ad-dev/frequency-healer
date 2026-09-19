@@ -1,8 +1,9 @@
 'use client';
 import { DESIRED_STATES, GOALS, type ParsedIntentionV1, type SelfRatingV1 } from '@/lib/voice/types';
 import styles from './voice.module.css';
-export const goalLabels = { clarity: 'Claridad', focus: 'Enfoque', relaxation: 'Relajación', reflection: 'Reflexión', creative_exploration: 'Exploración creativa', sleep_preparation: 'Preparación para dormir', custom: 'Personalizado' };
-export const stateLabels = { calm: 'Calma', focus: 'Enfoque', openness: 'Apertura', grounded: 'Presencia', creative: 'Creatividad', restful: 'Descanso' };
+import { dictionaries } from '@/lib/voice/i18n';
+export const goalLabels = dictionaries.es.goals;
+export const stateLabels = dictionaries.es.states;
 export function IntentFields({ value, onChange }: { value: ParsedIntentionV1; onChange: (v: ParsedIntentionV1) => void }) {
   return <>
     <label>Intención resumida<textarea maxLength={500} value={value.intention} onChange={e => onChange({ ...value, intention: e.target.value })} /></label>

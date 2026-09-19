@@ -79,6 +79,7 @@ export class VoiceOrchestrator {
     if (this.state !== 'marker_listening') return;
     this.engine.restore(); this.move('playing');
   }
+  cancelMarkerCapture() { this.markerDraft = null; this.endMarkerCapture(); }
   applyMarker(raw: string, confirmStop = false) {
     if (this.state !== 'playing' || !this.record) return;
     const note = text(raw), command = parseCommand(note);

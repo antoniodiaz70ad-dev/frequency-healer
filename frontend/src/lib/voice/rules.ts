@@ -1,5 +1,6 @@
 import { buildSchedule, type HarmonicConfig, type RatioId } from '../harmonic/math';
 import type { VoiceGoal, VoiceSessionProposalV1 } from './types';
+import { dictionaries } from './i18n';
 import { validateIntent } from './validation';
 const RULES: Record<VoiceGoal, { progression: RatioId[]; rationale: string }> = {
   clarity: { progression: ['major-third', 'fourth', 'fifth', 'root'], rationale: 'Recorrido ascendente y retorno a la raíz.' },
@@ -27,7 +28,7 @@ export function buildProposal(value: unknown, edits: ProposalEdits = {}): VoiceS
   let hash = 2166136261; for (const c of canonical) hash = Math.imul(hash ^ c.charCodeAt(0), 16777619);
   return { schemaVersion: 1, proposalId: `voice-v1-${(hash >>> 0).toString(16)}`, ruleId: `voice-${intent.goal}-${intent.intensity}`, ruleVersion: 'voice-rules-v1',
     source: Object.keys(edits).length ? 'user-customized' : 'local-rule', intent, harmonicConfig, schedule,
-    rationale: [edits.ratioId ? 'Relación elegida por ti; revisa los tonos y la secuencia resultante.' : rule.rationale, ...(intent.intensity === 'gentle' ? ['Intensidad suave: recorrido reducido y volumen inicial bajo.'] : []), 'Decisión de diseño sonoro, sin atribuir efectos a una frecuencia.'],
+    rationale: [edits.ratioId ? 'Relación elegida por ti; revisa los tonos y la secuencia resultante.' : dictionaries.es.rationale[intent.goal], ...(intent.intensity === 'gentle' ? ['Intensidad suave: recorrido reducido y volumen inicial bajo.'] : []), 'Decisión de diseño sonoro, sin atribuir efectos a una frecuencia.'],
     warnings: ['Comienza con un volumen cómodo. No uses la sesión al conducir o manejar maquinaria.', 'La sesión se detiene si ocultas la pestaña; no se reanuda automáticamente.'],
     requiresExplicitExperimentalConsent: harmonicConfig.ratioId === 'cascade-13-12' || intent.intensity === 'experimental' };
 }

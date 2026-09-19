@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Waveform, OutputMode, FocusLevelPreset } from "@/lib/types";
 import { getAudioEngine, AudioEngine } from "@/lib/audioEngine";
 import { FREQUENCY_DATABASE, WAVEFORM_INFO, DOMAIN_INFO } from "@/lib/frequencies";
@@ -39,7 +39,11 @@ export default function GeneradorPage() {
   const [binaural, setBinaural] = useState(false);
   const [binauralDiff, setBinauralDiff] = useState(10);
   const [dwellTime, setDwellTime] = useState(0); // 0 = continuous
-  const [dwellTimer, setDwellTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const dwellTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (dwellTimer.current) clearTimeout(dwellTimer.current);
+    getAudioEngine().stopProtocol();
+  }, []);
 
   // Hemi-Sync state
   const [selectedChord, setSelectedChord] = useState<FocusLevelPreset>(FOCUS_LEVEL_PRESETS[0]);
@@ -51,6 +55,7 @@ export default function GeneradorPage() {
   const effectiveFreq = tuning432 ? AudioEngine.to432(frequency) : frequency;
 
   const handlePlay = useCallback(() => {
+    if (dwellTimer.current) clearTimeout(dwellTimer.current);
     const engine = getAudioEngine();
     engine.setOutputMode(outputMode);
     engine.play(effectiveFreq, waveform, volume / 100, {
@@ -64,7 +69,7 @@ export default function GeneradorPage() {
         engine.stop();
         setIsPlaying(false);
       }, dwellTime * 1000);
-      setDwellTimer(timer);
+      dwellTimer.current = timer;
     }
   }, [effectiveFreq, waveform, volume, outputMode, binaural, binauralDiff, dwellTime]);
 
@@ -72,13 +77,14 @@ export default function GeneradorPage() {
     const engine = getAudioEngine();
     engine.stop();
     setIsPlaying(false);
-    if (dwellTimer) {
-      clearTimeout(dwellTimer);
-      setDwellTimer(null);
+    if (dwellTimer.current) {
+      clearTimeout(dwellTimer.current);
+      dwellTimer.current = null;
     }
-  }, [dwellTimer]);
+  }, []);
 
   const playChord = useCallback(() => {
+    if (dwellTimer.current) clearTimeout(dwellTimer.current);
     const engine = getAudioEngine();
     engine.playChord(selectedChord.layers, {
       masterVolume: chordVolume / 100,
@@ -91,7 +97,7 @@ export default function GeneradorPage() {
       engine.stop();
       setIsPlaying(false);
     }, minutes * 60 * 1000);
-    setDwellTimer(timer);
+    dwellTimer.current = timer;
   }, [selectedChord, chordVolume, pinkNoiseEnabled, chordDuration]);
 
   const requestPlayChord = useCallback(() => {

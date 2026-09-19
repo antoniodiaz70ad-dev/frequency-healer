@@ -1,5 +1,6 @@
 "use client";
 
+import { VOICE_ENABLED, HARMONIC_ENABLED } from "@/lib/voice/feature";
 import Link from "next/link";
 import { FREQUENCY_DATABASE, DOMAIN_INFO, CATEGORY_INFO } from "@/lib/frequencies";
 import { PROTOCOLS } from "@/lib/protocols";
@@ -59,6 +60,11 @@ export default function DashboardPage() {
         <p className="text-sm text-gray-400">Sanaci&oacute;n con frecuencias para cuerpo, alma y esp&iacute;ritu.</p>
       </div>
 
+      {(VOICE_ENABLED || HARMONIC_ENABLED) && <nav aria-label="Formas de explorar" className="grid gap-3 sm:grid-cols-3 mb-6">
+        <Link className="rounded-xl border border-slate-700 p-4 min-h-12 focus-visible:outline-cyan-300" href="/generador">🔊 Sesión rápida</Link>
+        {VOICE_ENABLED && <Link className="rounded-xl border border-cyan-700 p-4 min-h-12 focus-visible:outline-cyan-300" href="/voz">🎙️ Viaje por voz</Link>}
+        {HARMONIC_ENABLED && <Link className="rounded-xl border border-slate-700 p-4 min-h-12 focus-visible:outline-cyan-300" href="/laboratorio-armonico">∿ Laboratorio Armónico</Link>}
+      </nav>}
       {/* Domain cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {DOMAIN_CARDS.map((card) => (

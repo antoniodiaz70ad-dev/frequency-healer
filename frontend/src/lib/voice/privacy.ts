@@ -1,6 +1,6 @@
 export const CONSENT_KEY = 'fh:voice-consent-v1';
 export const SETTINGS_KEY = 'fh:voice-settings-v1';
-export function consentVersion(transcription: boolean, ai: boolean) { return `v1:${transcription ? 'remote-audio' : 'manual'}:${ai ? 'optional-remote-intent' : 'local-intent'}`; }
+export function consentVersion(transcription: boolean, ai: boolean, processingVersion = 'v1') { return `v1:${transcription ? 'remote-audio' : 'manual'}:${ai ? 'optional-remote-intent' : 'local-intent'}:${processingVersion}`; }
 export function loadConsent(version: string) {
   const raw = localStorage.getItem(CONSENT_KEY); if (!raw) return false;
   const value = JSON.parse(raw);

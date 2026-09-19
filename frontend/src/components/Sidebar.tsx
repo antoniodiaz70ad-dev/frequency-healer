@@ -1,9 +1,12 @@
 "use client";
+import { VOICE_ENABLED, HARMONIC_ENABLED } from "@/lib/voice/feature";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
+  ...(VOICE_ENABLED ? [{ href: "/voz", label: "Viaje por voz", icon: "🎙️" }] : []),
+  ...(HARMONIC_ENABLED ? [{ href: "/laboratorio-armonico", label: "Laboratorio Armónico", icon: "∿" }] : []),
   { href: "/", label: "Dashboard", icon: "⚡" },
   { href: "/sesion-nueva", label: "Nueva sesión", icon: "🌙" },
   { href: "/generador", label: "Generador", icon: "🔊" },

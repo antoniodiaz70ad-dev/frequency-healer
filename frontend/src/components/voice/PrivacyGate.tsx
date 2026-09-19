@@ -2,9 +2,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { consentVersion, loadConsent, saveConsent } from '@/lib/voice/privacy';
 import styles from './voice.module.css';
-export default function PrivacyGate({ transcriptionEnabled, aiEnabled, children }: { transcriptionEnabled: boolean; aiEnabled: boolean; children: ReactNode }) {
+export default function PrivacyGate({ transcriptionEnabled, aiEnabled, processingVersion, children }: { transcriptionEnabled: boolean; aiEnabled: boolean; processingVersion: string; children: ReactNode }) {
   const [accepted, setAccepted] = useState(false); const [loaded, setLoaded] = useState(false); const [error, setError] = useState('');
-  const version = consentVersion(transcriptionEnabled, aiEnabled);
+  const version = consentVersion(transcriptionEnabled, aiEnabled, processingVersion);
   useEffect(() => { let alive = true; queueMicrotask(() => { if (!alive) return; try { setAccepted(loadConsent(version)); } catch { setError('No se pudo leer el consentimiento. Puedes continuar solo en esta visita; no sobrescribiremos datos inválidos.'); } setLoaded(true); }); return () => { alive = false; }; }, [version]);
   if (!loaded) return <p role="status">Preparando privacidad…</p>;
   if (accepted) return children;
