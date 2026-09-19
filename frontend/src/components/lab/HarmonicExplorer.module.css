@@ -13,3 +13,7 @@
 .note { font-size: .8rem; color: #cbd5e1; }
 .signature { font-family: monospace; font-size: .8rem; }
 @media (max-width: 420px) { .explorer { padding: .85rem; } .explorer table { font-size: .8rem; } }
+.capability { display: block; font-size: .7rem; color: #cbd5e1; margin-top: .35rem; font-weight: 400; }
+.explorer .selectRatio { padding: .4rem .5rem; margin: 0; font-size: .75rem; }
+.preview { margin-top: 1.25rem; padding-top: .75rem; border-top: 1px solid #475569; }
+.preview table { table-layout: fixed; }

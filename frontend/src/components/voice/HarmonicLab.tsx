@@ -6,10 +6,12 @@ import { getAudioEngine } from '@/lib/audioEngine';
 import SessionPlan from './SessionPlan';
 import ExperimentSession, { type ExperimentSessionHandle } from '../lab/ExperimentSession';
 import HarmonicExplorer from '../lab/HarmonicExplorer';
+import { inverseHarmonicConfig } from '@/lib/harmonic/apply';
 import styles from './voice.module.css';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
   const startRun = useRef(0); const startPending = useRef(false);
+  const currentConfig = useRef(initial);
   const experiment = useRef<ExperimentSessionHandle>(null);
   const activeExperiment = useRef<{ handle: ExperimentSessionHandle; id: string } | null>(null);
   const [engine] = useState(() => new HarmonicEngine());
@@ -24,16 +26,25 @@ export default function HarmonicLab() {
     document.addEventListener('visibilitychange', hidden); window.addEventListener('pagehide', stop);
     return () => { invalidate(); engine.dispose(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted', false); activeExperiment.current = null; document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', stop); };
   }, [engine]);
-  const edit = (change: Partial<HarmonicConfig>) => { setConfig({ ...config, ...change }); setConfirmed(false); };
+  const edit = (change: Partial<HarmonicConfig>) => { const next = { ...currentConfig.current, ...change }; currentConfig.current = next; setConfig(next); setConfirmed(false); };
   return <div className={styles.workspace}><span className={styles.tag}>Relaciones exactas · motor aislado</span><h1>Laboratorio Armónico</h1><p>Configura una exploración sonora. Las relaciones matemáticas no demuestran efectos médicos.</p><section><h2>Diseño manual</h2><fieldset disabled={playing || busy}><div className={styles.grid}>
     <label>Base (Hz)<input type="number" min={40} max={2000} step="any" value={config.baseHz} onChange={e => edit({ baseHz: Number(e.target.value) })} /></label>
-    <label>Relación<select value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).filter(([id]) => id !== 'root').map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
+    <label>Relación<select value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
     <label>Modo<select value={config.mode} onChange={e => edit({ mode: e.target.value as HarmonicConfig['mode'] })}><option value="sequence">Secuencia</option><option value="simultaneous">Simultáneo</option></select></label>
     <label>Duración (minutos)<input type="number" min={1} max={60} value={config.durationSeconds / 60} onChange={e => edit({ durationSeconds: Number(e.target.value) * 60 })} /></label>
     <label>Volumen (0–100)<input type="number" min={0} max={100} value={config.uiVolume} onChange={e => edit({ uiVolume: Number(e.target.value) })} /></label>
     {config.ratioId === 'cascade-13-12' && <><label>Incrementos<input type="number" min={1} max={8} value={config.increments} onChange={e => edit({ increments: Number(e.target.value) })} /></label><label>Trayectoria<select value={config.direction} onChange={e => edit({ direction: e.target.value as HarmonicConfig['direction'] })}><option value="ascending">Ascendente</option><option value="descending">Descendente</option><option value="return">Expansión y retorno</option></select></label></>}
   </div></fieldset></section>
-    <HarmonicExplorer config={config} />
+    <HarmonicExplorer config={config} playbackActive={playing || busy} onApply={async (constellation, expectedConfig) => {
+      const run = startRun.current;
+      const changed = () => currentConfig.current !== expectedConfig || startPending.current || engine.isPlaying() || run !== startRun.current;
+      if (changed()) return 'La configuración o reproducción cambió. Selecciona de nuevo con el audio detenido.';
+      const result = await inverseHarmonicConfig(constellation, expectedConfig);
+      if (changed()) return 'La configuración o reproducción cambió durante la validación. No se aplicó la propuesta.';
+      if (result.status !== 'supported') return result.reason;
+      edit(result.config);
+      return null;
+    }} />
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
     {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}
     {schedule && <section><h2>Propuesta visible</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Al ocultar la pestaña, el audio se detiene.</p>
