@@ -14,6 +14,7 @@ import { ConstellationStore, CONSTELLATIONS_KEY } from '@/lib/harmonic/constella
 import type { HarmonicConstellationV1 } from '@/lib/harmonic/constellations';
 import GuidedRecommendation from '../lab/GuidedRecommendation';
 import { validateGuidedRecommendation, type GuidedRecommendationV1 } from '@/lib/guided/recommendations';
+import ProtocolDiscovery, { type DiscoveryPlaybackRequest } from '../lab/ProtocolDiscovery';
 import styles from './voice.module.css';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
@@ -22,6 +23,7 @@ export default function HarmonicLab() {
   const [previewError, setPreviewError] = useState('');
   const startRun = useRef(0); const startPending = useRef(false);
   const currentConfig = useRef(initial);
+  const discovery = useRef<DiscoveryPlaybackRequest | null>(null);
   const experiment = useRef<ExperimentSessionHandle>(null);
   const activeExperiment = useRef<{ handle: ExperimentSessionHandle; id: string } | null>(null);
   const [engine] = useState(() => new HarmonicEngine());
@@ -31,10 +33,10 @@ export default function HarmonicLab() {
   try { schedule = buildSchedule(config); } catch (e) { invalid = (e as Error).message; }
   useEffect(() => {
     const invalidate = () => { ++previewRun.current; ++startRun.current; startPending.current = false; };
-    const stop = () => { invalidate(); engine.stop(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setPlaying(false); setBusy(false); };
+    const stop = () => { invalidate(); engine.stop(); discovery.current?.finished('interrupted'); discovery.current = null; activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setPlaying(false); setBusy(false); };
     const hidden = () => { if (document.hidden) stop(); };
     document.addEventListener('visibilitychange', hidden); window.addEventListener('pagehide', stop);
-    return () => { invalidate(); engine.dispose(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted', false); activeExperiment.current = null; document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', stop); };
+    return () => { invalidate(); engine.dispose(); discovery.current?.finished('interrupted', false); discovery.current = null; activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted', false); activeExperiment.current = null; document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', stop); };
   }, [engine]);
   const edit = (change: Partial<HarmonicConfig>) => { const next = { ...currentConfig.current, ...change }; currentConfig.current = next; setConfig(next); setConfirmed(false); ++previewRun.current; setConstellationPlan(null); setPreviewError(''); };
   const startPlayback = async (plan?: ConstellationPlaybackPlan, guided?: GuidedRecommendationV1, consent = false) => {
@@ -70,7 +72,26 @@ export default function HarmonicLab() {
           if (run === startRun.current) { activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setError((e as Error).message); }
         } finally { if (run === startRun.current) { startPending.current = false; setBusy(false); } }
   };
-  const stopPlayback = () => { ++startRun.current; startPending.current = false; engine.stop(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'cancelled'); activeExperiment.current = null; setPlaying(false); setBusy(false); };
+  const stopPlayback = () => { ++startRun.current; startPending.current = false; engine.stop(); discovery.current?.finished('cancelled'); discovery.current = null; activeExperiment.current?.handle.finish(activeExperiment.current.id, 'cancelled'); activeExperiment.current = null; setPlaying(false); setBusy(false); };
+  const startDiscovery = async (request: DiscoveryPlaybackRequest) => {
+    if (playing || startPending.current) return;
+    ++previewRun.current; startPending.current = true; const run = ++startRun.current;
+    discovery.current = request; setBusy(true); setError('');
+    try {
+      const exact = await request.prepare();
+      if (run !== startRun.current) { request.finished('interrupted'); return; }
+      getAudioEngine().stopProtocol();
+      const started = await engine.start(exact, () => {
+        if (run !== startRun.current) return;
+        request.finished('completed'); discovery.current = null; setPlaying(false);
+      });
+      if (started && run === startRun.current) { request.started(); setPlaying(true); }
+      else { request.finished('interrupted'); if (discovery.current === request) discovery.current = null; }
+    } catch (e) {
+      request.finished('interrupted'); if (discovery.current === request) discovery.current = null;
+      if (run === startRun.current) setError((e as Error).message);
+    } finally { if (run === startRun.current) { startPending.current = false; setBusy(false); } }
+  };
   const previewPlayback = async (record: HarmonicConstellationV1) => {
     if (startPending.current || engine.isPlaying()) return;
     const run = ++previewRun.current, expected = currentConfig.current;
@@ -117,6 +138,7 @@ export default function HarmonicLab() {
       <button className={styles.primary} disabled={playing || busy} onClick={() => void startPlayback(constellationPlan)}>Confirmar y reproducir constelación</button>
       <button disabled={playing || busy} onClick={() => { ++previewRun.current; setConstellationPlan(null); }}>Cerrar vista previa de reproducción</button>
     </section>}
+    <ProtocolDiscovery active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
     {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}
     {schedule && <section><h2>Propuesta visible</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Al ocultar la pestaña, el audio se detiene.</p>

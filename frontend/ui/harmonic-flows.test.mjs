@@ -531,3 +531,50 @@ test('2B unknown intention requires human review; Voice medical text creates no 
   await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const consentStorage=await storage(page);await button(page,'Escribir intención').click();await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero curar dolor de pecho');await button(page,'Continuar').click();
   await page.getByRole('alert').filter({hasText:'no prescribe sesiones'}).waitFor();assert.equal(await button(page,'Generar propuesta').count(),0);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consentStorage);
 });
+
+const DISCOVERY_KEY='fh:protocol-discovery-plans-v1';
+async function openDiscovery(page){await page.getByText('Protocol Discovery · comparación personal',{exact:true}).click();}
+async function draftDiscovery(page){
+  await openDiscovery(page);await page.getByRole('textbox',{name:'Intención Discovery',exact:true}).fill('Quiero recuperarme 5 minutos');await button(page,'Interpretar intención Discovery').click();
+  await page.getByRole('textbox',{name:'Semillas elegidas (2–3 Hz separados por coma)',exact:true}).fill('144,220');await field(page,'Volumen Discovery').fill('0');await field(page,'Asignaciones por candidato').fill('3');
+}
+async function activateDiscovery(page){await button(page,'Validar candidatos y crear borrador').click();await button(page,'Guardar plan Discovery').click();await button(page,'Activar plan Discovery').click();await button(page,'Preparar siguiente asignación').waitFor();}
+async function prepareDiscovery(page){await button(page,'Preparar siguiente asignación').click();await page.getByRole('combobox',{name:'Expectativa Discovery (0–10, requerida)',exact:true}).selectOption('0');}
+async function reloadDiscovery(page){await page.reload();await openDiscovery(page);const rows=JSON.parse((await storage(page))[DISCOVERY_KEY]);await page.getByRole('combobox',{name:'Plan guardado',exact:true}).selectOption(rows[0].id);return rows;}
+
+test('Discovery UI create/review/activate/confirm/cancel/save/reload: assignment fixed, context and zero preserved',async t=>{
+  const page=await fixture(t);await draftDiscovery(page);await activateDiscovery(page);assert.equal((await probe(page)).contexts.length,0);
+  await prepareDiscovery(page);await page.getByRole('combobox',{name:'Antes Discovery Energía',exact:true}).selectOption('0');
+  await page.getByRole('textbox',{name:'Contexto Discovery (etiquetas opcionales separadas por coma)',exact:true}).fill('after-work');await page.getByRole('textbox',{name:'Dispositivo / auriculares (opcional)',exact:true}).fill('headphones');
+  assert.equal((await probe(page)).contexts.length,0);await button(page,'Confirmar y reproducir asignación').click();await page.getByRole('heading',{name:'Resultado: started · sin guardar',exact:true}).waitFor();
+  const reserved=JSON.parse((await storage(page))[DISCOVERY_KEY])[0];assert.equal(reserved.assignments[0].status,'reserved');assert.equal(reserved.assignments[0].result,undefined);
+  await button(page,'Detener asignación Discovery').click();await clean(page);await page.getByRole('combobox',{name:'Después Discovery Energía',exact:true}).selectOption('3');await button(page,'Guardar resultado Discovery').click();await button(page,'Preparar siguiente asignación').waitFor();
+  const [p]=await reloadDiscovery(page);const r=p.assignments[0].result;assert.equal(r.experiment.status,'cancelled');assert.equal(r.experiment.expectationScore,0);assert.equal(r.experiment.preState.energy,0);assert.equal(r.experiment.postState.energy,3);assert.equal(r.experiment.preState.focus,undefined);assert.deepEqual(r.context,{tags:['after-work'],device:'headphones'});assert.deepEqual(r.experiment.configurationSnapshot,p.candidates[0].config);
+  assert.match(await page.getByRole('region',{name:'Protocol Discovery',exact:true}).innerText(),/N completadas: 0/);
+  await button(page,'Omitir asignación (registrar omisión)').click();await eventually(async()=>assert.equal(JSON.parse((await storage(page))[DISCOVERY_KEY])[0].assignments[1].status,'skipped'));assert.deepEqual(Object.keys(await storage(page)),[DISCOVERY_KEY]);
+});
+test('Discovery saved constellation: UI plan creation, source deletion independent, natural completion/save and next assignment',async t=>{
+  const page=await fixture(t);await openBuilder(page);
+  for(const [i,seed] of [144,220].entries()){
+    if(i)await button(page,'Nuevo borrador').click();await field(page,'Semilla del Builder (Hz)').fill(String(seed));await button(page,'Añadir raíz').click();await page.getByRole('combobox',{name:'Ratio del miembro',exact:true}).selectOption('3:2');await button(page,'Añadir ratio').click();await page.getByRole('textbox',{name:'Nombre de constelación (opcional)',exact:true}).fill(`Discovery source ${i}`);await validBuilder(page);await button(page,'Guardar constelación').click();await button(page,'Constelación guardada').waitFor();
+  }
+  const sources=JSON.parse((await storage(page))[CONSTELLATION_KEY]);await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).click();
+  await draftDiscovery(page);await page.getByRole('combobox',{name:'Origen de candidatos',exact:true}).selectOption('saved');await button(page,'Cargar constelaciones para comparar').click();
+  for(let i=0;i<2;i++)await page.getByRole('checkbox',{name:new RegExp(`Discovery source ${i}`)}).check();await field(page,'Duración Discovery (segundos)').fill('1.2');await activateDiscovery(page);
+  const original=JSON.parse((await storage(page))[DISCOVERY_KEY])[0];await page.evaluate(rows=>localStorage.setItem('fh:harmonic-constellations-v1',JSON.stringify(rows.map(c=>({...c,name:'Renamed source'})))),sources);const [unchanged]=await reloadDiscovery(page);assert.deepEqual(unchanged.candidates,original.candidates);await page.evaluate(()=>localStorage.removeItem('fh:harmonic-constellations-v1'));
+  await prepareDiscovery(page);await page.getByRole('combobox',{name:'Antes Discovery Energía',exact:true}).selectOption('1');await button(page,'Confirmar y reproducir asignación').click();await page.getByRole('heading',{name:'Resultado: completed · sin guardar',exact:true}).waitFor();
+  await eventually(async()=>assert.ok((await probe(page)).contexts.every(c=>c.state==='closed'&&c.oscillators.every(o=>o.ended&&o.disconnected))));
+  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216]);
+  assert.equal(JSON.parse((await storage(page))[DISCOVERY_KEY])[0].assignments[0].result,undefined);
+  await page.getByRole('combobox',{name:'Después Discovery Energía',exact:true}).selectOption('2');await button(page,'Guardar resultado Discovery').click();await button(page,'Preparar siguiente asignación').waitFor();
+  const [saved]=await reloadDiscovery(page);assert.equal(saved.assignments[0].status,'completed');assert.deepEqual(saved.assignments[0].result.experiment.constellation.snapshot,original.candidates[0].constellation);assert.match(await page.getByRole('region',{name:'Protocol Discovery',exact:true}).innerText(),/Siguiente asignación: 2/);
+});
+test('Discovery navigation interruption keeps unresolved reservation, no false completed result, explicit recovery',async t=>{
+  const page=await fixture(t);await draftDiscovery(page);await activateDiscovery(page);await prepareDiscovery(page);await button(page,'Confirmar y reproducir asignación').click();await page.getByRole('heading',{name:'Resultado: started · sin guardar',exact:true}).waitFor();
+  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);let p=JSON.parse((await storage(page))[DISCOVERY_KEY])[0];assert.equal(p.assignments[0].status,'reserved');assert.equal(p.assignments[0].result,undefined);
+  await page.goto(harness.origin+'/laboratorio-armonico');await openDiscovery(page);await page.getByRole('combobox',{name:'Plan guardado',exact:true}).selectOption(p.id);await button(page,'Confirmar cierre como interrumpida').click();await button(page,'Preparar siguiente asignación').waitFor();p=JSON.parse((await storage(page))[DISCOVERY_KEY])[0];assert.equal(p.assignments[0].status,'interrupted');assert.equal(p.assignments[0].result,undefined);
+});
+test('Discovery corruption is preserved and exportable; no silent repair or playback',async t=>{
+  const page=await fixture(t);await page.evaluate(()=>localStorage.setItem('fh:protocol-discovery-plans-v1','{bad'));await page.reload();await openDiscovery(page);
+  await page.getByRole('alert').filter({hasText:'Almacenamiento Discovery inválido'}).waitFor();assert.equal((await storage(page))[DISCOVERY_KEY],'{bad');assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+});
