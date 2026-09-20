@@ -18,6 +18,8 @@ import PersonalizedAdvisor from '../lab/PersonalizedAdvisor';
 import StructureProfile from '../lab/StructureProfile';
 import ProtocolDiscovery, { type DiscoveryPlaybackRequest } from '../lab/ProtocolDiscovery';
 import styles from './voice.module.css';
+import { FHPageHeader, FHPageShell } from '../ui/FHLayout';
+import HarmonicStructure from '../lab/HarmonicStructure';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
   const previewRun = useRef(0);
@@ -105,7 +107,7 @@ export default function HarmonicLab() {
       if (run === previewRun.current && expected === currentConfig.current && !startPending.current && !engine.isPlaying()) setConstellationPlan(plan);
     } catch (e) { if (run === previewRun.current) setPreviewError((e as Error).message); }
   };
-  return <div className={styles.workspace}><span className={styles.tag}>Relaciones exactas · motor aislado</span><h1>Laboratorio Armónico</h1><p>Configura una exploración sonora. Las relaciones matemáticas no demuestran efectos médicos.</p><GuidedRecommendation active={playing || busy} onConfirm={(value, consent) => startPlayback(undefined, value, consent)} onStop={stopPlayback}/><section><h2>Diseño manual</h2><fieldset disabled={playing || busy}><div className={styles.grid}>
+  return <FHPageShell width="wide"><div className={`${styles.workspace} ${styles.lab}`}><FHPageHeader eyebrow="Relaciones exactas · motor aislado" title="Laboratorio Armónico" description="Construye, escucha y comprende una estructura acústica. Las relaciones matemáticas no demuestran efectos médicos." /><p className={styles.labRegionLabel}>Build · Construir</p><GuidedRecommendation active={playing || busy} onConfirm={(value, consent) => startPlayback(undefined, value, consent)} onStop={stopPlayback}/><section><h2>Diseño manual</h2><fieldset disabled={playing || busy}><div className={styles.grid}>
     <label>Base (Hz)<input type="number" min={40} max={2000} step="any" value={config.baseHz} onChange={e => edit({ baseHz: Number(e.target.value) })} /></label>
     <label>Relación<select value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
     <label>Modo<select value={config.mode} onChange={e => edit({ mode: e.target.value as HarmonicConfig['mode'] })}><option value="sequence">Secuencia</option><option value="simultaneous">Simultáneo</option></select></label>
@@ -113,7 +115,6 @@ export default function HarmonicLab() {
     <label>Volumen (0–100)<input type="number" min={0} max={100} value={config.uiVolume} onChange={e => edit({ uiVolume: Number(e.target.value) })} /></label>
     {config.ratioId === 'cascade-13-12' && <><label>Incrementos<input type="number" min={1} max={8} value={config.increments} onChange={e => edit({ increments: Number(e.target.value) })} /></label><label>Trayectoria<select value={config.direction} onChange={e => edit({ direction: e.target.value as HarmonicConfig['direction'] })}><option value="ascending">Ascendente</option><option value="descending">Descendente</option><option value="return">Expansión y retorno</option></select></label></>}
   </div></fieldset></section>
-    <StructureProfile config={config} label="Perfil estructural del laboratorio · avanzado"/>
     <HarmonicExplorer config={config} playbackActive={playing || busy} onApply={async (constellation, expectedConfig) => {
       const run = startRun.current;
       const changed = () => currentConfig.current !== expectedConfig || startPending.current || engine.isPlaying() || run !== startRun.current;
@@ -131,6 +132,8 @@ export default function HarmonicLab() {
       return null;
     }} />
     <ConstellationBuilder context={config} playbackActive={playing || busy} onPreviewPlayback={record => void previewPlayback(record)} />
+    <p className={styles.labRegionLabel}>Listen · Escuchar</p>
+    {schedule && <HarmonicStructure config={config} schedule={schedule} />}
     {previewError && <p role="alert">{previewError}</p>}
     {constellationPlan && <section aria-label="Confirmación de constelación guardada"><h2>Reproducción de constelación guardada</h2>
       <pre>{constellationPlan.constellation.name || constellationPlan.constellation.id}{'\n'}{constellationPlan.constellation.signature}</pre>
@@ -142,6 +145,8 @@ export default function HarmonicLab() {
       <button className={styles.primary} disabled={playing || busy} onClick={() => void startPlayback(constellationPlan)}>Confirmar y reproducir constelación</button>
       <button disabled={playing || busy} onClick={() => { ++previewRun.current; setConstellationPlan(null); }}>Cerrar vista previa de reproducción</button>
     </section>}
+    <p className={styles.labRegionLabel}>Understand · Comprender</p>
+    <StructureProfile config={config} label="Complejidad estructural · avanzado"/>
     <PersonalizedAdvisor active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
     <ProtocolDiscovery active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
@@ -155,5 +160,5 @@ export default function HarmonicLab() {
     </section>}
       {(playing || busy) && <button className={styles.stop} onClick={stopPlayback}>Detener sesión</button>}
       <p role="status">{playing ? 'Audio en curso' : busy ? 'Preparando audio…' : 'Audio detenido'}</p>
-  </div>;
+  </div></FHPageShell>;
 }

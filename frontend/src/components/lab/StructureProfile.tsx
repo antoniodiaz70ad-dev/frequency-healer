@@ -4,7 +4,7 @@ import type { HarmonicConfig } from '@/lib/harmonic/math';
 import type { HarmonicConstellationV1 } from '@/lib/harmonic/constellations';
 import { describeHarmonics, type HarmonicStructureV1 } from '@/lib/harmonic/profile/profile';
 
-export const HCI_DISCLAIMER='HCI describe solo complejidad estructural. No mide fuerza terapéutica ni eficacia.';
+export const HCI_DISCLAIMER='HCI describe la complejidad de la estructura armónica; no mide efectividad terapéutica.';
 const bands={lower:'menor complejidad estructural',moderate:'complejidad estructural intermedia',higher:'mayor complejidad estructural'};
 export default function StructureProfile({config,constellation,label='Perfil estructural'}:{config:HarmonicConfig;constellation?:HarmonicConstellationV1;label?:string}) {
   const [open,setOpen]=useState(false),[result,setResult]=useState<{key:string;value?:HarmonicStructureV1;error?:string}|null>(null);
