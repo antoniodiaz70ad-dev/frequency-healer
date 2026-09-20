@@ -4,8 +4,8 @@ import StructureProfile from './StructureProfile';
 import type { ReactNode } from 'react';
 import type { ProtocolRationaleV1 } from '@/lib/guided/rationale';
 import { EVIDENCE_LABELS } from '@/lib/guided/rationale';
-export default function ProtocolRationale({ value, children, config, constellation }: { value: ProtocolRationaleV1; children?: ReactNode; config?: HarmonicConfig; constellation?: HarmonicConstellationV1 }) {
-  return <details><summary>¿Por qué esta sesión?</summary><section aria-label="Explicación del protocolo">
+export default function ProtocolRationale({ value, children, config, constellation, summaryLabel = "¿Por qué esta sesión?" }: { summaryLabel?: string; value: ProtocolRationaleV1; children?: ReactNode; config?: HarmonicConfig; constellation?: HarmonicConstellationV1 }) {
+  return <details><summary>{summaryLabel}</summary><section aria-label="Explicación del protocolo">
     <p>Base: Exploratoria. {value.purpose}</p>
     <p>Las etiquetas distinguen matemática, acústica, diseño de protocolo e hipótesis exploratorias. No indican eficacia médica.</p>
     {value.components.map((component, index) => <div key={index}>

@@ -24,3 +24,8 @@
 .recording { font-weight: 700; border: 2px solid #fb7185; padding: .75rem; border-radius: .5rem; }
 .workspace pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
 @media (prefers-reduced-motion: reduce) { .workspace *, .workspace *::before, .workspace *::after { animation: none !important; transition: none !important; } }
+
+/* Guided presentation only; lab panels retain their existing layout. */
+.guided summary { cursor: pointer; padding: .75rem 0; }
+.guided summary:focus-visible, .guided h2:focus { outline: 2px solid #5eead4; outline-offset: 4px; }
+.guided details { margin-block: .75rem; }
