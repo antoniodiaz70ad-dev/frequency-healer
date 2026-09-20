@@ -12,7 +12,8 @@ function exportJSON(value: string, name: string) {
   const url=URL.createObjectURL(new Blob([value],{type:'application/json'}));
   const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-function Builder({ context }: { context: HarmonicConfig }) {
+interface BuilderProps { context: HarmonicConfig; playbackActive?: boolean; onPreviewPlayback?(record: HarmonicConstellationV1): void }
+function Builder({ context, playbackActive, onPreviewPlayback }: BuilderProps) {
   const [draft,setDraft]=useState(newDraft);
   const [ratio,setRatio]=useState('3:2'),[offset,setOffset]=useState('1');
   const [settled,setSettled]=useState<{source:ConstellationInputV1;context:HarmonicConfig;value?:HarmonicConstellationV1;playability?:BuilderPlayability;error?:string}>();
@@ -78,10 +79,10 @@ function Builder({ context }: { context: HarmonicConfig }) {
     <h3>Constelaciones guardadas ({history.length})</h3>
     <ul>{history.map(row=><li key={row.id}><button type="button" disabled={saving} aria-label={`Cargar constelación ${row.name||row.id}`} onClick={()=>{
       setDraft({id:row.id,...(row.name===undefined?{}:{name:row.name}),seedFrequencyHz:row.seedFrequencyHz,playbackMode:row.playbackMode,members:row.members.map(member=>{const {frequencyHz,...definition}=member;void frequencyHz;return definition;})});setSaved(true);setNotice('Constelación cargada en modo de lectura.');
-    }}>{row.name||'Sin nombre'} · {row.seedFrequencyHz} Hz · Cargar</button></li>)}</ul>
+    }}>{row.name||'Sin nombre'} · {row.seedFrequencyHz} Hz · Cargar</button>{onPreviewPlayback&&<button type="button" disabled={saving||playbackActive} aria-label={`Preparar reproducción de ${row.name||row.id}`} onClick={()=>onPreviewPlayback(row)}>Preparar reproducción</button>}</li>)}</ul>
   </div>;
 }
-export default function ConstellationBuilder({ context }: { context: HarmonicConfig }) {
+export default function ConstellationBuilder(props: BuilderProps) {
   const [open,setOpen]=useState(false);
-  return <details className={styles.container} onToggle={e=>{if(e.currentTarget.open)setOpen(true);}}><summary>Constructor de constelaciones · construir, validar y guardar</summary>{open&&<Builder context={context}/>}</details>;
+  return <details className={styles.container} onToggle={e=>{if(e.currentTarget.open)setOpen(true);}}><summary>Constructor de constelaciones · construir, validar y guardar</summary>{open&&<Builder {...props}/>}</details>;
 }

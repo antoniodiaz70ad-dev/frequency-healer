@@ -9,9 +9,15 @@ import HarmonicExplorer from '../lab/HarmonicExplorer';
 import ConstellationBuilder from '../lab/ConstellationBuilder';
 import { inverseHarmonicConfig } from '@/lib/harmonic/apply';
 import { proposeOctaveApply } from '@/lib/harmonic/octaveApply';
+import { planConstellationPlayback, type ConstellationPlaybackPlan } from '@/lib/harmonic/constellationPlayback';
+import { ConstellationStore } from '@/lib/harmonic/constellationStorage';
+import type { HarmonicConstellationV1 } from '@/lib/harmonic/constellations';
 import styles from './voice.module.css';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
+  const previewRun = useRef(0);
+  const [constellationPlan, setConstellationPlan] = useState<ConstellationPlaybackPlan | null>(null);
+  const [previewError, setPreviewError] = useState('');
   const startRun = useRef(0); const startPending = useRef(false);
   const currentConfig = useRef(initial);
   const experiment = useRef<ExperimentSessionHandle>(null);
@@ -22,13 +28,51 @@ export default function HarmonicLab() {
   let schedule; let invalid = '';
   try { schedule = buildSchedule(config); } catch (e) { invalid = (e as Error).message; }
   useEffect(() => {
-    const invalidate = () => { ++startRun.current; startPending.current = false; };
+    const invalidate = () => { ++previewRun.current; ++startRun.current; startPending.current = false; };
     const stop = () => { invalidate(); engine.stop(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setPlaying(false); setBusy(false); };
     const hidden = () => { if (document.hidden) stop(); };
     document.addEventListener('visibilitychange', hidden); window.addEventListener('pagehide', stop);
     return () => { invalidate(); engine.dispose(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted', false); activeExperiment.current = null; document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', stop); };
   }, [engine]);
-  const edit = (change: Partial<HarmonicConfig>) => { const next = { ...currentConfig.current, ...change }; currentConfig.current = next; setConfig(next); setConfirmed(false); };
+  const edit = (change: Partial<HarmonicConfig>) => { const next = { ...currentConfig.current, ...change }; currentConfig.current = next; setConfig(next); setConfirmed(false); ++previewRun.current; setConstellationPlan(null); setPreviewError(''); };
+  const startPlayback = async (plan?: ConstellationPlaybackPlan) => {
+        if (playing || startPending.current) return;
+        ++previewRun.current;
+        startPending.current = true; const run = ++startRun.current; setBusy(true); setError('');
+        try {
+          let playbackConfig = config;
+          if (plan) {
+            const stored = (await new ConstellationStore(localStorage).load()).find(row => row.id === plan.constellation.id);
+            if (!stored || JSON.stringify(stored) !== JSON.stringify(plan.constellation)) throw new Error('El registro guardado cambió o no está disponible. Prepara otra vista previa.');
+            const checked = await planConstellationPlayback(stored, plan.config);
+            if (JSON.stringify(checked) !== JSON.stringify(plan)) throw new Error('La propuesta cambió. Confirma una nueva vista previa.');
+            playbackConfig = checked.config;
+          }
+          if (run !== startRun.current) return;
+          const handle = experiment.current, id = handle?.prepare(playbackConfig) ?? null;
+          activeExperiment.current = handle && id ? { handle, id } : null;
+          getAudioEngine().stopProtocol();
+          const started = await engine.start(playbackConfig, () => {
+            if (run !== startRun.current) return;
+            activeExperiment.current?.handle.finish(activeExperiment.current.id, 'completed'); activeExperiment.current = null;
+            setPlaying(false);
+          });
+          if (started && run === startRun.current) { activeExperiment.current?.handle.started(activeExperiment.current.id); setPlaying(true); }
+        } catch (e) {
+          if (run === startRun.current) { activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setError((e as Error).message); }
+        } finally { if (run === startRun.current) { startPending.current = false; setBusy(false); } }
+  };
+  const previewPlayback = async (record: HarmonicConstellationV1) => {
+    if (startPending.current || engine.isPlaying()) return;
+    const run = ++previewRun.current, expected = currentConfig.current;
+    setConstellationPlan(null); setPreviewError('');
+    try {
+      const stored = (await new ConstellationStore(localStorage).load()).find(row => row.id === record.id);
+      if (!stored || JSON.stringify(stored) !== JSON.stringify(record)) throw new Error('El registro guardado cambió. Recarga el historial.');
+      const plan = await planConstellationPlayback(stored, expected);
+      if (run === previewRun.current && expected === currentConfig.current && !startPending.current && !engine.isPlaying()) setConstellationPlan(plan);
+    } catch (e) { if (run === previewRun.current) setPreviewError((e as Error).message); }
+  };
   return <div className={styles.workspace}><span className={styles.tag}>Relaciones exactas · motor aislado</span><h1>Laboratorio Armónico</h1><p>Configura una exploración sonora. Las relaciones matemáticas no demuestran efectos médicos.</p><section><h2>Diseño manual</h2><fieldset disabled={playing || busy}><div className={styles.grid}>
     <label>Base (Hz)<input type="number" min={40} max={2000} step="any" value={config.baseHz} onChange={e => edit({ baseHz: Number(e.target.value) })} /></label>
     <label>Relación<select value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
@@ -53,30 +97,27 @@ export default function HarmonicLab() {
       edit({ baseHz: result.config.baseHz });
       return null;
     }} />
-    <ConstellationBuilder context={config} />
+    <ConstellationBuilder context={config} playbackActive={playing || busy} onPreviewPlayback={record => void previewPlayback(record)} />
+    {previewError && <p role="alert">{previewError}</p>}
+    {constellationPlan && <section aria-label="Confirmación de constelación guardada"><h2>Reproducción de constelación guardada</h2>
+      <pre>{constellationPlan.constellation.name || constellationPlan.constellation.id}{'\n'}{constellationPlan.constellation.signature}</pre>
+      <p>Vista previa sin audio. Se conservan todos los miembros y su orden; duración y volumen proceden de los controles actuales. Cambiarlos invalida esta propuesta.</p>
+      <ol className={styles.steps}>{constellationPlan.constellation.members.map(member => <li key={member.id}>{member.id} · {member.relationshipType} · {member.relationshipType === 'ratio' ? `${member.ratio.numerator}:${member.ratio.denominator}` : '1:1'} · {member.frequencyHz} Hz</li>)}</ol>
+      <SessionPlan config={constellationPlan.config} schedule={constellationPlan.schedule} />
+      <p>El registro experimental opcional conserva la configuración V1 exacta y su progresión; no guarda el nombre ni los IDs de la constelación. No conduzcas ni manejes maquinaria.</p>
+      <button className={styles.primary} disabled={playing || busy} onClick={() => void startPlayback(constellationPlan)}>Confirmar y reproducir constelación</button>
+      <button disabled={playing || busy} onClick={() => { ++previewRun.current; setConstellationPlan(null); }}>Cerrar vista previa de reproducción</button>
+    </section>}
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
     {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}
     {schedule && <section><h2>Propuesta visible</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Al ocultar la pestaña, el audio se detiene.</p>
       {config.ratioId === 'cascade-13-12' && <label className={styles.check}><input type="checkbox" disabled={playing || busy} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Acepto la exploración experimental 13/12, sin promesas de resultados.</label>}
       <button className={styles.primary} disabled={playing || busy || (config.ratioId === 'cascade-13-12' && !confirmed)} onClick={async () => {
-        if (playing || startPending.current) return;
-        startPending.current = true; const run = ++startRun.current; setBusy(true); setError('');
-        try {
-          const handle = experiment.current, id = handle?.prepare(config) ?? null;
-          activeExperiment.current = handle && id ? { handle, id } : null;
-          getAudioEngine().stopProtocol();
-          const started = await engine.start(config, () => {
-            if (run !== startRun.current) return;
-            activeExperiment.current?.handle.finish(activeExperiment.current.id, 'completed'); activeExperiment.current = null;
-            setPlaying(false);
-          });
-          if (started && run === startRun.current) { activeExperiment.current?.handle.started(activeExperiment.current.id); setPlaying(true); }
-        } catch (e) {
-          if (run === startRun.current) { activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setError((e as Error).message); }
-        } finally { if (run === startRun.current) { startPending.current = false; setBusy(false); } }
+        await startPlayback();
       }}>Confirmar e iniciar</button>
+
+    </section>}
       {(playing || busy) && <button className={styles.stop} onClick={() => { ++startRun.current; startPending.current = false; engine.stop(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'cancelled'); activeExperiment.current = null; setPlaying(false); setBusy(false); }}>Detener sesión</button>}
       <p role="status">{playing ? 'Audio en curso' : busy ? 'Preparando audio…' : 'Audio detenido'}</p>
-    </section>}
   </div>;
 }

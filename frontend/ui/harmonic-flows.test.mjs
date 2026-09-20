@@ -381,3 +381,58 @@ test('builder: corrupt constellation storage preserved; export original; no othe
   const stream=await download.createReadStream();let text='';for await(const chunk of stream)text+=chunk;assert.equal(text,'{malformed');
   assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:'{malformed'});assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
 });
+
+async function savedPlaybackFixture(t, playbackMode='sequence', unsupported) {
+  const page=await fixture(t);await openBuilder(page);
+  await page.getByRole('combobox',{name:'Modo de la constelación',exact:true}).selectOption(playbackMode);
+  await button(page,'Añadir ratio').click();await button(page,'Añadir raíz').click();await button(page,'Añadir raíz').click();
+  if(unsupported==='octave')await button(page,'Añadir octava').click();
+  else if(unsupported){await page.getByRole('combobox',{name:'Ratio del miembro',exact:true}).selectOption(unsupported);await button(page,'Añadir ratio').click();}
+  await page.getByRole('textbox',{name:'Nombre de constelación (opcional)',exact:true}).fill('Playback fixture');await validBuilder(page);
+  await button(page,'Guardar constelación').click();await button(page,'Constelación guardada').waitFor();
+  const raw=(await storage(page))[CONSTELLATION_KEY];await page.reload();await field(page,'Duración (minutos)').fill('1');await field(page,'Volumen (0–100)').fill('0');await openBuilder(page);
+  return {page,raw};
+}
+async function previewConstellation(page){await button(page,'Preparar reproducción de Playback fixture').click();await page.getByRole('region',{name:'Confirmación de constelación guardada',exact:true}).waitFor();}
+async function startConstellation(page){await button(page,'Confirmar y reproducir constelación').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();}
+for(const playbackMode of ['sequence','simultaneous'])test(`saved constellation ${playbackMode}: load and preview silent, confirmation exact voices, stop and snapshot`,async t=>{
+  const {page,raw}=await savedPlaybackFixture(t,playbackMode);const before=await controls(page);
+  await button(page,'Cargar constelación Playback fixture').click();await validBuilder(page);
+  assert.equal((await probe(page)).contexts.length,0);assert.deepEqual((await probe(page)).writes,[]);
+  await previewConstellation(page);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await controls(page),before);
+  await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();
+  await page.getByRole('combobox',{name:'Antes: Claridad',exact:true}).selectOption('0');
+  await startConstellation(page);await graph(page,[648,432,432],playbackMode==='simultaneous');
+  assert.ok(await button(page,'Confirmar e iniciar').isDisabled());assert.ok(await button(page,'Preparar reproducción de Playback fixture').isDisabled());
+  await stop(page);await page.getByRole('status').filter({hasText:/Experimento: Cancelado por ti/}).waitFor();
+  assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});
+  await button(page,'Guardar experimento').click();await button(page,'Experimento guardado').waitFor();
+  const data=await storage(page);const [record]=JSON.parse(data[KEY]);assert.equal(data[CONSTELLATION_KEY],raw);
+  assert.deepEqual(record.configurationSnapshot,{baseHz:432,ratioId:'root',increments:1,direction:'ascending',mode:playbackMode,durationSeconds:60,uiVolume:0,waveform:'sine',progression:['fifth','root','root']});
+  assert.equal(record.preState.clarity,0);assert.equal(record.status,'cancelled');assert.equal(record.completedAt,undefined);
+  await page.reload();assert.deepEqual(await storage(page),data);assert.equal((await probe(page)).contexts.length,0);
+});
+for(const unsupported of ['5:3','2:1','octave'])test(`saved constellation rejects ${unsupported} without dropping members`,async t=>{
+  const {page,raw}=await savedPlaybackFixture(t,'sequence',unsupported);await button(page,'Preparar reproducción de Playback fixture').click();
+  await page.getByRole('alert').filter({hasText:'no representable exactamente'}).waitFor();assert.equal(await button(page,'Confirmar y reproducir constelación').count(),0);
+  assert.equal((await probe(page)).contexts.length,0);assert.deepEqual((await probe(page)).writes,[]);assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});
+});
+test('saved constellation: controls invalidate preview and changed saved record is rejected on confirmation',async t=>{
+  const {page}=await savedPlaybackFixture(t);await previewConstellation(page);await field(page,'Volumen (0–100)').fill('1');assert.equal(await button(page,'Confirmar y reproducir constelación').count(),0);
+  await field(page,'Volumen (0–100)').fill('0');await previewConstellation(page);
+  await page.evaluate(key=>localStorage.setItem(key,'{corrupt'),CONSTELLATION_KEY);await button(page,'Confirmar y reproducir constelación').click();
+  await page.getByRole('alert').filter({hasText:'Almacenamiento de constelaciones inválido'}).waitFor();assert.equal((await probe(page)).contexts.length,0);assert.equal((await storage(page))[CONSTELLATION_KEY],'{corrupt');assert.equal((await storage(page))[KEY],undefined);
+});
+test('saved constellation navigation: cleanup, no completed and no experiment autosave',async t=>{
+  const {page,raw}=await savedPlaybackFixture(t);await previewConstellation(page);await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();await startConstellation(page);
+  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);
+  assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
+});
+test('saved constellation natural end: completed only after native end, no autosave',async t=>{
+  const {page,raw}=await savedPlaybackFixture(t,'simultaneous');await field(page,'Duración (minutos)').fill('0.02');await previewConstellation(page);
+  await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();await startConstellation(page);
+  await page.getByRole('status').filter({hasText:/Experimento: Completado/}).waitFor();
+  await eventually(async()=>assert.ok((await probe(page)).contexts.every(c=>c.state==='closed'&&c.oscillators.every(o=>o.disconnected&&o.ended))));
+  assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});await button(page,'Guardar experimento').click();await button(page,'Experimento guardado').waitFor();
+  const [record]=JSON.parse((await storage(page))[KEY]);assert.equal(record.status,'completed');assert.ok(record.completedAt);assert.equal(record.configurationSnapshot.durationSeconds,1.2);
+});
