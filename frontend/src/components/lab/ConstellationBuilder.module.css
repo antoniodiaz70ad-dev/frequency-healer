@@ -1,0 +1,13 @@
+.container { margin: 1.2rem 0; padding: 1.1rem; border: 1px solid #334155; border-radius: 1rem; background: #111827; }
+.container summary { cursor: pointer; min-height: 44px; align-content: center; }
+.container summary:focus-visible { outline: 3px solid #67e8f9; outline-offset: 3px; }
+.builder { overflow-wrap: anywhere; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,220px),1fr)); gap: .75rem 1rem; }
+.builder table { table-layout: fixed; width: 100%; border-collapse: collapse; font-size: .85rem; }
+.builder th,.builder td { text-align: left; padding: .5rem .25rem; border-bottom: 1px solid #334155; vertical-align: top; }
+.builder caption { text-align: left; padding: .8rem 0; }
+.builder small { display: block; color: #94a3b8; font-size: .65rem; font-weight: normal; }
+.builder dt { color: #94a3b8; font-size: .85rem; }
+.builder button { max-width: 100%; }
+.builder input[readonly] { font-family: monospace; font-size: .8rem; }
+@media(max-width:480px) { .container { padding: .75rem; } .builder td button { padding: .45rem; margin-right: 0; font-size: .75rem; } }

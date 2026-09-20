@@ -59,3 +59,9 @@ Recommended required checks once validated: `Quality`, `Flags ON`, `Flags OFF`. 
 ## Saved experiment reader (Phase 1H)
 
 Nine additional UI cases exercise all five saved lifecycle states, missing fields versus explicit zero, every snapshot field including progression, exact supported summary, unsupported cascade summary, unchanged export and corrupt JSON/schema rejection. Synthetic records use the existing storage loader in an isolated context. View/return/export must preserve the original payload byte-for-byte with zero storage writes and no AudioContext. The UI suite now contains 27 cases; the 18 playback/experiment-flow cases remain unchanged.
+
+## Constellation Builder (Phase 1I)
+
+Four additional UI cases cover independent construction, member multiplicity/removal/reordering, name-independent signatures, unsupported playback relationships, invalid frequency rejection, explicit append/save/reload, read-only saved records, unchanged JSON export and corrupt storage preservation. All construction actions assert zero audio contexts and no experiment writes. The suite contains 31 cases; the previous 27 remain unchanged.
+
+Seven pure test cases also cover compiler validation, simultaneous ordering, exact adapter-based structural compatibility, duplicate IDs, corrupted signatures, concurrent serialized creation, storage races and quota failure. Only explicit Builder saving writes the new `fh:harmonic-constellations-v1` namespace; Web Locks are required for safe cross-tab creation. No existing record format or key changes. Compatibility is a structural audit in the current V1 context, not an Apply/play action. Typed octave members, 5:3 and 2:1 remain Builder-only relationships.

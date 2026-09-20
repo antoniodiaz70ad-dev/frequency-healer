@@ -6,6 +6,7 @@ import { getAudioEngine } from '@/lib/audioEngine';
 import SessionPlan from './SessionPlan';
 import ExperimentSession, { type ExperimentSessionHandle } from '../lab/ExperimentSession';
 import HarmonicExplorer from '../lab/HarmonicExplorer';
+import ConstellationBuilder from '../lab/ConstellationBuilder';
 import { inverseHarmonicConfig } from '@/lib/harmonic/apply';
 import { proposeOctaveApply } from '@/lib/harmonic/octaveApply';
 import styles from './voice.module.css';
@@ -52,6 +53,7 @@ export default function HarmonicLab() {
       edit({ baseHz: result.config.baseHz });
       return null;
     }} />
+    <ConstellationBuilder context={config} />
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
     {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}
     {schedule && <section><h2>Propuesta visible</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Al ocultar la pestaña, el audio se detiene.</p>

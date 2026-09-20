@@ -304,3 +304,80 @@ for (const payload of ['{broken json', JSON.stringify([{...readerRecord(),schema
   assert.equal(await page.getByText(/^Ver detalles ·/).count(),0); assert.equal(await page.getByRole('article').count(),0);
   await readOnly(page,raw);
 });
+
+const CONSTELLATION_KEY='fh:harmonic-constellations-v1';
+async function openBuilder(page) {
+  await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).click();
+  await page.getByRole('spinbutton',{name:'Semilla del Builder (Hz)',exact:true}).waitFor();
+}
+const builderPreview=page=>page.getByRole('region',{name:'Vista previa de constelación',exact:true});
+const builderSignature=page=>page.getByRole('textbox',{name:'Firma de la constelación del Builder',exact:true});
+async function validBuilder(page) {
+  await builderPreview(page).waitFor();
+  await eventually(async()=>assert.match(await builderSignature(page).inputValue(),/^sha256:[a-f0-9]{64}$/));
+}
+
+test('builder: independent exact members, multiplicity, sequence reorder, name invariant and no side effects',async t=>{
+  const page=await fixture(t),before=await controls(page);await openBuilder(page);
+  await button(page,'Añadir raíz').click();await button(page,'Añadir raíz').click();
+  await button(page,'Añadir ratio').click();await validBuilder(page);
+  let rows=await page.getByRole('table',{name:'Miembros del borrador · sin reproducción'}).locator('tbody tr').allTextContents();assert.equal(rows.length,3);
+  assert.match(rows[0],/432 Hz/);assert.match(rows[1],/432 Hz/);assert.match(rows[2],/648 Hz/);
+  assert.match(await builderPreview(page).innerText(),/Compatible con estructura/);
+  const signature=await builderSignature(page).inputValue();
+  await page.getByRole('textbox',{name:'Nombre de constelación (opcional)',exact:true}).fill('Evening Focus');await validBuilder(page);assert.equal(await builderSignature(page).inputValue(),signature);
+  await button(page,'Subir miembro 3').click();await validBuilder(page);assert.notEqual(await builderSignature(page).inputValue(),signature);
+  await button(page,'Quitar miembro 2').click();await validBuilder(page);
+  rows=await page.getByRole('table',{name:'Miembros del borrador · sin reproducción'}).locator('tbody tr').allTextContents();assert.equal(rows.length,2);
+  await page.getByRole('combobox',{name:'Modo de la constelación',exact:true}).selectOption('simultaneous');await validBuilder(page);
+  assert.equal(await button(page,'Subir miembro 2').count(),0);
+  await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).click();await openBuilder(page);
+  assert.equal(await page.getByRole('textbox',{name:'Nombre de constelación (opcional)',exact:true}).inputValue(),'Evening Focus');
+  assert.deepEqual(await controls(page),before);await noPlayback(page);
+});
+
+test('builder: unsupported ratios and octave types remain available; invalid values never clamp or save',async t=>{
+  const page=await fixture(t);await openBuilder(page);
+  await page.getByRole('combobox',{name:'Ratio del miembro',exact:true}).selectOption('5:3');await button(page,'Añadir ratio').click();await validBuilder(page);
+  assert.match(await builderPreview(page).innerText(),/720 Hz/);assert.match(await builderPreview(page).innerText(),/Solo Builder/);
+  await page.getByRole('combobox',{name:'Ratio del miembro',exact:true}).selectOption('2:1');await button(page,'Añadir ratio').click();await validBuilder(page);assert.match(await builderPreview(page).innerText(),/864 Hz/);
+  for(const offset of ['-1','0','1']){await page.getByRole('spinbutton',{name:'Desplazamiento del miembro de octava',exact:true}).fill(offset);await button(page,'Añadir octava').click();await validBuilder(page);}
+  assert.match(await builderPreview(page).innerText(),/216 Hz/);
+  await page.getByRole('spinbutton',{name:'Desplazamiento del miembro de octava',exact:true}).fill('3');await button(page,'Añadir octava').click();
+  await page.getByRole('alert').filter({hasText:'No se corrigen los valores'}).waitFor();assert.equal(await button(page,'Guardar constelación').count(),0);
+  assert.equal(await page.getByRole('spinbutton',{name:'Semilla del Builder (Hz)',exact:true}).inputValue(),'432');
+  await button(page,'Quitar miembro 6').click();await validBuilder(page);
+  await page.getByRole('spinbutton',{name:'Semilla del Builder (Hz)',exact:true}).fill('2001');
+  await page.getByRole('alert').filter({hasText:'No se corrigen los valores'}).waitFor();assert.equal(await button(page,'Guardar constelación').count(),0);
+  assert.equal(await page.getByRole('spinbutton',{name:'Semilla del Builder (Hz)',exact:true}).inputValue(),'2001');await noPlayback(page);
+});
+
+test('builder: explicit append, reload, read-only saved record, unchanged JSON export and separate namespace',async t=>{
+  const {page,raw}=await historical(t,[readerRecord('cancelled')]);const before=await controls(page);await openBuilder(page);
+  await button(page,'Añadir raíz').click();await button(page,'Añadir ratio').click();await validBuilder(page);
+  await page.getByRole('textbox',{name:'Nombre de constelación (opcional)',exact:true}).fill('Saved Builder');await validBuilder(page);
+  assert.deepEqual(await storage(page),{[KEY]:raw});assert.deepEqual((await probe(page)).writes,[]);
+  await button(page,'Guardar constelación').click();await button(page,'Constelación guardada').waitFor();
+  const savedStorage=await storage(page);assert.deepEqual(Object.keys(savedStorage).sort(),[KEY,CONSTELLATION_KEY].sort());assert.equal(savedStorage[KEY],raw);
+  const [record]=JSON.parse(savedStorage[CONSTELLATION_KEY]);assert.equal(record.schemaVersion,1);assert.equal(record.generationVersion,'harmonic-constellation-v1');assert.equal(record.name,'Saved Builder');assert.equal(record.members.length,2);
+  assert.equal((await probe(page)).writes.length,1);assert.equal((await probe(page)).contexts.length,0);
+  assert.deepEqual(await controls(page),before);
+  await page.reload();await openBuilder(page);await button(page,'Cargar constelación Saved Builder').click();await validBuilder(page);
+  assert.ok(await page.getByRole('spinbutton',{name:'Semilla del Builder (Hz)',exact:true}).isDisabled());
+  assert.ok(await button(page,'Constelación guardada').isDisabled());assert.equal(await builderSignature(page).inputValue(),record.signature);
+  const pending=page.waitForEvent('download');await button(page,'Exportar constelación JSON').click();const download=await pending;
+  const stream=await download.createReadStream();let text='';for await(const chunk of stream)text+=chunk;assert.deepEqual(JSON.parse(text),record);
+  assert.deepEqual(await storage(page),savedStorage);assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+  await button(page,'Nuevo borrador').click();await button(page,'Añadir raíz').click();await validBuilder(page);await button(page,'Guardar constelación').click();await button(page,'Constelación guardada').waitFor();
+  const appended=JSON.parse((await storage(page))[CONSTELLATION_KEY]);assert.equal(appended.length,2);assert.deepEqual(appended[0],record);assert.notEqual(appended[1].id,record.id);assert.equal((await storage(page))[KEY],raw);
+});
+
+test('builder: corrupt constellation storage preserved; export original; no other keys or audio',async t=>{
+  const page=await fixture(t);
+  await page.evaluate(key=>localStorage.setItem(key,'{malformed'),CONSTELLATION_KEY);await page.reload();await openBuilder(page);
+  await page.getByRole('alert').filter({hasText:'Almacenamiento de constelaciones inválido'}).waitFor();
+  await button(page,'Añadir raíz').click();await validBuilder(page);assert.ok(await button(page,'Guardar constelación').isDisabled());
+  const pending=page.waitForEvent('download');await button(page,'Exportar almacenamiento original de constelaciones').click();const download=await pending;
+  const stream=await download.createReadStream();let text='';for await(const chunk of stream)text+=chunk;assert.equal(text,'{malformed');
+  assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:'{malformed'});assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+});
