@@ -26,7 +26,7 @@ never used to award an auditory PASS.
 | Physical device | Browser | Version / access | Output | Result |
 | --- | --- | --- | --- | --- |
 | macOS host | Google Chrome | 153.0.8010.50; protected preview accessible | Current macOS default output; category was not exposed to the validation process | Functional guided/lifecycle/data checks PASS; auditory criteria NOT TESTED |
-| macOS host | Safari | 26.3; installed | Not exercised | NOT TESTED: protected preview redirected this browser to Vercel login and no credentials were invented |
+| macOS host | Safari | 26.3; authenticated preview access confirmed | Current output, category not reported by tester | Initial/privacy/text-entry render PASS; audio audible without perceived distortion and silence after Stop PASS by supervised tester report |
 | iPhone | Safari | Physical device detected through iPhone Mirroring, but unavailable because Continuity Camera was active | Not exercised | NOT TESTED |
 | Android phone | Chrome | No accessible physical Android device detected | Not exercised | NOT TESTED |
 | Headphones / earbuds | Applicable browser | No supervised listener/output category available | Not exercised | NOT TESTED |
@@ -39,7 +39,7 @@ listed as physical mobile validation.
 | Scenario | Chrome/macOS observed result | Other required devices | Status |
 | --- | --- | --- | --- |
 | A. Guided simple session | Text intention, interpretation, recommendation, rationale, confirmation, start, manual stop, observation and explicit save completed | Full completion still requires Chrome/Safari/iPhone/Android human runs | Partial PASS |
-| B. Guided stop | Start was explicit; Stop remained visible and immediately advanced to observation | Physical silence needs a listener on each output | Functional PASS; auditory NOT TESTED |
+| B. Guided stop | Start was explicit; Stop remained visible and immediately advanced to observation | Safari/macOS tester reported complete silence after Stop; other outputs remain pending | Functional PASS; Safari silence PASS |
 | C. Navigation interruption | Navigating Home during playback returned safely; returning to `/voz` showed one prior saved record and no new record | Physical silence needs a listener | Functional/data PASS; auditory NOT TESTED |
 | D. Refresh/interruption | A saved session survived reload. Active-refresh auditory teardown was not manually heard | All required devices | Partial PASS |
 | E. Sequence playback | Guided sequence entered `Sesión en curso` only after confirmation at UI volume 5/100 | Auditory quality/order | Functional PASS; auditory NOT TESTED |
@@ -98,7 +98,14 @@ Those results are supporting evidence only.
 | Simultaneous playback avoids obvious clipping | NOT TESTED | NOT TESTED |
 | Binaural left/right behavior with stereo isolation | N/A | NOT TESTED |
 
-No acoustic calibration, SPL claim or physical-output PASS is made.
+No acoustic calibration, SPL claim or blanket physical-output PASS is made.
+
+Supervised Safari/macOS observation: the tester reported that audio was audible,
+that no distortion was perceived, and that output became completely silent
+after Stop. The output category was not reported, so this observation is not
+assigned to either the speaker or headphone column above. Comfort, pops/clicks,
+stereo balance, simultaneous playback and binaural isolation remain
+`NOT TESTED` unless separately reported.
 
 ## Lifecycle and interruption observations
 
@@ -107,6 +114,7 @@ No acoustic calibration, SPL claim or physical-output PASS is made.
 - Navigating away during a second active session returned to Home. Returning to
   `/voz` showed no automatically saved or falsely completed second record.
 - The saved first session was accurately labelled `Detenida`, not `Completa`.
+- Safari/macOS Stop was reported to leave complete physical silence.
 - Background tab/app, screen lock, incoming OS interruption, Bluetooth
   disconnect/reconnect and active-page refresh remain `NOT TESTED` physically.
 - Existing code and browser regression cover `visibilitychange`, `pagehide`,
@@ -130,7 +138,7 @@ No acoustic calibration, SPL claim or physical-output PASS is made.
 | --- | --- | --- |
 | P0 | None observed in the functional validation. Physical P0 absence is not certified. | Keep the physical gate open. |
 | P1 | Required physical-audio acceptance and the iPhone/Android runs are incomplete. | Blocks unconditional V1 physical-audio acceptance. |
-| P2 | Safari validation could not reach the protected preview without a Vercel login. | Provide an authorized Safari session or an appropriately accessible non-production build. Do not weaken preview protection. |
+| P2 | None observed. | — |
 | P3 | None recorded. | — |
 
 The P1 is a validation gap, not an observed product defect. No finding was
