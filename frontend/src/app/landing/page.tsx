@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import HeroVideo from "@/components/landing/HeroVideo";
 import styles from "@/components/landing/landing.module.css";
-import { HARMONIC_ENABLED } from "@/lib/voice/feature";
+import { HARMONIC_ENABLED, VOICE_ENABLED } from "@/lib/voice/feature";
 
 export const metadata: Metadata = {
   title: "Frequency Healer — Explore sound as a personal experiment",
@@ -118,12 +118,12 @@ export default function LandingPage() {
             with useful states for you.
           </p>
           <div className={styles.actions}>
-            <a className={styles.primary} href="#method">
+            <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/"} prefetch={false}>
+              {VOICE_ENABLED ? "Start a guided session" : "Enter Frequency Healer"} <Arrow />
+            </Link>
+            <a className={styles.secondary} href="#method">
               Explore the Method <span aria-hidden="true">↓</span>
             </a>
-            <Link className={styles.secondary} href="/" prefetch={false}>
-              Enter Frequency Healer <Arrow />
-            </Link>
           </div>
           {HARMONIC_ENABLED && (
             <Link
@@ -420,8 +420,8 @@ export default function LandingPage() {
           and <em>honest.</em>
         </h2>
         <div className={styles.actions}>
-          <Link className={styles.primary} href="/" prefetch={false}>
-            Enter Frequency Healer <Arrow />
+          <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/"} prefetch={false}>
+            {VOICE_ENABLED ? "Start a guided session" : "Enter Frequency Healer"} <Arrow />
           </Link>
           <a className={styles.secondary} href="#method">
             Explore the Method <span aria-hidden="true">↑</span>

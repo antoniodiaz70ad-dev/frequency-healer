@@ -52,7 +52,8 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
   const proposal = flow.proposal;
   const evidence = useMemo(() => proposal ? personalEvidence(proposal, storageError ? null : records) : null, [proposal, records, storageError]);
   return <div className={styles.workspace}>
-    <span className={styles.tag}>Exploración sonora · reglas locales</span><h1>Viaje por voz</h1>
+    <span className={styles.tag}>Exploración sonora · reglas locales</span><h1>Sesión guiada</h1>
+    <p>Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p>
     <p>Intención → propuesta → confirmación → experiencia → observación.</p>
     <p className={styles.muted}>Las relaciones son matemáticas y musicales. Tus registros describen una experiencia subjetiva; no demuestran efectos médicos ni que un tono cause un cambio.</p>
     <p role="status" aria-live="polite">{active ? 'Sesión en curso' : state === 'reflection' ? 'Sesión detenida. Reflexión opcional.' : 'Nada se reproduce sin tu confirmación.'}</p>

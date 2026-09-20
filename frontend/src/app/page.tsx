@@ -60,11 +60,22 @@ export default function DashboardPage() {
         <p className="text-sm text-gray-400">Sanaci&oacute;n con frecuencias para cuerpo, alma y esp&iacute;ritu.</p>
       </div>
 
-      {(VOICE_ENABLED || HARMONIC_ENABLED) && <nav aria-label="Formas de explorar" className="grid gap-3 sm:grid-cols-3 mb-6">
-        <Link className="rounded-xl border border-slate-700 p-4 min-h-12 focus-visible:outline-cyan-300" href="/generador">🔊 Sesión rápida</Link>
-        {VOICE_ENABLED && <Link className="rounded-xl border border-cyan-700 p-4 min-h-12 focus-visible:outline-cyan-300" href="/voz">🎙️ Viaje por voz</Link>}
-        {HARMONIC_ENABLED && <Link className="rounded-xl border border-slate-700 p-4 min-h-12 focus-visible:outline-cyan-300" href="/laboratorio-armonico">∿ Laboratorio Armónico</Link>}
-      </nav>}
+      <nav aria-label="Formas de explorar" className="space-y-4 mb-8">
+        {VOICE_ENABLED && <section className="rounded-xl border border-cyan-700 bg-cyan-950/30 p-5">
+          <h2 className="text-xl font-semibold text-white">Sesión guiada</h2>
+          <p className="text-sm text-gray-300 mt-2">Describe lo que quieres explorar y Frequency Healer te propondrá una sesión.</p>
+          <p className="text-sm text-gray-400 mt-1">Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p>
+          <Link className="inline-flex items-center rounded-lg bg-cyan-300 text-slate-950 font-semibold px-5 py-3 mt-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300" href="/voz">Comenzar sesión guiada</Link>
+        </section>}
+        <div className="rounded-xl border border-slate-700 p-4">
+          <h2 className="text-sm font-semibold text-gray-300">Exploración avanzada</h2>
+          {HARMONIC_ENABLED && <div className="mt-3">
+            <Link className="text-cyan-300 underline underline-offset-4 focus-visible:outline-cyan-300" href="/laboratorio-armonico">Laboratorio Armónico</Link>
+            <p className="text-sm text-gray-400 mt-2">Explora frecuencias, relaciones, octavas, constelaciones y experimentos avanzados.</p>
+          </div>}
+          <Link className="inline-flex py-3 text-sm text-gray-300 underline underline-offset-4 focus-visible:outline-cyan-300" href="/generador">Abrir generador manual</Link>
+        </div>
+      </nav>
       {/* Domain cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {DOMAIN_CARDS.map((card) => (
