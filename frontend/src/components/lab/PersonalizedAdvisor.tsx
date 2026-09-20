@@ -10,6 +10,7 @@ import { STATE_FIELDS } from '@/lib/experiments/types';
 import { buildSchedule } from '@/lib/harmonic/math';
 import type { DiscoveryPlaybackRequest } from './ProtocolDiscovery';
 import ProtocolRationale from './ProtocolRationale';
+import StructuralAnalysis from './StructuralAnalysis';
 import SessionPlan from '../voice/SessionPlan';
 import styles from '../voice/voice.module.css';
 
@@ -81,7 +82,7 @@ export default function PersonalizedAdvisor({active,onConfirm,onStop}:{active:bo
         <h4>{r.candidate.label} · {recommendation.orderingApplied&&index===0?'Recomendado para ti':recommendation.orderingApplied?'Otra opción válida':'Orden original'}</h4>
         <p>Regla: {r.candidate.ruleId??`Constelación ${r.candidate.constellation?.generationVersion}`} · Matemática validada · Compatible con reproducción V1.</p>
         <p>N = {r.comparableN} sesiones comparables · {r.evidenceLevel} · Score: {r.personalizationScore}</p>
-        <ProtocolRationale value={r.candidate.rationale}><section aria-label={`Por qué se priorizó ${r.candidateId}`}>
+        <ProtocolRationale value={r.candidate.rationale} config={r.candidate.config} constellation={r.candidate.constellation}><section aria-label={`Por qué se priorizó ${r.candidateId}`}>
           <h4>Por qué se priorizó para ti</h4>
           <p>{recommendation.orderingApplied&&index===0?'Este candidato tiene la mayor señal descriptiva registrada (los empates conservan el orden original).':reasons[recommendation.reason]}</p>
           <p>Métrica: {labels[r.targetMetric]} · N = {r.comparableN} · Evidencia: {r.evidenceLevel}.</p>
@@ -93,6 +94,7 @@ export default function PersonalizedAdvisor({active,onConfirm,onStop}:{active:bo
         </section></ProtocolRationale>
         <button disabled={blocked} onClick={()=>{setChosen(r.candidateId);setExpectation('');setPre({});setPost({});setReflection('');setConsent(false);}}>Elegir {r.candidate.label} · vista previa</button>
       </article>)}
+      <StructuralAnalysis evidence={recommendation}/>
       <button onClick={()=>download(JSON.stringify(recommendation,null,2),'personalization-recommendation.json')}>Exportar recomendación y evidencia</button>
     </section>}
     {selected&&recommendation&&!record&&<section aria-label="Vista previa personalizada"><h3>Confirmar {selected.candidate.label}</h3>

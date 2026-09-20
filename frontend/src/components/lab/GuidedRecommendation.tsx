@@ -44,7 +44,7 @@ export default function GuidedRecommendation({active,onConfirm,onStop}:{active:b
     {recommendation&&<div aria-label="Recomendación guiada"><h3>Una exploración para revisar</h3>
       <p>{dictionaries.es.goals[recommendation.proposal.intent.goal]} · {recommendation.proposal.intent.durationMinutes} minutos · volumen {recommendation.proposal.harmonicConfig.uiVolume}/100.</p>
       <p>{recommendation.proposal.rationale[0]}</p>
-      <ProtocolRationale value={recommendation.rule.rationale}/>
+      <ProtocolRationale value={recommendation.rule.rationale} config={recommendation.proposal.harmonicConfig}/>
       <details><summary>¿Por qué esta propuesta?</summary>
         <p>Tu intención: {recommendation.interpretation.rawText}</p>
         <p>Interpretación: {dictionaries.es.goals[recommendation.proposal.intent.goal]}. {recommendation.interpretation.explanation}</p>

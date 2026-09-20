@@ -74,7 +74,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
     {['review_session', 'audio_error'].includes(state) && proposal && <section><h2>3. Propuesta para confirmar</h2>
       <p><strong>{proposal.intent.intention}</strong></p><p>{goalLabels[proposal.intent.goal]} · {proposal.intent.desiredStates.map(s => stateLabels[s]).join(', ') || 'Sin estado específico'}</p>
       <p className={styles.muted}>Fuente: {proposal.source === 'local-rule' ? 'regla local' : 'selección del usuario sobre regla local'} · {proposal.ruleId} · {proposal.ruleVersion}</p>
-      {proposal.rationale.map(r => <p key={r}>{r}</p>)}<ProtocolRationale value={protocolRationale(proposal)} /><details><summary>Detalles armónicos de la sesión</summary><SessionPlan config={proposal.harmonicConfig} schedule={proposal.schedule} /></details>
+      {proposal.rationale.map(r => <p key={r}>{r}</p>)}<ProtocolRationale value={protocolRationale(proposal)} config={proposal.harmonicConfig} /><details><summary>Detalles armónicos de la sesión</summary><SessionPlan config={proposal.harmonicConfig} schedule={proposal.schedule} /></details>
       {evidence && <PersonalEvidence value={evidence}/>}
       <p>Intención revisada · interpretación confirmada · configuración válida · reproducción compatible · duración {proposal.intent.durationMinutes} minutos · volumen {proposal.harmonicConfig.uiVolume}/100 · evidencia personal indicada.</p>
       {proposal.warnings.map(w => <p key={w} className={styles.muted}>{w}</p>)}<RatingFields title="Antes de empezar" value={before} onChange={setBefore} />

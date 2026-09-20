@@ -650,3 +650,58 @@ test('Personalization Web Crypto race rejects newly changed evidence before engi
   await page.evaluate(key=>{const rows=JSON.parse(localStorage.getItem(key));rows[0].assignments[0].result.experiment.postState.energy=3;localStorage.setItem(key,JSON.stringify(rows));window.__personalRelease();},DISCOVERY_KEY);
   await page.getByRole('alert').filter({hasText:'La evidencia cambió durante la confirmación'}).waitFor();assert.equal((await probe(page)).contexts.length,0);assert.equal((await storage(page))[PERSONAL_KEY],undefined);
 });
+
+async function openStructure(scope){
+  await scope.getByText('Perfil estructural',{exact:true}).click();
+  const profile=scope.getByRole('region',{name:'Perfil estructural',exact:true});
+  await eventually(async()=>assert.match(await profile.innerText(),/HCI: [0-9]/));return profile;
+}
+async function exportStructure(page){const pending=page.waitForEvent('download');await button(page,'Exportar análisis estructural').click();const stream=await(await pending).createReadStream();let text='';for await(const chunk of stream)text+=chunk;return JSON.parse(text);}
+test('HIP guided explanation displays exact versioned HCI without changing proposal, storage or playback',async t=>{
+  const page=await fixture(t);await interpretGuide(page,'Quiero calma 5 minutos');await field(page,'Volumen de la guía (0–100)').fill('0');await recommendGuide(page);const original=await downloadGuide(page);
+  await guide(page).getByText('¿Por qué esta sesión?',{exact:true}).click();const profile=await openStructure(guide(page));
+  assert.match(await profile.innerText(),/harmonic-complexity-v1/);assert.match(await profile.innerText(),/No mide fuerza terapéutica ni eficacia/);assert.match(await profile.innerText(),/Miembros: 3/);
+  assert.deepEqual(await downloadGuide(page),original);await noPlayback(page);
+  await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),original.proposal.schedule.steps.flatMap(s=>s.frequencies));
+  await button(page,'Detener audio del laboratorio').click();await clean(page);assert.deepEqual(await storage(page),{});
+});
+test('HIP Lab advanced sequence/simultaneous view updates descriptors only and retains exact audio',async t=>{
+  const page=await fixture(t);const initial=await controls(page);await page.getByText('Perfil estructural del laboratorio · avanzado',{exact:true}).click();
+  const profile=page.getByRole('region',{name:'Perfil estructural del laboratorio · avanzado',exact:true});await eventually(async()=>assert.match(await profile.innerText(),/HCI: [0-9]/));
+  assert.match(await profile.innerText(),/Miembros: 2/);assert.match(await profile.innerText(),/Amplitud espectral: 216 Hz/);assert.deepEqual(await controls(page),initial);await noPlayback(page);
+  await mode(page).selectOption('simultaneous');await eventually(async()=>assert.match(await profile.innerText(),/Orden significativo: no/));assert.match(await profile.innerText(),/orden 0/);await noPlayback(page);
+  await start(page);await graph(page,[432,648],true);await stop(page);assert.deepEqual(await storage(page),{});
+});
+test('HIP personal profiles and structural groups preserve ranking, seed strata, evidence bytes and export versions',async t=>{
+  const {page,raw,rows}=await personalFixtureUI(t);const ranking=page.getByRole('region',{name:'Ranking personal',exact:true});
+  const before=await ranking.getByRole('article').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')));
+  const card=page.getByRole('article',{name:'Candidato personal candidate-1',exact:true});await card.getByText('¿Por qué esta sesión?',{exact:true}).click();const profile=await openStructure(card);assert.match(await profile.innerText(),/harmonic-constellation-v1/);
+  await page.getByText('Análisis estructural N=1 · avanzado',{exact:true}).click();const analysis=page.getByRole('region',{name:'Análisis estructural N=1',exact:true});
+  await eventually(async()=>assert.equal(await analysis.getByRole('article').count(),2));assert.match(await analysis.innerText(),/Semilla 144 Hz/);assert.match(await analysis.innerText(),/Semilla 220 Hz/);assert.match(await analysis.innerText(),/asociación descriptiva del grupo completo/);
+  for(const group of ['memberCount','ratioDiversity','octaveSpan','playbackMode']){await page.getByRole('combobox',{name:'Agrupar estructura por',exact:true}).selectOption(group);await eventually(async()=>assert.equal(await analysis.getByRole('article').count(),2));}
+  const report=await exportStructure(page);assert.equal(report.profileVersion,'harmonic-information-v1');assert.equal(report.algorithmVersion,'harmonic-complexity-v1');assert.deepEqual(report.evidence.sourcePlans,rows);
+  assert.deepEqual(report.evidence.orderedCandidateIds,['candidate-1','candidate-0']);assert.equal(report.groups.reduce((n,g)=>n+g.comparableN,0),20);assert.equal(report.groups.length,2);
+  assert.deepEqual(await ranking.getByRole('article').filter({hasText:'Matemática validada'}).evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label'))),before);
+  assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+});
+test('HIP sparse structural evidence shows insufficient sessions, never pattern claims or missing-to-zero',async t=>{
+  const {page,raw}=await personalFixtureUI(t,p=>{p.assignments=p.assignments.map(a=>a.index<10?a:{index:a.index,candidateId:a.candidateId,status:'skipped',resolvedAt:a.resolvedAt});p.assignments[0].result.experiment.preState={};});
+  await page.getByText('Análisis estructural N=1 · avanzado',{exact:true}).click();const analysis=page.getByRole('region',{name:'Análisis estructural N=1',exact:true});
+  await eventually(async()=>assert.equal(await analysis.getByRole('article').count(),2));assert.match(await analysis.innerText(),/N = 4/);assert.match(await analysis.innerText(),/N = 5/);assert.match(await analysis.innerText(),/Insufficient comparable sessions/);assert.doesNotMatch(await analysis.innerText(),/el cambio registrado/);
+  assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.equal((await probe(page)).contexts.length,0);
+});
+test('HIP Voice Journey explanation is optional, shows disclaimer and keeps existing confirmed playback',async t=>{
+  const page=await fixture(t);await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const before=await storage(page);await button(page,'Escribir intención').click();
+  await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero enfoque profundo 5 minutos');await button(page,'Continuar').click();await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar propuesta').click();
+  await page.getByText('¿Por qué esta sesión?',{exact:true}).click();const profile=await openStructure(page);assert.match(await profile.innerText(),/Miembros: 4/);assert.match(await profile.innerText(),/No mide fuerza terapéutica ni eficacia/);assert.equal((await probe(page)).contexts.length,0);
+  await button(page,'Confirmar e iniciar').click();await button(page,'Detener sesión').waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216,144,216]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),before);
+});
+test('HIP saved constellation preview retains exact multiplicity, immutable source and explicit playback',async t=>{
+  const {page,raw}=await savedPlaybackFixture(t,'simultaneous');await previewConstellation(page);const scope=page.getByRole('region',{name:'Confirmación de constelación guardada',exact:true});const profile=await openStructure(scope);
+  assert.match(await profile.innerText(),/Orden significativo: no/);assert.match(await profile.innerText(),/Repeticiones de frecuencia: 1/);assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});assert.equal((await probe(page)).contexts.length,0);
+  await startConstellation(page);await stop(page);assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});
+});
+test('HIP invalid manual input hides the old profile, never corrects values or starts audio',async t=>{
+  const page=await fixture(t);await page.getByText('Perfil estructural del laboratorio · avanzado',{exact:true}).click();const profile=page.getByRole('region',{name:'Perfil estructural del laboratorio · avanzado',exact:true});await eventually(async()=>assert.match(await profile.innerText(),/HCI: [0-9]/));
+  await field(page,'Base (Hz)').fill('0');await eventually(async()=>assert.match(await profile.innerText(),/Perfil no disponible/));assert.doesNotMatch(await profile.innerText(),/HCI: [0-9]/);assert.equal(await field(page,'Base (Hz)').inputValue(),'0');assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),{});
+});

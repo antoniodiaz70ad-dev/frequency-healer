@@ -15,6 +15,7 @@ import type { HarmonicConstellationV1 } from '@/lib/harmonic/constellations';
 import GuidedRecommendation from '../lab/GuidedRecommendation';
 import { validateGuidedRecommendation, type GuidedRecommendationV1 } from '@/lib/guided/recommendations';
 import PersonalizedAdvisor from '../lab/PersonalizedAdvisor';
+import StructureProfile from '../lab/StructureProfile';
 import ProtocolDiscovery, { type DiscoveryPlaybackRequest } from '../lab/ProtocolDiscovery';
 import styles from './voice.module.css';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
@@ -112,6 +113,7 @@ export default function HarmonicLab() {
     <label>Volumen (0–100)<input type="number" min={0} max={100} value={config.uiVolume} onChange={e => edit({ uiVolume: Number(e.target.value) })} /></label>
     {config.ratioId === 'cascade-13-12' && <><label>Incrementos<input type="number" min={1} max={8} value={config.increments} onChange={e => edit({ increments: Number(e.target.value) })} /></label><label>Trayectoria<select value={config.direction} onChange={e => edit({ direction: e.target.value as HarmonicConfig['direction'] })}><option value="ascending">Ascendente</option><option value="descending">Descendente</option><option value="return">Expansión y retorno</option></select></label></>}
   </div></fieldset></section>
+    <StructureProfile config={config} label="Perfil estructural del laboratorio · avanzado"/>
     <HarmonicExplorer config={config} playbackActive={playing || busy} onApply={async (constellation, expectedConfig) => {
       const run = startRun.current;
       const changed = () => currentConfig.current !== expectedConfig || startPending.current || engine.isPlaying() || run !== startRun.current;
@@ -135,6 +137,7 @@ export default function HarmonicLab() {
       <p>Vista previa sin audio. Se conservan todos los miembros y su orden; duración y volumen proceden de los controles actuales. Cambiarlos invalida esta propuesta.</p>
       <ol className={styles.steps}>{constellationPlan.constellation.members.map(member => <li key={member.id}>{member.id} · {member.relationshipType} · {member.relationshipType === 'ratio' ? `${member.ratio.numerator}:${member.ratio.denominator}` : '1:1'} · {member.frequencyHz} Hz</li>)}</ol>
       <SessionPlan config={constellationPlan.config} schedule={constellationPlan.schedule} />
+      <StructureProfile config={constellationPlan.config} constellation={constellationPlan.constellation}/>
       <p>El registro experimental opcional V2 conserva la identidad y definición completas de esta constelación, además de la configuración exacta enviada al motor. No conduzcas ni manejes maquinaria.</p>
       <button className={styles.primary} disabled={playing || busy} onClick={() => void startPlayback(constellationPlan)}>Confirmar y reproducir constelación</button>
       <button disabled={playing || busy} onClick={() => { ++previewRun.current; setConstellationPlan(null); }}>Cerrar vista previa de reproducción</button>
