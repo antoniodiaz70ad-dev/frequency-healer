@@ -6,6 +6,7 @@ for (const path of ['/', '/generador', '/protocolos', '/biblioteca', '/sesion-nu
   assert.equal(response.status, 200, path);
   const body = await response.text();
   if (path === '/') { assert.equal(body.includes('href="/voz"'), enabled, 'voice navigation flag'); assert.equal(body.includes('href="/laboratorio-armonico"'), enabled, 'lab navigation flag'); }
+  if (path === '/') { assert.equal(body.includes('Comenzar sesión guiada'), enabled); assert.ok(body.includes('Abrir generador manual')); assert.ok(body.includes('Navegación principal')); }
   console.log(`PASS ${path} 200`);
 }
 for (const path of ['/voz', '/laboratorio-armonico']) {

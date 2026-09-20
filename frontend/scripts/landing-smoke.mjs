@@ -11,6 +11,8 @@ assert.ok(!html.includes('<aside'), 'landing has no application sidebar');
 assert.ok(html.includes('lang="en"'), 'English content declares its language');
 assert.equal(html.includes('href="/laboratorio-armonico"'), enabled, 'lab CTA respects the flag');
 assert.ok(html.includes('href="/"'), 'dashboard entry remains available');
+assert.equal(html.includes('href="/voz"'), enabled, 'guided CTA respects the voice flag');
+assert.equal(html.includes('Start a guided session'), enabled, 'guided label only when available');
 for (const id of ['method', 'relationships', 'process', 'hero-title', 'map-title', 'closing-title']) {
   assert.ok(html.includes(`id="${id}"`), `section ${id}`);
 }

@@ -186,7 +186,7 @@ test('experiment: exact final immutable snapshot, missing ratings, explicit save
 test('navigation during audio: closes native graph, never completed, never autosaved', async t => {
   const page = await fixture(t); await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();
   await start(page); await page.getByRole('status').filter({hasText:'Experimento: En curso'}).waitFor();
-  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click(); await page.waitForURL(harness.origin + '/');
+  await page.getByRole('link',{name:'⚡ Inicio',exact:true}).click(); await page.waitForURL(harness.origin + '/');
   await clean(page); const data = await probe(page);
   assert.ok(data.statuses.some(s=>s.includes('En curso'))); assert.ok(data.statuses.every(s=>!s.includes('Completado')));
   assert.deepEqual(data.writes,[]); assert.deepEqual(await storage(page),{});
@@ -426,7 +426,7 @@ test('saved constellation: controls invalidate preview and changed saved record 
 });
 test('saved constellation navigation: cleanup, no completed and no experiment autosave',async t=>{
   const {page,raw}=await savedPlaybackFixture(t);await previewConstellation(page);await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();await startConstellation(page);
-  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);
+  await page.getByRole('link',{name:'⚡ Inicio',exact:true}).click();await clean(page);
   assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
 });
 test('saved constellation natural end: completed only after native end, no autosave',async t=>{
@@ -483,7 +483,7 @@ test('guided creativity: extra consent, unchanged cascade and navigation cleanup
   const page=await fixture(t);await interpretGuide(page,'Quiero creatividad 5 minutos');await page.getByRole('spinbutton',{name:'Volumen de la guía (0–100)',exact:true}).fill('0');await recommendGuide(page);const rec=await downloadGuide(page);
   assert.ok(await button(page,'Confirmar y escuchar propuesta').isDisabled());await page.getByRole('checkbox',{name:'Acepto la cascada experimental de la guía, sin promesas de resultados.',exact:true}).check();await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();
   assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),rec.proposal.schedule.steps.flatMap(s=>s.frequencies));
-  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{});assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
+  await page.getByRole('link',{name:'⚡ Inicio',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{});assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
 });
 
 async function linkedExperimentFixture(t){
@@ -571,7 +571,7 @@ test('Discovery saved constellation: UI plan creation, source deletion independe
 });
 test('Discovery navigation interruption keeps unresolved reservation, no false completed result, explicit recovery',async t=>{
   const page=await fixture(t);await draftDiscovery(page);await activateDiscovery(page);await prepareDiscovery(page);await button(page,'Confirmar y reproducir asignación').click();await page.getByRole('heading',{name:'Resultado: started · sin guardar',exact:true}).waitFor();
-  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);let p=JSON.parse((await storage(page))[DISCOVERY_KEY])[0];assert.equal(p.assignments[0].status,'reserved');assert.equal(p.assignments[0].result,undefined);
+  await page.getByRole('link',{name:'⚡ Inicio',exact:true}).click();await clean(page);let p=JSON.parse((await storage(page))[DISCOVERY_KEY])[0];assert.equal(p.assignments[0].status,'reserved');assert.equal(p.assignments[0].result,undefined);
   await page.goto(harness.origin+'/laboratorio-armonico');await openDiscovery(page);await page.getByRole('combobox',{name:'Plan guardado',exact:true}).selectOption(p.id);await button(page,'Confirmar cierre como interrumpida').click();await button(page,'Preparar siguiente asignación').waitFor();p=JSON.parse((await storage(page))[DISCOVERY_KEY])[0];assert.equal(p.assignments[0].status,'interrupted');assert.equal(p.assignments[0].result,undefined);
 });
 test('Discovery corruption is preserved and exportable; no silent repair or playback',async t=>{
@@ -637,7 +637,7 @@ test('Personalization changed evidence rejects confirmation without audio or imp
 });
 test('Personalization navigation interrupts native audio without completed state, save or plan mutation',async t=>{
   const {page,raw}=await personalFixtureUI(t);await choosePersonal(page,'A');await button(page,'Confirmar y escuchar opción personal').click();await page.getByRole('heading',{name:'Sesión personal: started · sin guardar',exact:true}).waitFor();
-  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.deepEqual((await probe(page)).writes,[]);
+  await page.getByRole('link',{name:'⚡ Inicio',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.deepEqual((await probe(page)).writes,[]);
 });
 test('Personalization corrupt source cannot become no-evidence fallback or overwrite',async t=>{
   const page=await fixture(t);await page.evaluate(key=>localStorage.setItem(key,'{bad'),DISCOVERY_KEY);await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();
@@ -734,7 +734,7 @@ test('Adaptive active fixed plan requires outside-plan choice and never mutates 
   await page.getByRole('region',{name:'Planes fijos activos',exact:true}).waitFor();assert.equal(await button(page,'Usar esta sesión · vista previa').isDisabled(),true);await page.getByRole('checkbox',{name:'Quiero una exploración fuera de estos planes fijos',exact:true}).check();await chooseAdaptive(page);await button(page,'Confirmar y reproducir exploración').click();await page.getByRole('heading',{name:'Exploración: started · sin guardar',exact:true}).waitFor();await button(page,'Detener exploración').click();await clean(page);await page.getByRole('heading',{name:'Exploración: cancelled · sin guardar',exact:true}).waitFor();assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});await button(page,'Guardar resultado exploratorio').click();await page.getByText('Resultados exploratorios guardados (1)',{exact:true}).waitFor();assert.equal((await storage(page))[DISCOVERY_KEY],raw);assert.equal(JSON.parse((await storage(page))[ADAPTIVE_KEY])[0].experiment.status,'cancelled');
 });
 test('Adaptive navigation interrupts without saving or false completion',async t=>{
-  const {page,raw}=await adaptiveFixtureUI(t);await chooseAdaptive(page);await button(page,'Confirmar y reproducir exploración').click();await page.getByRole('heading',{name:'Exploración: started · sin guardar',exact:true}).waitFor();await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.deepEqual((await probe(page)).writes,[]);
+  const {page,raw}=await adaptiveFixtureUI(t);await chooseAdaptive(page);await button(page,'Confirmar y reproducir exploración').click();await page.getByRole('heading',{name:'Exploración: started · sin guardar',exact:true}).waitFor();await page.getByRole('link',{name:'⚡ Inicio',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.deepEqual((await probe(page)).writes,[]);
 });
 test('Adaptive changed evidence rejects preview confirmation without audio',async t=>{
   const {page}=await adaptiveFixtureUI(t);await chooseAdaptive(page);await page.evaluate(key=>localStorage.setItem(key,'[]'),ADAPTIVE_KEY);await button(page,'Confirmar y reproducir exploración').click();await page.getByRole('alert').filter({hasText:'La evidencia o los planes cambiaron'}).waitFor();assert.equal((await probe(page)).contexts.length,0);assert.equal((await storage(page))[ADAPTIVE_KEY],'[]');
@@ -749,4 +749,25 @@ test('Adaptive asynchronous signature race rejects evidence changes before audio
 });
 test('Adaptive zero evidence keeps deterministic original order without inventing a best match',async t=>{
   const {page,raw}=await adaptiveFixtureUI(t,rows=>rows.forEach(p=>{p.assignments=p.assignments.map(a=>({index:a.index,candidateId:a.candidateId,status:'skipped',resolvedAt:a.resolvedAt}));}));const region=page.getByRole('region',{name:'Exploración adaptativa',exact:true});assert.match(await region.innerText(),/no establece aún una mejor señal/);assert.match(await region.innerText(),/Protocolo A · N = 0/);assert.match(await region.innerText(),/no-personal-evidence/);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});
+});
+
+for (const mobile of [false,true]) test(`3B.1 ${mobile?'mobile':'desktop'}: guided primary entry, separate Lab, unchanged URLs and no storage/audio side effects`,async t=>{
+  const page=await fixture(t);if(mobile)await page.setViewportSize({width:390,height:844});await page.goto(harness.origin+'/');
+  const entry=page.getByRole('navigation',{name:'Formas de explorar',exact:true});assert.equal(await entry.getByRole('link',{name:'Comenzar sesión guiada',exact:true}).getAttribute('href'),'/voz');
+  assert.match(await entry.innerText(),/Describe lo que quieres explorar y Frequency Healer te propondrá una sesión\./);assert.match(await entry.innerText(),/El micrófono es opcional/);
+  if(mobile)await button(page,'Menu').click();
+  const nav=page.getByRole('navigation',{name:'Navegación principal',exact:true});
+  const expected=[['⚡ Inicio','/'],['✎ Sesión guiada','/voz'],['📋 Protocolos','/protocolos'],['∿ Laboratorio Armónico','/laboratorio-armonico'],['🔊 Generador manual','/generador'],['📚 Biblioteca','/biblioteca'],['🌙 Preparación OBE','/sesion-nueva'],['📓 Diario OBE','/diario']];
+  for(const [name,path] of expected)assert.equal(await nav.getByRole('link',{name,exact:true}).getAttribute('href'),path);
+  await nav.getByRole('link',{name:'✎ Sesión guiada',exact:true}).click();await page.waitForURL(harness.origin+'/voz');await page.getByRole('heading',{name:'Sesión guiada · tu privacidad',exact:true}).waitFor();assert.match(await page.locator('main').innerText(),/Puedes completar toda la sesión escribiendo/);
+  assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
+  if(mobile){assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await button(page,'Menu').click();}
+  await nav.getByRole('link',{name:'∿ Laboratorio Armónico',exact:true}).click();await page.waitForURL(harness.origin+'/laboratorio-armonico');await field(page,'Base (Hz)').waitFor();assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
+});
+test('3B.1 text-only guided session works with microphone unavailable and keeps the existing proposal/storage contract',async t=>{
+  const page=await fixture(t);await page.addInitScript(()=>{window.__micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.__micRequests++;throw new DOMException('Microphone unavailable','NotAllowedError');};});
+  await page.goto(harness.origin+'/');await page.getByRole('link',{name:'Comenzar sesión guiada',exact:true}).click();await button(page,'Entendido, continuar').click();await page.getByRole('heading',{name:'Sesión guiada',exact:true}).waitFor();await page.getByText('Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.',{exact:true}).waitFor();
+  const consent=await storage(page);assert.deepEqual(Object.keys(consent),['fh:voice-consent-v1']);await button(page,'Escribir intención').click();await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero concentrarme durante cinco minutos');await button(page,'Continuar').click();await page.getByRole('combobox',{name:'Intensidad',exact:true}).selectOption('deep');await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar propuesta').click();assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consent);
+  await button(page,'Confirmar e iniciar').click();await button(page,'Detener sesión').waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216,144,216]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consent);await button(page,'Guardar sesión').click();await page.getByRole('status').filter({hasText:'Sesión guardada en este dispositivo.'}).waitFor();
+  const saved=await storage(page);assert.deepEqual(Object.keys(saved).sort(),['fh:voice-consent-v1','fh:voice-sessions-v1'].sort());assert.equal(saved['fh:voice-consent-v1'],consent['fh:voice-consent-v1']);const [record]=JSON.parse(saved['fh:voice-sessions-v1']);assert.equal(record.schemaVersion,1);assert.equal(record.status,'stopped');assert.equal(record.proposal.ruleVersion,'voice-rules-v1');assert.equal(record.proposal.ruleId,'voice-focus-deep');assert.deepEqual(record.proposal.harmonicConfig,{baseHz:144,uiVolume:0,mode:'sequence',ratioId:'fifth',increments:3,direction:'return',waveform:'sine',durationSeconds:300,progression:['root','fifth','root','fifth']});assert.equal(await page.evaluate(()=>window.__micRequests),0);
 });
