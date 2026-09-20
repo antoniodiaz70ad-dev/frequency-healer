@@ -44,3 +44,18 @@
 .lab > details { margin-block: 1rem; border-top: 1px solid var(--fh-border); }
 @media (min-width: 64rem) { .lab > section, .lab > figure, .lab > details { max-width: 72rem; } }
 @media (max-width: 48rem) { .labRegionLabel { margin-top: 2rem !important; } .lab svg { min-width: 36rem; } .lab figure { overflow-x: auto; } }
+.history { display: grid; gap: 1.25rem; }
+.historyHeader { display: flex; align-items: flex-start; flex-direction: column; gap: 1rem; }
+.historyActions { display: flex; width: 100%; flex-wrap: wrap; justify-content: flex-start; }
+.historyList { display: grid; gap: 1rem; }
+.historyRecord { padding: 1.25rem; border: 1px solid var(--fh-border); border-radius: var(--fh-radius-surface); background: var(--fh-surface); }
+.historyRecord > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.historyRecord time { color: var(--fh-text-muted); font-family: var(--font-geist-mono), monospace; font-size: .75rem; }
+.historyRecord code { overflow-wrap: anywhere; color: var(--fh-text); }
+.historyMetrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin-block: 1rem; }
+.historyMetrics > div { display: grid; gap: .2rem; padding: .75rem; border: 1px solid var(--fh-border); border-radius: var(--fh-radius-control); background: var(--fh-bg-raised); }
+.historyMetrics span, .historyMetrics small { color: var(--fh-text-muted); font-size: .72rem; }
+.historyMetrics strong { overflow-wrap: anywhere; color: var(--fh-text); font-family: var(--font-geist-mono), monospace; font-size: .9rem; }
+.n1Header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+@media (max-width: 64rem) { .historyActions button { flex: 1 1 12rem; margin-right: 0; } }
+@media (max-width: 40rem) { .historyActions button { width: 100%; } .historyMetrics { grid-template-columns: 1fr; } }
