@@ -6,6 +6,8 @@ import { STATE_FIELDS, type ConfigurationSnapshot, type ExperimentState, type Ex
 import { adaptHarmonicConfig, type HarmonicAdapterResult } from '@/lib/harmonic/adapter';
 import { RATIOS } from '@/lib/harmonic/math';
 import styles from './SavedExperimentReader.module.css';
+import { validateExperimentV2, type AuditableExperiment, type ExperimentRecordV2 } from '@/lib/experiments/v2';
+import ConstellationAudit from './ConstellationAudit';
 
 const statuses: Record<ExperimentStatus, string> = {
   prepared: 'Preparado · reproducción no iniciada', started: 'Iniciado · sin final registrado',
@@ -51,7 +53,20 @@ function HarmonicSummary({ config }: { config: ConfigurationSnapshot }) {
 
 /** Only existing validated records enter the audit view; no write/player APIs. */
 export default function SavedExperimentReader({ record, onExport }: { record: unknown; onExport: () => void }) {
+  if (record && typeof record === 'object' && 'schemaVersion' in record && record.schemaVersion === 2) return <ValidatedV2Reader record={record} onExport={onExport}/>;
+  return <ValidatedV1Reader record={record} onExport={onExport}/>;
+}
+function ValidatedV1Reader({record,onExport}:{record:unknown;onExport:()=>void}) {
   const validated = useMemo(() => { try { return validateExperiment(record); } catch { return null; } }, [record]);
+  return validated ? <ExperimentDetails validated={validated} record={record} onExport={onExport}/> : <p role="alert">Registro inválido. No se muestra ni se modifica su contenido.</p>;
+}
+function ValidatedV2Reader({record,onExport}:{record:unknown;onExport:()=>void}) {
+  const [settled,setSettled]=useState<{source:unknown;value?:ExperimentRecordV2}>();
+  useEffect(()=>{let active=true;void validateExperimentV2(record).then(value=>{if(active)setSettled({source:record,value});},()=>{if(active)setSettled({source:record});});return()=>{active=false;};},[record]);
+  if(!settled || settled.source!==record)return <p role="status">Validando experimento V2…</p>;
+  return settled.value?<ExperimentDetails validated={settled.value} record={record} onExport={onExport}/>:<p role="alert">Registro V2 inválido. No se muestra ni se repara.</p>;
+}
+function ExperimentDetails({validated,record,onExport}:{validated:AuditableExperiment;record:unknown;onExport:()=>void}) {
   const details = useRef<HTMLDetailsElement>(null);
   const [open, setOpen] = useState(false);
   if (!validated) return <p role="alert">Registro inválido. No se muestra ni se modifica su contenido.</p>;
@@ -60,6 +75,8 @@ export default function SavedExperimentReader({ record, onExport }: { record: un
     <summary>Ver detalles · {new Date(validated.createdAt).toLocaleString('es-MX')} · {statuses[validated.status]} · {config.baseHz} Hz</summary>
     {open && <article aria-label={`Experimento guardado ${validated.id}`}>
       <h3>Experimento guardado · solo lectura</h3>
+      <p>{validated.schemaVersion===1?'Registro legado V1; no tiene identidad de constelación registrada.':'Registro V2 de auditoría; sin migración de registros anteriores.'}</p>
+      {validated.schemaVersion===2&&(validated.constellation?<ConstellationAudit link={validated.constellation}/>:<p>Sin constelación vinculada registrada.</p>)}
       <p className={styles.status} data-state={validated.status}>{statuses[validated.status]} <code>({validated.status})</code></p>
       <Fields rows={[
         ['ID', validated.id], ['Estado', validated.status], ['Origen', validated.source], ['Versión del esquema', validated.schemaVersion],
@@ -68,7 +85,7 @@ export default function SavedExperimentReader({ record, onExport }: { record: un
         ['Intención', validated.intention], ['Expectativa', validated.expectationScore === undefined ? absent : `${validated.expectationScore} / 10`], ['Contexto', validated.context],
       ]} />
       <State title="Estado previo" value={validated.preState} />
-      <section aria-label="Configuración guardada"><h4>Configuración guardada</h4><p>Snapshot confirmado en esta sesión; no corresponde a los controles actuales.</p>
+      <section aria-label="Configuración guardada"><h4>{validated.schemaVersion===2?'Configuración exacta enviada al motor':'Configuración guardada'}</h4><p>Snapshot confirmado en esta sesión; no corresponde a los controles actuales.</p>
         <Fields rows={[
           ['baseHz', `${config.baseHz} Hz`], ['ratioId', `${config.ratioId} · ${RATIOS[config.ratioId].label}`],
           ['increments', config.increments], ['direction', config.direction], ['mode', config.mode],

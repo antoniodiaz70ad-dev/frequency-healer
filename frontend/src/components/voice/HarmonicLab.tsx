@@ -10,7 +10,7 @@ import ConstellationBuilder from '../lab/ConstellationBuilder';
 import { inverseHarmonicConfig } from '@/lib/harmonic/apply';
 import { proposeOctaveApply } from '@/lib/harmonic/octaveApply';
 import { planConstellationPlayback, type ConstellationPlaybackPlan } from '@/lib/harmonic/constellationPlayback';
-import { ConstellationStore } from '@/lib/harmonic/constellationStorage';
+import { ConstellationStore, CONSTELLATIONS_KEY } from '@/lib/harmonic/constellationStorage';
 import type { HarmonicConstellationV1 } from '@/lib/harmonic/constellations';
 import GuidedRecommendation from '../lab/GuidedRecommendation';
 import { validateGuidedRecommendation, type GuidedRecommendationV1 } from '@/lib/guided/recommendations';
@@ -43,16 +43,22 @@ export default function HarmonicLab() {
         startPending.current = true; const run = ++startRun.current; setBusy(true); setError('');
         try {
           let playbackConfig = guided ? validateGuidedRecommendation(guided, consent) : config;
+          let sourcePayload: string | null = null;
+          let linkedConstellation: HarmonicConstellationV1 | undefined;
           if (plan) {
+            sourcePayload = localStorage.getItem(CONSTELLATIONS_KEY);
             const stored = (await new ConstellationStore(localStorage).load()).find(row => row.id === plan.constellation.id);
             if (!stored || JSON.stringify(stored) !== JSON.stringify(plan.constellation)) throw new Error('El registro guardado cambió o no está disponible. Prepara otra vista previa.');
             const checked = await planConstellationPlayback(stored, plan.config);
             if (JSON.stringify(checked) !== JSON.stringify(plan)) throw new Error('La propuesta cambió. Confirma una nueva vista previa.');
-            playbackConfig = checked.config;
+            playbackConfig = checked.config; linkedConstellation = checked.constellation;
           }
           if (run !== startRun.current) return;
-          const handle = experiment.current, id = handle?.prepare(playbackConfig) ?? null;
+          const handle = experiment.current;
+          const id = linkedConstellation ? await handle?.prepareLinked(playbackConfig, linkedConstellation) ?? null : handle?.prepare(playbackConfig) ?? null;
+          if (run !== startRun.current) return;
           activeExperiment.current = handle && id ? { handle, id } : null;
+          if (plan && localStorage.getItem(CONSTELLATIONS_KEY) !== sourcePayload) throw new Error('La fuente cambió durante la confirmación. Prepara una nueva vista previa.');
           getAudioEngine().stopProtocol();
           const started = await engine.start(playbackConfig, () => {
             if (run !== startRun.current) return;
@@ -107,7 +113,7 @@ export default function HarmonicLab() {
       <p>Vista previa sin audio. Se conservan todos los miembros y su orden; duración y volumen proceden de los controles actuales. Cambiarlos invalida esta propuesta.</p>
       <ol className={styles.steps}>{constellationPlan.constellation.members.map(member => <li key={member.id}>{member.id} · {member.relationshipType} · {member.relationshipType === 'ratio' ? `${member.ratio.numerator}:${member.ratio.denominator}` : '1:1'} · {member.frequencyHz} Hz</li>)}</ol>
       <SessionPlan config={constellationPlan.config} schedule={constellationPlan.schedule} />
-      <p>El registro experimental opcional conserva la configuración V1 exacta y su progresión; no guarda el nombre ni los IDs de la constelación. No conduzcas ni manejes maquinaria.</p>
+      <p>El registro experimental opcional V2 conserva la identidad y definición completas de esta constelación, además de la configuración exacta enviada al motor. No conduzcas ni manejes maquinaria.</p>
       <button className={styles.primary} disabled={playing || busy} onClick={() => void startPlayback(constellationPlan)}>Confirmar y reproducir constelación</button>
       <button disabled={playing || busy} onClick={() => { ++previewRun.current; setConstellationPlan(null); }}>Cerrar vista previa de reproducción</button>
     </section>}

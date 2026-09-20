@@ -19,6 +19,7 @@ const test = (name, run) => nodeTest(name, { timeout: 45000 }, async t => {
   }
 });
 const KEY = 'fh:experiment-sessions-v1';
+const V2_KEY = 'fh:experiment-sessions-v2';
 let harness;
 before(async () => { harness = await startHarness(); }, { timeout: 60000 });
 after(async () => { await harness?.close(); }, { timeout: 15000 });
@@ -407,9 +408,9 @@ for(const playbackMode of ['sequence','simultaneous'])test(`saved constellation 
   await stop(page);await page.getByRole('status').filter({hasText:/Experimento: Cancelado por ti/}).waitFor();
   assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});
   await button(page,'Guardar experimento').click();await button(page,'Experimento guardado').waitFor();
-  const data=await storage(page);const [record]=JSON.parse(data[KEY]);assert.equal(data[CONSTELLATION_KEY],raw);
+  const data=await storage(page);const [record]=JSON.parse(data[V2_KEY]);assert.equal(data[CONSTELLATION_KEY],raw);
   assert.deepEqual(record.configurationSnapshot,{baseHz:432,ratioId:'root',increments:1,direction:'ascending',mode:playbackMode,durationSeconds:60,uiVolume:0,waveform:'sine',progression:['fifth','root','root']});
-  assert.equal(record.preState.clarity,0);assert.equal(record.status,'cancelled');assert.equal(record.completedAt,undefined);
+  assert.equal(record.schemaVersion,2);assert.deepEqual(record.constellation.snapshot,JSON.parse(raw)[0]);assert.equal(record.constellation.signature,JSON.parse(raw)[0].signature);assert.equal(record.preState.clarity,0);assert.equal(record.status,'cancelled');assert.equal(record.completedAt,undefined);
   await page.reload();assert.deepEqual(await storage(page),data);assert.equal((await probe(page)).contexts.length,0);
 });
 for(const unsupported of ['5:3','2:1','octave'])test(`saved constellation rejects ${unsupported} without dropping members`,async t=>{
@@ -434,7 +435,7 @@ test('saved constellation natural end: completed only after native end, no autos
   await page.getByRole('status').filter({hasText:/Experimento: Completado/}).waitFor();
   await eventually(async()=>assert.ok((await probe(page)).contexts.every(c=>c.state==='closed'&&c.oscillators.every(o=>o.disconnected&&o.ended))));
   assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});await button(page,'Guardar experimento').click();await button(page,'Experimento guardado').waitFor();
-  const [record]=JSON.parse((await storage(page))[KEY]);assert.equal(record.status,'completed');assert.ok(record.completedAt);assert.equal(record.configurationSnapshot.durationSeconds,1.2);
+  const [record]=JSON.parse((await storage(page))[V2_KEY]);assert.equal(record.status,'completed');assert.ok(record.completedAt);assert.equal(record.configurationSnapshot.durationSeconds,1.2);
 });
 
 const guide=page=>page.getByRole('region',{name:'Guía por intención',exact:true});
@@ -476,4 +477,29 @@ test('guided creativity: extra consent, unchanged cascade and navigation cleanup
   assert.ok(await button(page,'Confirmar y escuchar propuesta').isDisabled());await page.getByRole('checkbox',{name:'Acepto la cascada experimental de la guía, sin promesas de resultados.',exact:true}).check();await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();
   assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),rec.proposal.schedule.steps.flatMap(s=>s.frequencies));
   await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{});assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
+});
+
+async function linkedExperimentFixture(t){
+  const {page,raw}=await savedPlaybackFixture(t);await previewConstellation(page);await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();await page.getByRole('combobox',{name:'Antes: Claridad',exact:true}).selectOption('0');await startConstellation(page);await stop(page);await button(page,'Guardar experimento').click();await button(page,'Experimento guardado').waitFor();
+  const experimentRaw=(await storage(page))[V2_KEY];return {page,raw,experimentRaw,record:JSON.parse(experimentRaw)[0]};
+}
+async function openLinkedReader(page,id){await page.getByText('Experimentos guardados (1)',{exact:true}).click();await page.getByText(/^Ver detalles ·/).click();await page.getByRole('article',{name:`Experimento guardado ${id}`,exact:true}).waitFor();return page.getByRole('region',{name:'Constelación vinculada',exact:true});}
+test('V2 audit: exact identity/definition/config, source rename/delete independent and export unchanged',async t=>{
+  const {page,raw,experimentRaw,record}=await linkedExperimentFixture(t);await page.reload();let linked=await openLinkedReader(page,record.id);
+  assert.match(await linked.innerText(),/Playback fixture/);assert.match(await linked.innerText(),new RegExp(record.constellation.id));assert.match(await linked.innerText(),new RegExp(record.constellation.signature));await linked.getByRole('status').filter({hasText:'coincide con el snapshot'}).waitFor();assert.equal((await probe(page)).contexts.length,0);assert.deepEqual((await probe(page)).writes,[]);
+  const renamed=JSON.parse(raw);renamed[0].name='Renamed source';await page.evaluate(({key,value})=>localStorage.setItem(key,value),{key:CONSTELLATION_KEY,value:JSON.stringify(renamed)});await page.reload();linked=await openLinkedReader(page,record.id);await linked.getByRole('status').filter({hasText:'cambió desde la confirmación'}).waitFor();assert.match(await linked.innerText(),/Playback fixture/);assert.doesNotMatch(await linked.innerText(),/Renamed source/);
+  await page.evaluate(key=>localStorage.removeItem(key),CONSTELLATION_KEY);await page.reload();linked=await openLinkedReader(page,record.id);await linked.getByRole('status').filter({hasText:'ya no está disponible'}).waitFor();
+  const pending=page.waitForEvent('download');await button(page,'Exportar registro guardado').click();const stream=await(await pending).createReadStream();let exported='';for await(const chunk of stream)exported+=chunk;assert.deepEqual(JSON.parse(exported),record);assert.deepEqual(await storage(page),{[V2_KEY]:experimentRaw});assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+});
+test('V2 invalid signature is preserved, while legacy V1 still renders unchanged',async t=>{
+  const {page,record}=await linkedExperimentFixture(t);record.constellation.signature='sha256:corrupt';const bad=JSON.stringify([record]);const legacy=readerRecord('cancelled');const rawLegacy=JSON.stringify([legacy]);
+  await page.evaluate(({bad,rawLegacy,k1,k2})=>{localStorage.setItem(k1,rawLegacy);localStorage.setItem(k2,bad);},{bad,rawLegacy,k1:KEY,k2:V2_KEY});await page.reload();await page.getByText('Experimentos guardados (1)',{exact:true}).click();await page.getByRole('alert').filter({hasText:'Historial V2 inválido'}).waitFor();await page.getByText(/^Ver detalles ·/).click();await page.getByRole('article',{name:`Experimento guardado ${legacy.id}`,exact:true}).waitFor();assert.match(await page.getByRole('article').innerText(),/Registro legado V1/);assert.equal(await page.getByRole('region',{name:'Constelación vinculada',exact:true}).count(),0);
+  assert.equal((await storage(page))[KEY],rawLegacy);assert.equal((await storage(page))[V2_KEY],bad);assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+});
+test('V2 confirmation race during Web Crypto: changed source rejects without audio/autosave/completed',async t=>{
+  const {page}=await savedPlaybackFixture(t);await previewConstellation(page);await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();
+  await page.evaluate(()=>{const original=crypto.subtle.digest.bind(crypto.subtle);let once=true;crypto.subtle.digest=async(...args)=>{if(once){once=false;window.__auditWaiting=true;await new Promise(resolve=>{window.__auditRelease=resolve;});}return original(...args);};});
+  await button(page,'Confirmar y reproducir constelación').click();await eventually(async()=>assert.equal(await page.evaluate(()=>window.__auditWaiting),true));
+  await page.evaluate(key=>{const rows=JSON.parse(localStorage.getItem(key));rows[0].name='Changed during confirmation';localStorage.setItem(key,JSON.stringify(rows));window.__auditRelease();},CONSTELLATION_KEY);
+  await page.getByRole('alert').filter({hasText:'fuente cambió durante la confirmación'}).waitFor();assert.equal((await probe(page)).contexts.length,0);assert.equal((await storage(page))[V2_KEY],undefined);assert.equal((await storage(page))[KEY],undefined);assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
 });
