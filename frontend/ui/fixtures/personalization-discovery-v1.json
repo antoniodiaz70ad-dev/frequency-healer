@@ -1,0 +1,2000 @@
+[
+  {
+    "intent": {
+      "schemaVersion": 1,
+      "taxonomyVersion": "guided-mapping-v1",
+      "rawText": "Quiero recuperarme 5 minutos",
+      "intent": {
+        "schemaVersion": 1,
+        "intention": "Quiero recuperarme 5 minutos",
+        "goal": "relaxation",
+        "desiredStates": [
+          "calm",
+          "grounded"
+        ],
+        "durationMinutes": 5,
+        "intensity": "gentle",
+        "sessionKind": "exploratory",
+        "language": "es-MX",
+        "confidence": {
+          "goal": 1,
+          "durationMinutes": 1,
+          "intensity": 0
+        },
+        "requiresReview": [
+          "goal",
+          "intensity"
+        ]
+      },
+      "explanation": "Interpretamos esta expresión como una intención de recuperación y centrado subjetivos. No asumimos un mecanismo de drenaje energético."
+    },
+    "primaryMetric": "energy",
+    "candidates": [
+      {
+        "schemaVersion": 1,
+        "id": "candidate-0",
+        "label": "Protocolo A",
+        "type": "harmonic-constellation",
+        "constellation": {
+          "schemaVersion": 1,
+          "id": "personal-source-0",
+          "name": "Source 0",
+          "seedFrequencyHz": 144,
+          "members": [
+            {
+              "id": "r",
+              "relationshipType": "root",
+              "frequencyHz": 144
+            },
+            {
+              "id": "f",
+              "relationshipType": "ratio",
+              "ratio": {
+                "numerator": 3,
+                "denominator": 2
+              },
+              "frequencyHz": 216
+            }
+          ],
+          "playbackMode": "sequence",
+          "playbackOrder": [
+            "r",
+            "f"
+          ],
+          "generationVersion": "harmonic-constellation-v1",
+          "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+        },
+        "config": {
+          "baseHz": 144,
+          "ratioId": "root",
+          "increments": 1,
+          "direction": "ascending",
+          "mode": "sequence",
+          "durationSeconds": 1.2,
+          "uiVolume": 0,
+          "waveform": "sine",
+          "progression": [
+            "root",
+            "fifth"
+          ]
+        },
+        "rationale": {
+          "schemaVersion": 1,
+          "purpose": "Comparar una arquitectura guardada elegida explícitamente, sin presuponer un efecto.",
+          "components": [
+            {
+              "componentType": "constellation",
+              "value": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "role": "Definición exacta del candidato",
+              "basis": "mathematical",
+              "explanation": "Se conserva cada miembro, su orden y multiplicidad. Se reproduce el snapshot del plan, no una fuente que pueda cambiar."
+            },
+            {
+              "componentType": "mode",
+              "value": "sequence",
+              "role": "Organización temporal",
+              "basis": "acoustic",
+              "explanation": "Secuencia separa tonos; simultáneo los presenta juntos."
+            },
+            {
+              "componentType": "duration",
+              "value": "1.2 s",
+              "role": "Tiempo controlado",
+              "basis": "protocol-design",
+              "explanation": "Misma duración para todos los candidatos."
+            },
+            {
+              "componentType": "volume",
+              "value": "0/100",
+              "role": "Nivel controlado",
+              "basis": "protocol-design",
+              "explanation": "Mismo control de volumen; no mide decibelios. Usa un nivel cómodo."
+            }
+          ],
+          "limitations": [
+            "Diseño exploratorio; no establece eficacia ni causalidad."
+          ]
+        },
+        "metadata": {
+          "seedFrequencyHz": 144,
+          "ratios": [
+            "1:1",
+            "3:2"
+          ],
+          "octaveOffsets": [],
+          "playbackMode": "sequence",
+          "memberCount": 2,
+          "durationSeconds": 1.2,
+          "uiVolume": 0,
+          "evidenceBasis": [
+            "protocol-design",
+            "mathematical",
+            "exploratory"
+          ],
+          "seedBasis": "saved-constellation"
+        }
+      },
+      {
+        "schemaVersion": 1,
+        "id": "candidate-1",
+        "label": "Protocolo B",
+        "type": "harmonic-constellation",
+        "constellation": {
+          "schemaVersion": 1,
+          "id": "personal-source-1",
+          "name": "Source 1",
+          "seedFrequencyHz": 220,
+          "members": [
+            {
+              "id": "r",
+              "relationshipType": "root",
+              "frequencyHz": 220
+            },
+            {
+              "id": "f",
+              "relationshipType": "ratio",
+              "ratio": {
+                "numerator": 3,
+                "denominator": 2
+              },
+              "frequencyHz": 330
+            }
+          ],
+          "playbackMode": "sequence",
+          "playbackOrder": [
+            "r",
+            "f"
+          ],
+          "generationVersion": "harmonic-constellation-v1",
+          "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+        },
+        "config": {
+          "baseHz": 220,
+          "ratioId": "root",
+          "increments": 1,
+          "direction": "ascending",
+          "mode": "sequence",
+          "durationSeconds": 1.2,
+          "uiVolume": 0,
+          "waveform": "sine",
+          "progression": [
+            "root",
+            "fifth"
+          ]
+        },
+        "rationale": {
+          "schemaVersion": 1,
+          "purpose": "Comparar una arquitectura guardada elegida explícitamente, sin presuponer un efecto.",
+          "components": [
+            {
+              "componentType": "constellation",
+              "value": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "role": "Definición exacta del candidato",
+              "basis": "mathematical",
+              "explanation": "Se conserva cada miembro, su orden y multiplicidad. Se reproduce el snapshot del plan, no una fuente que pueda cambiar."
+            },
+            {
+              "componentType": "mode",
+              "value": "sequence",
+              "role": "Organización temporal",
+              "basis": "acoustic",
+              "explanation": "Secuencia separa tonos; simultáneo los presenta juntos."
+            },
+            {
+              "componentType": "duration",
+              "value": "1.2 s",
+              "role": "Tiempo controlado",
+              "basis": "protocol-design",
+              "explanation": "Misma duración para todos los candidatos."
+            },
+            {
+              "componentType": "volume",
+              "value": "0/100",
+              "role": "Nivel controlado",
+              "basis": "protocol-design",
+              "explanation": "Mismo control de volumen; no mide decibelios. Usa un nivel cómodo."
+            }
+          ],
+          "limitations": [
+            "Diseño exploratorio; no establece eficacia ni causalidad."
+          ]
+        },
+        "metadata": {
+          "seedFrequencyHz": 220,
+          "ratios": [
+            "1:1",
+            "3:2"
+          ],
+          "octaveOffsets": [],
+          "playbackMode": "sequence",
+          "memberCount": 2,
+          "durationSeconds": 1.2,
+          "uiVolume": 0,
+          "evidenceBasis": [
+            "protocol-design",
+            "mathematical",
+            "exploratory"
+          ],
+          "seedBasis": "saved-constellation"
+        }
+      }
+    ],
+    "assignmentStrategy": "balanced",
+    "randomSeed": 42,
+    "minimumSessionsPerCandidate": 10,
+    "schemaVersion": 1,
+    "id": "personal-plan",
+    "createdAt": "2026-09-01T12:00:00.000Z",
+    "status": "completed",
+    "comparabilityPolicy": {
+      "schemaVersion": 1,
+      "durationSeconds": 1.2,
+      "uiVolume": 0,
+      "mode": "sequence",
+      "contextPolicy": "exact-recorded-stratum",
+      "scale": "optional-0-10"
+    },
+    "assignments": [
+      {
+        "index": 0,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-0",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 0,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-0",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 1,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-1",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 1,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-1",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 2,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-2",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 2,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-2",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 3,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-3",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 3,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-3",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 4,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-4",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 4,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-4",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 5,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-5",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 5,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-5",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 6,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-6",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 6,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-6",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 7,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-7",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 7,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-7",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 8,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-8",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 8,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-8",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 9,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-9",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 9,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-9",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 10,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-10",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 10,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-10",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 11,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-11",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 11,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-11",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 12,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-12",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 12,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-12",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 13,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-13",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 13,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-13",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 14,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-14",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 14,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-14",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 15,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-15",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 15,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-15",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 16,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-16",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 16,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-16",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 17,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-17",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 17,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-17",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 18,
+        "candidateId": "candidate-0",
+        "status": "completed",
+        "attemptId": "personal-plan-18",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-0",
+          "assignmentIndex": 18,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-18",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 144,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 1
+            },
+            "constellation": {
+              "id": "personal-source-0",
+              "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-0",
+                "name": "Source 0",
+                "seedFrequencyHz": 144,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 144
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 216
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:d1db0e8908322bf900bfd09894974496b6caccbe93c2ab4570dbfbe656f06086"
+              }
+            }
+          }
+        }
+      },
+      {
+        "index": 19,
+        "candidateId": "candidate-1",
+        "status": "completed",
+        "attemptId": "personal-plan-19",
+        "reservedAt": "2026-09-01T12:00:00.000Z",
+        "resolvedAt": "2026-09-01T12:05:01.000Z",
+        "result": {
+          "schemaVersion": 1,
+          "planId": "personal-plan",
+          "candidateId": "candidate-1",
+          "assignmentIndex": 19,
+          "context": {
+            "tags": [
+              "after-work"
+            ],
+            "device": "headphones",
+            "timeOfDay": "evening"
+          },
+          "experiment": {
+            "id": "personal-plan-19",
+            "schemaVersion": 2,
+            "source": "harmonic-lab",
+            "status": "completed",
+            "createdAt": "2026-09-01T12:00:00.000Z",
+            "startedAt": "2026-09-01T12:00:01.000Z",
+            "endedAt": "2026-09-01T12:05:01.000Z",
+            "completedAt": "2026-09-01T12:05:01.000Z",
+            "intention": "Quiero recuperarme 5 minutos",
+            "expectationScore": 5,
+            "configurationSnapshot": {
+              "baseHz": 220,
+              "ratioId": "root",
+              "increments": 1,
+              "direction": "ascending",
+              "mode": "sequence",
+              "durationSeconds": 1.2,
+              "uiVolume": 0,
+              "waveform": "sine",
+              "progression": [
+                "root",
+                "fifth"
+              ]
+            },
+            "preState": {
+              "energy": 0
+            },
+            "postState": {
+              "energy": 2
+            },
+            "constellation": {
+              "id": "personal-source-1",
+              "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10",
+              "generationVersion": "harmonic-constellation-v1",
+              "snapshot": {
+                "schemaVersion": 1,
+                "id": "personal-source-1",
+                "name": "Source 1",
+                "seedFrequencyHz": 220,
+                "members": [
+                  {
+                    "id": "r",
+                    "relationshipType": "root",
+                    "frequencyHz": 220
+                  },
+                  {
+                    "id": "f",
+                    "relationshipType": "ratio",
+                    "ratio": {
+                      "numerator": 3,
+                      "denominator": 2
+                    },
+                    "frequencyHz": 330
+                  }
+                ],
+                "playbackMode": "sequence",
+                "playbackOrder": [
+                  "r",
+                  "f"
+                ],
+                "generationVersion": "harmonic-constellation-v1",
+                "signature": "sha256:0c9fb2419e68bb663d9d769c837d882bab5a15ee2ab9997ab6b6805ba3c64e10"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+]

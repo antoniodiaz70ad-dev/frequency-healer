@@ -14,6 +14,7 @@ import { ConstellationStore, CONSTELLATIONS_KEY } from '@/lib/harmonic/constella
 import type { HarmonicConstellationV1 } from '@/lib/harmonic/constellations';
 import GuidedRecommendation from '../lab/GuidedRecommendation';
 import { validateGuidedRecommendation, type GuidedRecommendationV1 } from '@/lib/guided/recommendations';
+import PersonalizedAdvisor from '../lab/PersonalizedAdvisor';
 import ProtocolDiscovery, { type DiscoveryPlaybackRequest } from '../lab/ProtocolDiscovery';
 import styles from './voice.module.css';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
@@ -138,6 +139,7 @@ export default function HarmonicLab() {
       <button className={styles.primary} disabled={playing || busy} onClick={() => void startPlayback(constellationPlan)}>Confirmar y reproducir constelación</button>
       <button disabled={playing || busy} onClick={() => { ++previewRun.current; setConstellationPlan(null); }}>Cerrar vista previa de reproducción</button>
     </section>}
+    <PersonalizedAdvisor active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
     <ProtocolDiscovery active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
     {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}

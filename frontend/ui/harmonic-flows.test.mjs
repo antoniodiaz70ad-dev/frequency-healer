@@ -578,3 +578,75 @@ test('Discovery corruption is preserved and exportable; no silent repair or play
   const page=await fixture(t);await page.evaluate(()=>localStorage.setItem('fh:protocol-discovery-plans-v1','{bad'));await page.reload();await openDiscovery(page);
   await page.getByRole('alert').filter({hasText:'Almacenamiento Discovery inválido'}).waitFor();assert.equal((await storage(page))[DISCOVERY_KEY],'{bad');assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
 });
+
+const PERSONAL_KEY='fh:personalized-experiments-v1';
+// Synthetic completed records produced by tests/personalization-fixtures.ts using the real validators/compiler.
+async function personalFixtureUI(t,adjust){
+  const {readFile}=await import('node:fs/promises');
+  const rows=JSON.parse(await readFile(new URL('./fixtures/personalization-discovery-v1.json',import.meta.url),'utf8'));
+  if(adjust)adjust(rows[0]);const raw=JSON.stringify(rows),page=await fixture(t);
+  await page.evaluate(({key,raw})=>localStorage.setItem(key,raw),{key:DISCOVERY_KEY,raw});await page.reload();
+  await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();
+  await page.getByRole('combobox',{name:'Intención registrada',exact:true}).selectOption(rows[0].id);
+  await button(page,'Generar recomendaciones personales').click();await page.getByRole('region',{name:'Ranking personal',exact:true}).waitFor();
+  return {page,rows,raw};
+}
+async function choosePersonal(page,label){
+  await button(page,`Elegir Protocolo ${label} · vista previa`).click();
+  await page.getByRole('combobox',{name:'Expectativa personal (0–10, requerida)',exact:true}).selectOption('0');
+  await page.getByRole('combobox',{name:'Antes personal Energía',exact:true}).selectOption('0');
+}
+for(const [label,id] of [['B','candidate-1'],['A','candidate-0']])test(`Personalization ${label}: ranked top/alternative, rationale, native audio, explicit exact experiment and export`,async t=>{
+  const {page,rows,raw}=await personalFixtureUI(t);const ranking=page.getByRole('region',{name:'Ranking personal',exact:true});
+  assert.match(await ranking.innerText(),/DESCRIPTIVE/);assert.match(await ranking.innerText(),/N = 10/);
+  assert.deepEqual(await ranking.getByRole('article').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label'))),['Candidato personal candidate-1','Candidato personal candidate-0']);
+  const card=page.getByRole('article',{name:`Candidato personal ${id}`,exact:true});await card.getByText('¿Por qué esta sesión?',{exact:true}).click();
+  const why=page.getByRole('region',{name:`Por qué se priorizó ${id}`,exact:true});assert.match(await why.innerText(),/personalization-v1/);assert.match(await why.innerText(),/Expectativa media: 5/);assert.match(await why.innerText(),/Consistencia: 10\/10/);
+  await choosePersonal(page,label);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});
+  const selected=rows[0].candidates.find(c=>c.id===id);
+  await button(page,'Confirmar y escuchar opción personal').click();
+  if(label==='B'){
+    await page.getByRole('heading',{name:'Sesión personal: completed · sin guardar',exact:true}).waitFor();
+    await eventually(async()=>assert.ok((await probe(page)).contexts.every(c=>c.state==='closed'&&c.oscillators.every(o=>o.ended&&o.disconnected))));
+  }else{
+    await page.getByRole('heading',{name:'Sesión personal: started · sin guardar',exact:true}).waitFor();await button(page,'Detener sesión personal').click();await clean(page);
+  }
+  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[selected.config.baseHz,selected.config.baseHz*1.5]);
+  assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});await page.getByRole('combobox',{name:'Después personal Energía',exact:true}).selectOption('1');
+  await button(page,'Guardar experimento personal').click();await page.getByText('Experimentos personales guardados (1)',{exact:true}).waitFor();
+  const data=await storage(page),[saved]=JSON.parse(data[PERSONAL_KEY]);assert.equal(data[DISCOVERY_KEY],raw);assert.deepEqual(Object.keys(data).sort(),[DISCOVERY_KEY,PERSONAL_KEY].sort());
+  assert.equal(saved.selectedCandidateId,id);assert.deepEqual(saved.experiment.configurationSnapshot,selected.config);assert.deepEqual(saved.experiment.constellation.snapshot,selected.constellation);
+  assert.equal(saved.experiment.expectationScore,0);assert.equal(saved.experiment.preState.energy,0);assert.equal(saved.experiment.preState.focus,undefined);assert.equal(saved.experiment.status,label==='B'?'completed':'cancelled');
+  assert.deepEqual(saved.recommendation.sourcePlans,rows);assert.equal(saved.recommendation.recommendations[0].provenance.length,10);
+  await page.reload();await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();await page.getByText('Experimentos personales guardados (1)',{exact:true}).click();
+  const pending=page.waitForEvent('download');await button(page,`Exportar experimento personal ${saved.experiment.id}`).click();const stream=await(await pending).createReadStream();let text='';for await(const chunk of stream)text+=chunk;assert.deepEqual(JSON.parse(text),saved);
+  assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+});
+test('Personalization expectation confound and preliminary evidence retain alternatives and original order',async t=>{
+  const {page}=await personalFixtureUI(t,p=>{p.assignments.forEach(a=>{a.result.experiment.expectationScore=a.candidateId==='candidate-0'?0:10;});});
+  const ranking=page.getByRole('region',{name:'Ranking personal',exact:true});assert.match(await ranking.innerText(),/expectativas medias difieren/);
+  assert.deepEqual(await ranking.getByRole('article').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label'))),['Candidato personal candidate-0','Candidato personal candidate-1']);
+  await page.evaluate(key=>{const rows=JSON.parse(localStorage.getItem(key));rows[0].assignments=rows[0].assignments.map(a=>a.index<10?a:{index:a.index,candidateId:a.candidateId,status:'skipped',resolvedAt:a.resolvedAt});localStorage.setItem(key,JSON.stringify(rows));},DISCOVERY_KEY);
+  await button(page,'Cargar evidencia personal').click();await page.getByRole('combobox',{name:'Intención registrada',exact:true}).selectOption('personal-plan');await button(page,'Generar recomendaciones personales').click();
+  await eventually(async()=>assert.match(await ranking.innerText(),/PRELIMINARY/));assert.match(await ranking.innerText(),/N = 5/);assert.match(await ranking.innerText(),/se conserva el orden original/);assert.equal((await probe(page)).contexts.length,0);
+});
+test('Personalization changed evidence rejects confirmation without audio or implicit save',async t=>{
+  const {page}=await personalFixtureUI(t);await choosePersonal(page,'B');
+  await page.evaluate(key=>{const rows=JSON.parse(localStorage.getItem(key));rows[0].assignments[0].result.experiment.postState.energy=3;localStorage.setItem(key,JSON.stringify(rows));},DISCOVERY_KEY);
+  await button(page,'Confirmar y escuchar opción personal').click();await page.getByRole('alert').filter({hasText:'La evidencia cambió.'}).waitFor();assert.equal((await probe(page)).contexts.length,0);assert.equal((await storage(page))[PERSONAL_KEY],undefined);
+});
+test('Personalization navigation interrupts native audio without completed state, save or plan mutation',async t=>{
+  const {page,raw}=await personalFixtureUI(t);await choosePersonal(page,'A');await button(page,'Confirmar y escuchar opción personal').click();await page.getByRole('heading',{name:'Sesión personal: started · sin guardar',exact:true}).waitFor();
+  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.deepEqual((await probe(page)).writes,[]);
+});
+test('Personalization corrupt source cannot become no-evidence fallback or overwrite',async t=>{
+  const page=await fixture(t);await page.evaluate(key=>localStorage.setItem(key,'{bad'),DISCOVERY_KEY);await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();
+  const region=page.getByRole('region',{name:'Asesor personalizado',exact:true});await region.getByRole('alert').waitFor();assert.equal(await button(page,'Generar recomendaciones personales').count(),0);assert.equal((await storage(page))[DISCOVERY_KEY],'{bad');assert.equal((await probe(page)).contexts.length,0);
+});
+test('Personalization Web Crypto race rejects newly changed evidence before engine access',async t=>{
+  const {page}=await personalFixtureUI(t);await choosePersonal(page,'B');
+  await page.evaluate(()=>{const original=crypto.subtle.digest.bind(crypto.subtle);let once=true;crypto.subtle.digest=async(...args)=>{if(once){once=false;window.__personalWaiting=true;await new Promise(resolve=>{window.__personalRelease=resolve;});}return original(...args);};});
+  await button(page,'Confirmar y escuchar opción personal').click();await eventually(async()=>assert.equal(await page.evaluate(()=>window.__personalWaiting),true));
+  await page.evaluate(key=>{const rows=JSON.parse(localStorage.getItem(key));rows[0].assignments[0].result.experiment.postState.energy=3;localStorage.setItem(key,JSON.stringify(rows));window.__personalRelease();},DISCOVERY_KEY);
+  await page.getByRole('alert').filter({hasText:'La evidencia cambió durante la confirmación'}).waitFor();assert.equal((await probe(page)).contexts.length,0);assert.equal((await storage(page))[PERSONAL_KEY],undefined);
+});
