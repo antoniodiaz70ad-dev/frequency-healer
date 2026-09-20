@@ -1,14 +1,14 @@
 import { Protocol } from './types';
 
 /**
- * Protocolos de sanación pre-configurados.
+ * Protocolos históricos pre-configurados.
  * Secuencias de frecuencias con duraciones y parámetros específicos.
  */
 export const PROTOCOLS: Protocol[] = [
   {
     id: 'solfeggio-ascension',
     name: 'Ascensión Solfeggio',
-    description: 'Recorre las 9 frecuencias Solfeggio sagradas. Limpieza y elevación completa de cuerpo, alma y espíritu.',
+    description: 'Recorrido histórico por nueve tonos asociados a la tradición Solfeggio. Las atribuciones espirituales se conservan solo como contexto cultural no validado.',
     domain: ['cuerpo', 'alma', 'espiritu'],
     icon: '🎵',
     color: '#fbbf24',
@@ -27,8 +27,8 @@ export const PROTOCOLS: Protocol[] = [
   },
   {
     id: 'sanacion-cuerpo',
-    name: 'Sanación del Cuerpo',
-    description: 'Protocolo Rife antimicrobiano. Antibacteriano, antiviral e inmunológico con onda cuadrada.',
+    name: 'Secuencia Rife corporal (histórica)',
+    description: 'Secuencia heredada de tonos cuadrados atribuida a fuentes Rife/CAFL. El catálogo no representa evidencia de efectos antimicrobianos, antivirales o inmunológicos.',
     domain: ['cuerpo'],
     icon: '🫀',
     color: '#f87171',
@@ -43,7 +43,7 @@ export const PROTOCOLS: Protocol[] = [
   {
     id: 'meditacion-profunda',
     name: 'Meditación Profunda',
-    description: 'Descenso gradual desde Schumann hasta Epsilon. Binaural beats para inducir estados meditativos profundos.',
+    description: 'Secuencia binaural descendente para exploración meditativa subjetiva. No se afirma que induzca un estado fisiológico específico.',
     domain: ['alma', 'espiritu'],
     icon: '🧘',
     color: '#a78bfa',
@@ -57,8 +57,8 @@ export const PROTOCOLS: Protocol[] = [
   },
   {
     id: 'gamma-neuroproteccion',
-    name: 'Gamma Neuroprotección',
-    description: 'Frecuencia gamma 40 Hz sostenida. Basado en investigación MIT sobre reducción de placas amiloides en Alzheimer.',
+    name: 'Gamma 40 Hz (histórico)',
+    description: 'Secuencia binaural heredada de 40 Hz. No representa tratamiento, neuroprotección ni evidencia clínica sobre Alzheimer.',
     domain: ['cuerpo', 'alma'],
     icon: '🧠',
     color: '#60a5fa',
@@ -70,7 +70,7 @@ export const PROTOCOLS: Protocol[] = [
   {
     id: 'desintoxicacion',
     name: 'Desintoxicación',
-    description: 'Protocolo Rife/CAFL para desintoxicación. Elimina parásitos y bacterias con frecuencias específicas.',
+    description: 'Secuencia heredada atribuida a listas Rife/CAFL. No se presenta como desintoxicación ni como tratamiento de parásitos o bacterias.',
     domain: ['cuerpo'],
     icon: '🧹',
     color: '#4ade80',
@@ -84,7 +84,7 @@ export const PROTOCOLS: Protocol[] = [
   {
     id: 'sueno-profundo',
     name: 'Sueño Profundo',
-    description: 'Descenso gradual de alpha a delta. Usa binaural beats para inducir sueño reparador naturalmente.',
+    description: 'Recorrido binaural descendente para una rutina exploratoria previa al descanso. No promete inducir sueño ni producir efectos reparadores.',
     domain: ['cuerpo', 'alma'],
     icon: '🌙',
     color: '#818cf8',
@@ -100,7 +100,7 @@ export const PROTOCOLS: Protocol[] = [
   {
     id: 'equilibrio-432',
     name: 'Equilibrio 432 Hz',
-    description: 'Baño sonoro en 432 Hz con armónicos naturales. La afinación de las catedrales antiguas.',
+    description: 'Recorrido sonoro por múltiplos de 432 Hz. Las asociaciones históricas atribuidas a esta afinación no se tratan como evidencia de bienestar.',
     domain: ['cuerpo', 'alma'],
     icon: '🎶',
     color: '#4ade80',
@@ -116,7 +116,7 @@ export const PROTOCOLS: Protocol[] = [
   {
     id: 'despertar-espiritual',
     name: 'Despertar Espiritual',
-    description: 'Frecuencias Solfeggio superiores para activación espiritual. Tercer ojo, corona y conexión divina.',
+    description: 'Recorrido histórico por tonos Solfeggio altos. Las asociaciones con tercer ojo, corona o conexión divina son referencias espirituales exploratorias.',
     domain: ['espiritu'],
     icon: '✨',
     color: '#67e8f9',
@@ -129,8 +129,8 @@ export const PROTOCOLS: Protocol[] = [
   },
   {
     id: 'frecuencia-milagro',
-    name: 'Frecuencia del Milagro',
-    description: '528 Hz sostenida — la frecuencia del amor y la reparación del ADN. La más poderosa del Solfeggio.',
+    name: '528 Hz Solfeggio (histórico)',
+    description: 'Tono sostenido de 528 Hz, asociado en fuentes populares con amor o reparación del ADN. Esas afirmaciones no se consideran evidencia establecida.',
     domain: ['cuerpo', 'alma', 'espiritu'],
     icon: '💎',
     color: '#fbbf24',
@@ -141,8 +141,8 @@ export const PROTOCOLS: Protocol[] = [
   },
   {
     id: 'antiparasitario',
-    name: 'Antiparasitario Completo',
-    description: 'Protocolo CAFL completo para parásitos. Múltiples frecuencias con onda cuadrada para máxima efectividad.',
+    name: 'Secuencia CAFL múltiple (histórica)',
+    description: 'Secuencia heredada de tonos cuadrados atribuida a listas CAFL. No se presenta como tratamiento antiparasitario ni se afirma efectividad médica.',
     domain: ['cuerpo'],
     icon: '🛡️',
     color: '#f87171',
@@ -157,8 +157,8 @@ export const PROTOCOLS: Protocol[] = [
   // ─── PROTOCOLOS RESONANCIA ALFA ──────────────────────────────────
   {
     id: 'resonancia-alfa-iq',
-    name: 'Resonancia Alfa — Alto IQ',
-    description: 'Escala progresiva de ondas Alpha 8→13 Hz. Entrena la firma biométrica del genio: frecuencia rápida, alta amplitud y coherencia inter-hemisférica.',
+    name: 'Recorrido Alpha 8–13 Hz',
+    description: 'Escala binaural progresiva de 8 a 13 Hz. No se atribuyen aumentos de IQ, genialidad ni entrenamiento de coherencia cerebral.',
     domain: ['alma'],
     icon: '🧠',
     color: '#60a5fa',
@@ -174,7 +174,7 @@ export const PROTOCOLS: Protocol[] = [
   {
     id: 'samadhi-alpha',
     name: 'Samadhi — Alpha Continuo',
-    description: 'Meditación estilo hindú. Alpha 10 Hz sostenido 30 min. Imperturbable, tolerancia extrema. El mundo físico es Maya, la verdadera realidad es interna.',
+    description: 'Secuencia Alpha inspirada en una referencia cultural a Samadhi. No se prometen imperturbabilidad ni cambios cognitivos o fisiológicos.',
     domain: ['alma', 'espiritu'],
     icon: '🪷',
     color: '#f59e0b',
@@ -187,7 +187,7 @@ export const PROTOCOLS: Protocol[] = [
   {
     id: 'satori-alpha',
     name: 'Satori — Alpha Reactivo',
-    description: 'Meditación estilo Zen japonés. Alpha 12-13 Hz con variaciones. Altamente reactivo: cada estímulo es nuevo. Supresión profunda en milisegundos.',
+    description: 'Secuencia Alpha variable inspirada en una referencia cultural a Satori. No se atribuyen reactividad o supresión neurológica medibles.',
     domain: ['alma', 'espiritu'],
     icon: '⛩️',
     color: '#ef4444',
@@ -202,8 +202,8 @@ export const PROTOCOLS: Protocol[] = [
   },
   {
     id: 'neurofeedback-alfa',
-    name: 'Neurofeedback Alpha — Sweet Spot',
-    description: 'Entrenamiento con tono de recompensa en sweet spot 400-800 Hz. Alpha 10→12 Hz con tono de retroalimentación intercalado. Vía orgánica, no imposición.',
+    name: 'Alpha con tono intercalado',
+    description: 'Secuencia Alpha con un tono intercalado de 600 Hz. La app no mide EEG y esta reproducción no equivale a neurofeedback.',
     domain: ['alma'],
     icon: '🎯',
     color: '#10b981',
@@ -220,8 +220,8 @@ export const PROTOCOLS: Protocol[] = [
   },
   {
     id: 'sincronizacion-grupal',
-    name: 'Sincronización Grupal Alpha',
-    description: 'Para sesiones grupales. Alpha 10 Hz sostenido con alta coherencia. Potencial exponencial: sincronizar mentes eleva el rendimiento a la potencia del grupo.',
+    name: 'Secuencia Alpha grupal (histórica)',
+    description: 'Secuencia Alpha heredada para exploración grupal. No se afirma sincronización mental, coherencia cerebral ni aumento del rendimiento.',
     domain: ['alma', 'espiritu'],
     icon: '🔗',
     color: '#8b5cf6',

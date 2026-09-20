@@ -6,13 +6,14 @@ import { getAudioEngine } from "@/lib/audioEngine";
 import { CommandCard, CommandPhase, FrequencyEntry } from "@/lib/types";
 import { COMMAND_CARDS, COMMAND_PHASES_ORDERED, PHASE_INFO } from "@/lib/commandCards";
 import CommandCardItem from "@/components/CommandCardItem";
+import { CLAIM_CLASSIFICATION_LABELS, frequencyClaimClassification } from "@/lib/protocolLibrary";
 
 type Tab = "frecuencias" | "comandos";
 
 const EVIDENCE_INFO: Record<string, { label: string; color: string; icon: string }> = {
-  verificada: { label: "Verificada", color: "#4ade80", icon: "✓" },
-  anecdotica: { label: "Anecdótica", color: "#fbbf24", icon: "~" },
-  especulativa: { label: "Especulativa", color: "#f87171", icon: "?" },
+  verificada: { label: "Clasificación heredada: verificada", color: "#fbbf24", icon: "~" },
+  anecdotica: { label: "Referencia anecdótica", color: "#fbbf24", icon: "~" },
+  especulativa: { label: "Referencia especulativa", color: "#f87171", icon: "?" },
 };
 
 export default function BibliotecaPage() {
@@ -82,7 +83,7 @@ export default function BibliotecaPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white mb-1">Biblioteca</h1>
         <p className="text-sm text-gray-400">
-          Frecuencias documentadas y tarjetas operativas para sesiones binaurales profundas.
+          Catálogo histórico y exploratorio de tonos, más tarjetas operativas. Las asociaciones heredadas no son recomendaciones médicas.
         </p>
       </div>
 
@@ -286,7 +287,7 @@ function FrequenciasTab({
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
           <input
             type="text"
-            placeholder="Buscar por nombre, frecuencia, dolencia..."
+            placeholder="Buscar por nombre, frecuencia o referencia histórica..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-[#111827] border border-[#1f2937] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#60a5fa] transition-colors"
@@ -360,6 +361,7 @@ function FrequenciasTab({
           const isCurrentlyPlaying = playingId === freq.id;
           const catInfo = CATEGORY_INFO[freq.category];
           const evidInfo = EVIDENCE_INFO[freq.evidence];
+          const classification = frequencyClaimClassification(freq.category);
 
           return (
             <div
@@ -421,6 +423,7 @@ function FrequenciasTab({
               {isExpanded && (
                 <div className="px-4 pb-4 border-t border-[#1f2937] pt-3 space-y-3">
                   <p className="text-sm text-gray-300">{freq.description}</p>
+                  <p className="text-xs text-[#fbbf24]">Clasificación: {CLAIM_CLASSIFICATION_LABELS[classification]}</p>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
@@ -440,7 +443,7 @@ function FrequenciasTab({
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-600 uppercase">Evidencia</p>
+                      <p className="text-[10px] text-gray-600 uppercase">Procedencia heredada</p>
                       <p className="text-sm" style={{ color: evidInfo.color }}>
                         {evidInfo.icon} {evidInfo.label}
                       </p>
@@ -469,7 +472,7 @@ function FrequenciasTab({
                     ))}
                   </div>
 
-                  <p className="text-[10px] text-gray-600">Fuente: {freq.source}</p>
+                  <p className="text-[10px] text-gray-600">Fuente declarada en el catálogo heredado: {freq.source}. Esta etiqueta no valida sus afirmaciones.</p>
                 </div>
               )}
             </div>

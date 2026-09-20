@@ -9,6 +9,7 @@ export const EVIDENCE_CATEGORIES = [
   'EXPLORATORY',
   'PERSONAL_N1',
   'PUBLISHED_EVIDENCE',
+  'UNSUPPORTED_LEGACY_CLAIM',
 ] as const;
 export const SEED_SELECTION_BASES = [
   'harmonic-compatibility',
@@ -153,4 +154,21 @@ export const LEGACY_PROTOCOL_DISPOSITIONS_V1: readonly LegacyProtocolDisposition
 
 export function protocolForRuleId(ruleId: string): ProtocolDefinitionV1 | undefined {
   return PROTOCOL_LIBRARY_V1.find(protocol => protocol.candidateRuleIds.includes(ruleId));
+}
+
+export function legacyProtocolDisposition(protocolId: string): LegacyProtocolDispositionV1 | undefined {
+  return LEGACY_PROTOCOL_DISPOSITIONS_V1.find(value => value.protocolId === protocolId);
+}
+
+export const CLAIM_CLASSIFICATION_LABELS: Record<EvidenceCategoryV1, string> = {
+  MATHEMATICAL: 'Matemática', ACOUSTIC: 'Acústica', PROTOCOL_DESIGN: 'Diseño de protocolo',
+  TRADITIONAL_HISTORICAL: 'Histórico / tradicional', EXPLORATORY: 'Exploratorio',
+  PERSONAL_N1: 'Personal N=1', PUBLISHED_EVIDENCE: 'Evidencia publicada',
+  UNSUPPORTED_LEGACY_CLAIM: 'Afirmación heredada no validada',
+};
+
+export function frequencyClaimClassification(category: string): EvidenceCategoryV1 {
+  if (category === 'solfeggio') return 'TRADITIONAL_HISTORICAL';
+  if (category === 'rife' || category === 'nogier') return 'UNSUPPORTED_LEGACY_CLAIM';
+  return 'EXPLORATORY';
 }

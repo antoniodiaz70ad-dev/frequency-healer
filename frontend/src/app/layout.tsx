@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Frequency Healer",
-  description: "Generador de frecuencias para sanacion de cuerpo, alma y espiritu",
+  description: "Plataforma personal de exploración armónica y observación subjetiva",
 };
 
 export default function RootLayout({

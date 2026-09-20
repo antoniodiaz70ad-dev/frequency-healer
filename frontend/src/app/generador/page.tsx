@@ -15,14 +15,14 @@ import SafetyDisclaimerModal, {
 } from "@/components/SafetyDisclaimerModal";
 
 const PRESETS = [
-  { label: "528 Hz Milagro", hz: 528, waveform: "sine" as Waveform, color: "#fbbf24" },
+  { label: "528 Hz Solfeggio", hz: 528, waveform: "sine" as Waveform, color: "#fbbf24" },
   { label: "432 Hz Natural", hz: 432, waveform: "sine" as Waveform, color: "#4ade80" },
   { label: "40 Hz Gamma", hz: 40, waveform: "sine" as Waveform, color: "#60a5fa" },
   { label: "7.83 Hz Schumann", hz: 7.83, waveform: "sine" as Waveform, color: "#a78bfa" },
-  { label: "174 Hz Dolor", hz: 174, waveform: "sine" as Waveform, color: "#f87171" },
-  { label: "963 Hz Corona", hz: 963, waveform: "sine" as Waveform, color: "#67e8f9" },
-  { label: "727 Hz Rife", hz: 727, waveform: "square" as Waveform, color: "#f87171" },
-  { label: "880 Hz Inmune", hz: 880, waveform: "square" as Waveform, color: "#fb923c" },
+  { label: "174 Hz Solfeggio", hz: 174, waveform: "sine" as Waveform, color: "#f87171" },
+  { label: "963 Hz Solfeggio", hz: 963, waveform: "sine" as Waveform, color: "#67e8f9" },
+  { label: "727 Hz Rife (histórico)", hz: 727, waveform: "square" as Waveform, color: "#f87171" },
+  { label: "880 Hz Rife (histórico)", hz: 880, waveform: "square" as Waveform, color: "#fb923c" },
 ];
 
 type Tab = "tone" | "hemi-sync";

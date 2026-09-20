@@ -5,6 +5,7 @@ import { PROTOCOLS } from "@/lib/protocols";
 import { DOMAIN_INFO, WAVEFORM_INFO } from "@/lib/frequencies";
 import { getAudioEngine } from "@/lib/audioEngine";
 import { Protocol, ProtocolStep } from "@/lib/types";
+import { legacyProtocolDisposition } from "@/lib/protocolLibrary";
 
 type ProtocolState = "idle" | "playing" | "paused";
 
@@ -141,8 +142,8 @@ export default function ProtocolosPage() {
   return (
     <div className="max-w-4xl animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Protocolos de Sanaci&oacute;n</h1>
-        <p className="text-sm text-gray-400">Secuencias automatizadas de frecuencias terap&eacute;uticas.</p>
+        <h1 className="text-2xl font-bold text-white mb-1">Protocolos históricos</h1>
+        <p className="text-sm text-gray-400">Secuencias heredadas para exploración personal. Sus asociaciones no representan evidencia médica ni recomendaciones de Core V1.</p>
       </div>
 
       {/* Domain filter */}
@@ -254,6 +255,7 @@ export default function ProtocolosPage() {
       {/* Protocol cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredProtocols.map((protocol) => {
+          const disposition = legacyProtocolDisposition(protocol.id);
           const isSelected = selectedProtocol?.id === protocol.id;
           const isActive = isSelected && protocolState !== "idle";
           return (
@@ -273,6 +275,7 @@ export default function ProtocolosPage() {
                   <div>
                     <h3 className="text-sm font-bold text-white">{protocol.name}</h3>
                     <p className="text-xs text-gray-500">{protocol.totalDurationMinutes} min &middot; {protocol.steps.length} pasos</p>
+                    <p className="text-[10px] text-[#fbbf24]">{disposition?.status === "deprecated" ? "Histórico · excluido de nuevas recomendaciones" : "Histórico / exploratorio"}</p>
                   </div>
                 </div>
                 {!isActive && (

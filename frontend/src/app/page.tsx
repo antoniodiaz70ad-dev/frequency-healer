@@ -6,12 +6,12 @@ import { FREQUENCY_DATABASE, DOMAIN_INFO, CATEGORY_INFO } from "@/lib/frequencie
 import { PROTOCOLS } from "@/lib/protocols";
 
 const QUICK_FREQUENCIES = [
-  { id: "sol-528", label: "528 Hz Milagro", color: "#fbbf24" },
+  { id: "sol-528", label: "528 Hz Solfeggio", color: "#fbbf24" },
   { id: "bw-gamma", label: "40 Hz Gamma", color: "#60a5fa" },
   { id: "bw-schumann", label: "7.83 Hz Schumann", color: "#a78bfa" },
   { id: "mus-432", label: "432 Hz Natural", color: "#4ade80" },
-  { id: "rife-727", label: "727 Hz Rife", color: "#f87171" },
-  { id: "sol-963", label: "963 Hz Corona", color: "#67e8f9" },
+  { id: "rife-727", label: "727 Hz Rife (histórico)", color: "#f87171" },
+  { id: "sol-963", label: "963 Hz Solfeggio", color: "#67e8f9" },
 ];
 
 const DOMAIN_CARDS = [
@@ -19,7 +19,7 @@ const DOMAIN_CARDS = [
     domain: "cuerpo" as const,
     title: "Cuerpo",
     icon: "🫀",
-    subtitle: "Sanaci\u00f3n F\u00edsica",
+    subtitle: "Exploraci\u00f3n corporal subjetiva",
     description: "Frecuencias Rife, CAFL y Nogier para el cuerpo f\u00edsico.",
     gradient: "from-[#f8717120] to-transparent",
     borderColor: "#f87171",
@@ -57,7 +57,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-1">Frequency Healer</h1>
-        <p className="text-sm text-gray-400">Sanaci&oacute;n con frecuencias para cuerpo, alma y esp&iacute;ritu.</p>
+        <p className="text-sm text-gray-400">Exploración sonora personal para observar experiencias subjetivas.</p>
       </div>
 
       <nav aria-label="Formas de explorar" className="space-y-4 mb-8">
@@ -125,7 +125,7 @@ export default function DashboardPage() {
       {/* Protocols quick access */}
       <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-white">Protocolos de Sanaci&oacute;n</h3>
+          <h3 className="text-sm font-bold text-white">Protocolos históricos</h3>
           <Link href="/protocolos" className="text-xs text-[#60a5fa] hover:text-white transition-colors">
             Ver todos →
           </Link>
