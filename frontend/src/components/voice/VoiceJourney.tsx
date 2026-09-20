@@ -18,6 +18,7 @@ import ProtocolRationale from '../lab/ProtocolRationale';
 import { protocolRationale } from '@/lib/guided/rationale';
 import SessionPlan from './SessionPlan';
 import styles from './voice.module.css';
+import { FHPageHeader, FHPageShell } from '../ui/FHLayout';
 
 export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled = false }: { transcriptionEnabled?: boolean; aiEnabled?: boolean }) {
   const [flow] = useState(() => new VoiceOrchestrator());
@@ -62,9 +63,9 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
   const showHistory = () => { if (history.current) { history.current.open = true; history.current.querySelector('summary')?.focus(); } };
   const evidenceLabel = !evidence?.available ? 'Evidencia personal no disponible' : ({ none: 'Evidencia personal insuficiente', insufficient: 'Evidencia personal insuficiente', preliminary: 'Señal personal preliminar', descriptive: 'Patrón personal descriptivo' })[evidence.evidenceLevel];
   const sessionStyle = proposal?.harmonicConfig.mode === 'simultaneous' ? 'Tonos simultáneos' : 'Secuencia de tonos';
-  return <div className={`${styles.workspace} ${styles.guided}`}>
-    <span className={styles.tag}>Exploración sonora · reglas locales</span><h1>Sesión guiada</h1>
-    {step < 7 && <p className={styles.muted}>Paso {step} de 6</p>}
+  return <FHPageShell width="narrow"><div className={`${styles.workspace} ${styles.guided}`}>
+    <FHPageHeader eyebrow="Exploración sonora · reglas locales" title="Sesión guiada" description="Una intención, una propuesta revisable y una observación personal." />
+    {step < 7 && <div className={styles.journeyProgress} aria-label={`Paso ${step} de 6`}><span>{String(step).padStart(2, '0')} / 06</span><i style={{ width: `${Math.min(100, step / 6 * 100)}%` }} /></div>}
     {(error || flow.error) && <p role="alert" className={styles.error}>{error || flow.error}</p>}
     {['idle', 'review_transcript', 'interpretation_error', 'requesting_permission', 'listening', 'transcribing', 'permission_denied', 'unsupported', 'transcription_error'].includes(state) && <section><h2 ref={heading} tabIndex={-1}>¿Qué quieres explorar hoy?</h2><p>Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p><form onSubmit={async e => { e.preventDefault(); const boundary = guidanceBoundary(words); if (boundary) { setError(boundary); return; } setError(''); if (state === 'idle' || state === 'interpretation_error') flow.move('review_transcript'); if (useAI) await flow.interpretRemote(words); else flow.interpret(words); setIntent(flow.intent); }}><label>¿Qué quieres explorar?<textarea maxLength={500} value={words} onChange={e => setWords(e.target.value)} placeholder="Quiero explorar una decisión con claridad durante veinte minutos." required /></label>{aiEnabled && <label className={styles.check}><input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />Enviar este texto al asistente remoto (opcional)</label>}<button type="submit" disabled={!['idle', 'review_transcript', 'interpretation_error'].includes(state)}>Interpretar intención</button><button type="button" onClick={reset}>Cancelar</button></form><details><summary>Usar voz · opcional</summary><VoiceCapture kind="intention" remoteEnabled={transcriptionEnabled} onPhase={p => flow.move(p)} onCancel={() => { flow.cancel(); flow.move('review_transcript'); }} onText={result => { if (result) setWords(result); if (flow.state !== 'review_transcript') { flow.cancel(); flow.move('review_transcript'); } }} /></details></section>}
     {state === 'interpreting' && <section><p role="status">Estructurando la intención…</p><button onClick={reset}>Cancelar</button></section>}
@@ -125,5 +126,5 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
     {!active && <details ref={history}><summary>Historial de sesiones</summary><VoiceHistory records={[...memory, ...records.filter(r => !memory.some(m => m.id === r.id))]} rawExport={() => { try { exportJSON({ key: SESSIONS_KEY, original: localStorage.getItem(SESSIONS_KEY) }, 'frequency-healer-voice-original.json'); } catch { setStorageError('No se puede leer el almacenamiento. Exporta las sesiones visibles.'); } }} onDelete={async id => {
       try { const store = new VoiceStore(localStorage); setRecords(id === null ? await store.clear() : await store.remove(id)); setMemory(rows => id === null ? [] : rows.filter(r => r.id !== id)); setStorageError(''); } catch (e) { setStorageError((e as Error).message); }
     }} /></details>}
-  </div>;
+  </div></FHPageShell>;
 }
