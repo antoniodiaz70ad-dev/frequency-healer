@@ -1,3 +1,4 @@
+import { recommendationRule, type HarmonicRecommendationRuleV1 } from './rationale';
 import { parseLocalIntent } from '../voice/intentParser';
 import { buildProposal } from '../voice/rules';
 import { validateIntent, text } from '../voice/validation';
@@ -48,19 +49,21 @@ export interface GuidedRecommendationV1 {
   proposal: VoiceSessionProposalV1;
   personalEvidence: PersonalEvidenceV1;
   explanation: string[];
+  rule: HarmonicRecommendationRuleV1;
 }
 export function recommendGuided(interpretation: GuidedInterpretationV1, values: readonly unknown[] | null = [], volume?: number): GuidedRecommendationV1 {
   if(interpretation.schemaVersion!==1||interpretation.taxonomyVersion!==GUIDED_TAXONOMY_VERSION)throw new Error('Versión de interpretación desconocida.');
   const rawText=text(interpretation.rawText),intent=validateIntent(interpretation.intent);
   const boundary=guidanceBoundary(rawText)||guidanceBoundary(intent.intention);if(boundary)throw new Error(boundary);
   const proposal=buildProposal(intent,volume===undefined?{}:{uiVolume:volume});
-  return {schemaVersion:1,interpretation:{...interpretation,rawText,intent},proposal,personalEvidence:personalEvidence(proposal,values),explanation:[`Objetivo revisado: ${dictionaries.es.goals[intent.goal]}. Regla ${proposal.ruleId} (${proposal.ruleVersion}).`,...proposal.rationale,'Una sola opción validada por las reglas actuales. Suave/profunda describen el diseño, no potencia médica. El historial no cambia la selección ni el orden de recomendaciones.','Las observaciones personales no demuestran eficacia médica ni causalidad.']};
+  return {schemaVersion:1,interpretation:{...interpretation,rawText,intent},proposal,rule:recommendationRule(proposal),personalEvidence:personalEvidence(proposal,values),explanation:[`Objetivo revisado: ${dictionaries.es.goals[intent.goal]}. Regla ${proposal.ruleId} (${proposal.ruleVersion}).`,...proposal.rationale,'Una sola opción validada por las reglas actuales. Suave/profunda describen el diseño, no potencia médica. El historial no cambia la selección ni el orden de recomendaciones.','Las observaciones personales no demuestran eficacia médica ni causalidad.']};
 }
 /** Rebuild executable output at confirmation. Never trust a supplied schedule. */
 export function validateGuidedRecommendation(value: GuidedRecommendationV1, experimentalConsent: boolean) {
   if(value.schemaVersion!==1)throw new Error('Versión de recomendación desconocida.');
   const edits=value.proposal.source==='user-customized'?value.proposal.harmonicConfig.uiVolume:undefined;
   const rebuilt=recommendGuided(value.interpretation,[],edits).proposal;
+  if(JSON.stringify(recommendationRule(rebuilt))!==JSON.stringify(value.rule))throw new Error('La explicación o la regla cambió. Genera otra propuesta.');
   if(JSON.stringify(rebuilt)!==JSON.stringify(value.proposal))throw new Error('La propuesta no coincide con la regla local. Genera otra.');
   if(rebuilt.requiresExplicitExperimentalConsent&&!experimentalConsent)throw new Error('La cascada experimental requiere consentimiento adicional.');
   return rebuilt.harmonicConfig;
