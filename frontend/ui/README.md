@@ -88,3 +88,29 @@ V1 remains in `fh:experiment-sessions-v1` with unchanged validators and payloads
 Coverage includes immutable identity, exact signature/configuration, zeros versus absent fields, lifecycle states, source rename/deletion, corruption, concurrent writes, export/reload and source changes during asynchronous confirmation. The reader reports source availability independently from snapshot validity. Confirmation conservatively rejects any constellation-storage payload change during validation, including unrelated additions; a new preview is required. Source identity/signature/plan are revalidated immediately before playback. The mathematical signature is not a tamper-proof signature over subjective or identity fields.
 
 Local macOS validation encountered a stalled native audio clock even in a standalone AudioContext test. Running the unchanged harness through an external FH_UI_BROWSER_PATH wrapper adding Chromium's `--disable-audio-output` restored native clock/ended/cleanup behavior. This replaces only the OS output sink, not AudioContext or assertions; no wrapper or test flag was added to the repository. CI continues to run the normal pinned Chromium harness. Physical speaker output was not verified by this fallback. Chromium documents this test switch at https://chromium.googlesource.com/chromium/src/+/f29eb01290cd36a30177ecf8197f906c01088a0d.
+
+## Guided advisor + protocol rationale (Phase 2B)
+
+`HarmonicRecommendationRuleV1` identifies the existing `voice-rules-v1` rule, goal, intensity and legacy candidate type. `ProtocolRationaleV1` derives explanations from the existing validated proposal/schedule, never from a new frequency table. It includes seed, every audible relationship (including duplicates and cascade returns), mode, duration and volume, with explicit evidence basis and limitations. No octave or saved-constellation identity is invented. Guided confirmation rebuilds and checks both proposal and rule/rationale before playback. The full rationale is included in the existing recommendation JSON export; it adds no persistence key or record-schema field.
+
+The same rationale is rendered in Harmonic Lab and Voice Journey under “¿Por qué esta sesión?”. Voice Journey keeps the existing interpreter and acoustic proposals; its technical controls/plan are expandable, and it reuses the guide's medical-language boundary and strict descriptive personal-evidence function. The guide's current alias adapter remains unchanged. One candidate is returned; no invented balanced variant, ranking, learning or protocol mutation.
+
+Conceptual taxonomy maps onto existing categories, not new acoustic rules:
+
+| Concept | Existing goal / states |
+| --- | --- |
+| Calm / emotional regulation | relaxation / calm |
+| Focus / dispersion | focus / focus |
+| Sleep preparation | sleep_preparation / restful |
+| Recovery / subjective energy | relaxation / calm + grounded |
+| Grounding | relaxation / grounded |
+| Creativity | creative_exploration / creative |
+| Meditation / integration | reflection / calm + openness |
+| Exploration / unknown | custom / review required |
+| Clarity | clarity / calm + focus |
+
+Classification confidence concerns text interpretation only. The UI requires review/correction; vocabulary coverage is heuristic, not a general semantic model. Evidence labels distinguish mathematical, acoustic, protocol-design, exploratory and personal N=1 claims; traditional is reserved in the type but no unattributed historical claim is emitted. N<5 is insufficient; N=5–9 preliminary; N>=10 descriptive. All levels remain non-causal and do not change ordering. Only exact comparable validated completed voice records count; V1/V2 experiments are not silently pooled.
+
+The guide returns legacy configs, so optional guided experiment recording stays V1. Saved-constellation playback independently retains the Phase 2A V2 ID/signature/definition/acoustic snapshot path, covered by regression. No constellation-based recommendation or new provenance storage is introduced; recommendation provenance is in its export, not added to old experiment schemas.
+
+Eleven new unit/integration cases bring the suite to 121. Two new browser cases bring the suite to 61. The eight existing intent cases now additionally assert per-component rationale labels, exact frequencies after explicit confirmation and graph cleanup. Voice Journey cases cover shared rationale/evidence, no autoplay, native exact playback and medical text rejection. V2 identity/corruption/race/export regressions remain. Local UI uses the previously documented native Chromium test output sink; CI uses normal pinned Chromium.

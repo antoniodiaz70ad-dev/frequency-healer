@@ -4,9 +4,10 @@ import { interpretGuidedIntent, recommendGuided, type GuidedInterpretationV1, ty
 import { GOALS, type VoiceGoal } from '@/lib/voice/types';
 import { dictionaries } from '@/lib/voice/i18n';
 import { VoiceStore, SESSIONS_KEY } from '@/lib/voice/storage';
+import ProtocolRationale from './ProtocolRationale';
 import SessionPlan from '../voice/SessionPlan';
 import styles from '../voice/voice.module.css';
-const levels={none:'Sin evidencia personal',insufficient:'Datos insuficientes',preliminary:'Señal preliminar',descriptive:'Patrón descriptivo'};
+const levels={none:'Evidencia personal insuficiente',insufficient:'Evidencia personal insuficiente',preliminary:'Señal personal preliminar',descriptive:'Patrón personal descriptivo'};
 export default function GuidedRecommendation({active,onConfirm,onStop}:{active:boolean;onConfirm(value:GuidedRecommendationV1,consent:boolean):Promise<void>;onStop():void}) {
   const [words,setWords]=useState(''),[interpretation,setInterpretation]=useState<GuidedInterpretationV1|null>(null);
   const [recommendation,setRecommendation]=useState<GuidedRecommendationV1|null>(null),[volume,setVolume]=useState<number|undefined>();
@@ -43,6 +44,7 @@ export default function GuidedRecommendation({active,onConfirm,onStop}:{active:b
     {recommendation&&<div aria-label="Recomendación guiada"><h3>Una exploración para revisar</h3>
       <p>{dictionaries.es.goals[recommendation.proposal.intent.goal]} · {recommendation.proposal.intent.durationMinutes} minutos · volumen {recommendation.proposal.harmonicConfig.uiVolume}/100.</p>
       <p>{recommendation.proposal.rationale[0]}</p>
+      <ProtocolRationale value={recommendation.rule.rationale}/>
       <details><summary>¿Por qué esta propuesta?</summary>
         <p>Tu intención: {recommendation.interpretation.rawText}</p>
         <p>Interpretación: {dictionaries.es.goals[recommendation.proposal.intent.goal]}. {recommendation.interpretation.explanation}</p>
@@ -53,11 +55,11 @@ export default function GuidedRecommendation({active,onConfirm,onStop}:{active:b
         <p>Frecuencias exactas sin redondeo: {recommendation.proposal.schedule.steps.flatMap(step=>step.frequencies).join(', ')} Hz.</p>
         <p>Arquitectura V1 existente; no se inventa una constelación ni una firma.</p>
       </details>
-      <h3>Tu evidencia</h3><p>{recommendation.personalEvidence.available?`Sesiones comparables: ${recommendation.personalEvidence.comparableSessions} · ${levels[recommendation.personalEvidence.evidenceLevel]}`:'Evidencia no disponible; no se presume N=0.'}</p>
+      <h3>Tu evidencia personal · Personal N=1</h3><p>{recommendation.personalEvidence.available?`Sesiones comparables: ${recommendation.personalEvidence.comparableSessions} · ${levels[recommendation.personalEvidence.evidenceLevel]}`:'Evidencia no disponible; no se presume N=0.'}</p>
       <details><summary>Cómo se compara tu historial</summary><p>{recommendation.personalEvidence.explanation}</p></details>
       {recommendation.personalEvidence.metrics.map(metric=><p key={metric.metric}>En tus sesiones comparables, esta configuración se asoció con un cambio medio de {metric.mean} en {({clarity:'claridad',stress:'tensión percibida',focus:'enfoque'})[metric.metric]} (después − antes; N={metric.n}). {metric.label}. No demuestra causalidad.</p>)}
       <p>La selección sigue las reglas, sin priorizar resultados personales. La ausencia de registros no es una valoración negativa.</p>
-      <h3>Antes de confirmar</h3><p>Intención revisada · configuración validada · duración {recommendation.proposal.intent.durationMinutes} minutos · volumen {recommendation.proposal.harmonicConfig.uiVolume}/100 · {recommendation.personalEvidence.available?levels[recommendation.personalEvidence.evidenceLevel]:'evidencia no disponible'}.</p>
+      <h3>Antes de confirmar</h3><p>Intención revisada · interpretación confirmada · reproducción compatible · configuración validada · duración {recommendation.proposal.intent.durationMinutes} minutos · volumen {recommendation.proposal.harmonicConfig.uiVolume}/100 · {recommendation.personalEvidence.available?levels[recommendation.personalEvidence.evidenceLevel]:'evidencia no disponible'}.</p>
       <p>Empieza con volumen cómodo. No conduzcas ni manejes maquinaria. Detente si aparece incomodidad, dolor, mareo o síntomas inusuales. No se requieren auriculares para este diseño. Al ocultar la pestaña, el audio se detiene.</p>
       <p>Exploración personal, sin promesas médicas; no sustituye una evaluación profesional si describes síntomas de salud. El registro experimental opcional de abajo conserva la configuración acústica; la explicación se exporta por separado y no se guarda automáticamente.</p>
       {recommendation.proposal.requiresExplicitExperimentalConsent&&<label className={styles.check}><input type="checkbox" checked={consent} disabled={active} onChange={e=>setConsent(e.target.checked)}/>Acepto la cascada experimental de la guía, sin promesas de resultados.</label>}

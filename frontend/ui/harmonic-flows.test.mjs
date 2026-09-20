@@ -443,9 +443,16 @@ async function interpretGuide(page,words){await page.getByRole('textbox',{name:'
 async function recommendGuide(page){await button(page,'Revisé mi intención · generar recomendación').click();await button(page,'Confirmar y escuchar propuesta').waitFor();}
 for(const [words,goal] of [['Quiero calma','relaxation'],['Necesito concentrarme','focus'],['Quiero dormir mejor','sleep_preparation'],['Quiero recuperarme después de una reunión','relaxation'],['Quiero sentirme más centrado','relaxation'],['Quiero creatividad','creative_exploration'],['Quiero meditar','reflection'],['quiero evitar drenaje energético','relaxation']])test(`guided ${goal}: ${words}; interpretation, rule, provenance, no autoplay`,async t=>{
   const page=await fixture(t);await interpretGuide(page,words);assert.equal(await page.getByRole('combobox',{name:'Objetivo interpretado',exact:true}).inputValue(),goal);await noPlayback(page);
-  await recommendGuide(page);await noPlayback(page);await page.getByText('¿Por qué esta propuesta?',{exact:true}).click();assert.match(await guide(page).innerText(),new RegExp(`voice-${goal}-gentle`));
+  await field(page,'Volumen de la guía (0–100)').fill('0');await recommendGuide(page);await noPlayback(page);await page.getByText('¿Por qué esta propuesta?',{exact:true}).click();assert.match(await guide(page).innerText(),new RegExp(`voice-${goal}-gentle`));
   assert.match(await guide(page).innerText(),/Sesiones comparables: 0/);await page.getByText('Detalles armónicos de la guía',{exact:true}).click();assert.match(await guide(page).innerText(),/144 Hz/);await noPlayback(page);
-  if(goal==='creative_exploration')assert.ok(await button(page,'Confirmar y escuchar propuesta').isDisabled());
+  await page.getByText('¿Por qué esta sesión?',{exact:true}).click();
+  const rationale=page.getByRole('region',{name:'Explicación del protocolo',exact:true});
+  assert.match(await rationale.innerText(),/Matemática/);assert.match(await rationale.innerText(),/Acústica/);assert.match(await rationale.innerText(),/Diseño de protocolo/);assert.match(await rationale.innerText(),/Exploratoria/);
+  await noPlayback(page);const exported=await downloadGuide(page);assert.equal(exported.rule.id,exported.proposal.ruleId);
+  if(goal==='creative_exploration'){assert.ok(await button(page,'Confirmar y escuchar propuesta').isDisabled());await page.getByRole('checkbox',{name:'Acepto la cascada experimental de la guía, sin promesas de resultados.',exact:true}).check();}
+  await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();
+  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),exported.proposal.schedule.steps.flatMap(step=>step.frequencies));
+  await button(page,'Detener audio del laboratorio').click();await clean(page);assert.deepEqual(await storage(page),{});
 });
 test('guided correction and medical boundary: no hidden recommendation or audio',async t=>{
   const page=await fixture(t);await interpretGuide(page,'Quiero meditar');await recommendGuide(page);await button(page,'Corregir interpretación').click();
@@ -454,7 +461,7 @@ test('guided correction and medical boundary: no hidden recommendation or audio'
   await page.getByRole('textbox',{name:'Tu intención de exploración',exact:true}).fill('Quiero curar dolor de pecho');await button(page,'Interpretar intención').click();await page.getByRole('alert').filter({hasText:'no prescribe sesiones'}).waitFor();assert.equal(await button(page,'Confirmar y escuchar propuesta').count(),0);await noPlayback(page);
 });
 async function downloadGuide(page){const pending=page.waitForEvent('download');await button(page,'Exportar propuesta y explicación').click();const stream=await(await pending).createReadStream();let text='';for await(const chunk of stream)text+=chunk;return JSON.parse(text);}
-for(const [n,label] of [[0,'Sin evidencia personal'],[4,'Datos insuficientes'],[5,'Señal preliminar'],[9,'Señal preliminar'],[10,'Patrón descriptivo']])test(`guided evidence UI N=${n}: no ranking mutation, export, no storage write`,async t=>{
+for(const [n,label] of [[0,'Evidencia personal insuficiente'],[4,'Evidencia personal insuficiente'],[5,'Señal personal preliminar'],[9,'Señal personal preliminar'],[10,'Patrón personal descriptivo']])test(`guided evidence UI N=${n}: no ranking mutation, export, no storage write`,async t=>{
   const page=await fixture(t);await interpretGuide(page,'Quiero calma 5 minutos');await recommendGuide(page);const original=await downloadGuide(page);const proposal=original.proposal;
   const rows=Array.from({length:n},(_,i)=>({schemaVersion:1,id:`guided-evidence-${i}`,createdAt:'2026-09-01T12:00:00.000Z',completedAt:'2026-09-01T12:05:00.000Z',status:'completed',intent:proposal.intent,proposal,markers:[],before:{clarity:0,stress:4,focus:2},after:{clarity:1,stress:3,focus:3},technical:{actualDurationMs:300000,stopReason:'completed'}}));
   const raw=JSON.stringify(rows);await page.evaluate(raw=>localStorage.setItem('fh:voice-sessions-v1',raw),raw);await page.reload();await interpretGuide(page,'Quiero calma 5 minutos');await recommendGuide(page);
@@ -502,4 +509,25 @@ test('V2 confirmation race during Web Crypto: changed source rejects without aud
   await button(page,'Confirmar y reproducir constelación').click();await eventually(async()=>assert.equal(await page.evaluate(()=>window.__auditWaiting),true));
   await page.evaluate(key=>{const rows=JSON.parse(localStorage.getItem(key));rows[0].name='Changed during confirmation';localStorage.setItem(key,JSON.stringify(rows));window.__auditRelease();},CONSTELLATION_KEY);
   await page.getByRole('alert').filter({hasText:'fuente cambió durante la confirmación'}).waitFor();assert.equal((await probe(page)).contexts.length,0);assert.equal((await storage(page))[V2_KEY],undefined);assert.equal((await storage(page))[KEY],undefined);assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
+});
+
+
+test('2B Voice Journey shares rationale and evidence without changing legacy proposal or starting early',async t=>{
+  const page=await fixture(t);await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const consentStorage=await storage(page);await button(page,'Escribir intención').click();
+  await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero enfoque profundo 5 minutos');await button(page,'Continuar').click();
+  await page.getByRole('combobox',{name:'Objetivo',exact:true}).waitFor();assert.equal((await probe(page)).contexts.length,0);
+  await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');
+  await button(page,'Generar propuesta').click();await page.getByText('¿Por qué esta sesión?',{exact:true}).click();
+  assert.match(await page.getByRole('region',{name:'Explicación del protocolo'}).innerText(),/144 Hz/);
+  assert.match(await page.getByRole('region',{name:'Evidencia personal de la sesión'}).innerText(),/Sesiones comparables: 0/);
+  assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consentStorage);
+  await button(page,'Confirmar e iniciar').click();await button(page,'Detener sesión').waitFor();
+  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216,144,216]);
+  await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consentStorage);
+});
+test('2B unknown intention requires human review; Voice medical text creates no proposal',async t=>{
+  const page=await fixture(t);await interpretGuide(page,'Una cosa desconocida');assert.equal(await page.getByRole('combobox',{name:'Objetivo interpretado'}).inputValue(),'custom');
+  assert.equal(await button(page,'Confirmar y escuchar propuesta').count(),0);await noPlayback(page);
+  await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const consentStorage=await storage(page);await button(page,'Escribir intención').click();await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero curar dolor de pecho');await button(page,'Continuar').click();
+  await page.getByRole('alert').filter({hasText:'no prescribe sesiones'}).waitFor();assert.equal(await button(page,'Generar propuesta').count(),0);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consentStorage);
 });
