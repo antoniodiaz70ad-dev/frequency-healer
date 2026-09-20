@@ -436,3 +436,44 @@ test('saved constellation natural end: completed only after native end, no autos
   assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});await button(page,'Guardar experimento').click();await button(page,'Experimento guardado').waitFor();
   const [record]=JSON.parse((await storage(page))[KEY]);assert.equal(record.status,'completed');assert.ok(record.completedAt);assert.equal(record.configurationSnapshot.durationSeconds,1.2);
 });
+
+const guide=page=>page.getByRole('region',{name:'Guía por intención',exact:true});
+async function interpretGuide(page,words){await page.getByRole('textbox',{name:'Tu intención de exploración',exact:true}).fill(words);await button(page,'Interpretar intención').click();await page.getByRole('combobox',{name:'Objetivo interpretado',exact:true}).waitFor();}
+async function recommendGuide(page){await button(page,'Revisé mi intención · generar recomendación').click();await button(page,'Confirmar y escuchar propuesta').waitFor();}
+for(const [words,goal] of [['Quiero calma','relaxation'],['Necesito concentrarme','focus'],['Quiero dormir mejor','sleep_preparation'],['Quiero recuperarme después de una reunión','relaxation'],['Quiero sentirme más centrado','relaxation'],['Quiero creatividad','creative_exploration'],['Quiero meditar','reflection'],['quiero evitar drenaje energético','relaxation']])test(`guided ${goal}: ${words}; interpretation, rule, provenance, no autoplay`,async t=>{
+  const page=await fixture(t);await interpretGuide(page,words);assert.equal(await page.getByRole('combobox',{name:'Objetivo interpretado',exact:true}).inputValue(),goal);await noPlayback(page);
+  await recommendGuide(page);await noPlayback(page);await page.getByText('¿Por qué esta propuesta?',{exact:true}).click();assert.match(await guide(page).innerText(),new RegExp(`voice-${goal}-gentle`));
+  assert.match(await guide(page).innerText(),/Sesiones comparables: 0/);await page.getByText('Detalles armónicos de la guía',{exact:true}).click();assert.match(await guide(page).innerText(),/144 Hz/);await noPlayback(page);
+  if(goal==='creative_exploration')assert.ok(await button(page,'Confirmar y escuchar propuesta').isDisabled());
+});
+test('guided correction and medical boundary: no hidden recommendation or audio',async t=>{
+  const page=await fixture(t);await interpretGuide(page,'Quiero meditar');await recommendGuide(page);await button(page,'Corregir interpretación').click();
+  await page.getByRole('combobox',{name:'Objetivo interpretado',exact:true}).selectOption('focus');await recommendGuide(page);await page.getByText('¿Por qué esta propuesta?',{exact:true}).click();assert.match(await guide(page).innerText(),/voice-focus-gentle/);await noPlayback(page);
+  await button(page,'No era lo que quería decir · editar texto').click();assert.equal(await button(page,'Confirmar y escuchar propuesta').count(),0);
+  await page.getByRole('textbox',{name:'Tu intención de exploración',exact:true}).fill('Quiero curar dolor de pecho');await button(page,'Interpretar intención').click();await page.getByRole('alert').filter({hasText:'no prescribe sesiones'}).waitFor();assert.equal(await button(page,'Confirmar y escuchar propuesta').count(),0);await noPlayback(page);
+});
+async function downloadGuide(page){const pending=page.waitForEvent('download');await button(page,'Exportar propuesta y explicación').click();const stream=await(await pending).createReadStream();let text='';for await(const chunk of stream)text+=chunk;return JSON.parse(text);}
+for(const [n,label] of [[0,'Sin evidencia personal'],[4,'Datos insuficientes'],[5,'Señal preliminar'],[9,'Señal preliminar'],[10,'Patrón descriptivo']])test(`guided evidence UI N=${n}: no ranking mutation, export, no storage write`,async t=>{
+  const page=await fixture(t);await interpretGuide(page,'Quiero calma 5 minutos');await recommendGuide(page);const original=await downloadGuide(page);const proposal=original.proposal;
+  const rows=Array.from({length:n},(_,i)=>({schemaVersion:1,id:`guided-evidence-${i}`,createdAt:'2026-09-01T12:00:00.000Z',completedAt:'2026-09-01T12:05:00.000Z',status:'completed',intent:proposal.intent,proposal,markers:[],before:{clarity:0,stress:4,focus:2},after:{clarity:1,stress:3,focus:3},technical:{actualDurationMs:300000,stopReason:'completed'}}));
+  const raw=JSON.stringify(rows);await page.evaluate(raw=>localStorage.setItem('fh:voice-sessions-v1',raw),raw);await page.reload();await interpretGuide(page,'Quiero calma 5 minutos');await recommendGuide(page);
+  assert.match(await guide(page).innerText(),new RegExp(`Sesiones comparables: ${n} · ${label}`));const exported=await downloadGuide(page);assert.deepEqual(exported.proposal,original.proposal);assert.equal(exported.personalEvidence.comparableSessions,n);assert.equal(exported.personalEvidence.metrics.length,n<5?0:3);
+  assert.deepEqual(await storage(page),{'fh:voice-sessions-v1':raw});assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+});
+test('guided corrupt history: evidence unavailable, never N=0 or repair',async t=>{
+  const page=await fixture(t);await page.evaluate(()=>localStorage.setItem('fh:voice-sessions-v1','{invalid'));await page.reload();await interpretGuide(page,'Quiero calma');await recommendGuide(page);
+  assert.match(await guide(page).innerText(),/Evidencia no disponible/);assert.doesNotMatch(await guide(page).innerText(),/Sesiones comparables: 0/);assert.deepEqual(await storage(page),{'fh:voice-sessions-v1':'{invalid'});assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
+});
+test('guided confirmation: exact existing rule, shared stop, explicit unchanged experiment snapshot',async t=>{
+  const page=await fixture(t);await interpretGuide(page,'Quiero calma 5 minutos');await page.getByRole('spinbutton',{name:'Volumen de la guía (0–100)',exact:true}).fill('0');await recommendGuide(page);const rec=await downloadGuide(page);
+  await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();
+  const audio=await probe(page);assert.deepEqual(audio.contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),rec.proposal.schedule.steps.flatMap(s=>s.frequencies));assert.ok(await button(page,'Confirmar e iniciar').isDisabled());
+  await button(page,'Detener audio del laboratorio').click();await clean(page);assert.deepEqual(await storage(page),{});await button(page,'Guardar experimento').click();await button(page,'Experimento guardado').waitFor();
+  const data=await storage(page);assert.deepEqual(Object.keys(data),[KEY]);const [record]=JSON.parse(data[KEY]);assert.deepEqual(record.configurationSnapshot,rec.proposal.harmonicConfig);assert.equal(record.status,'cancelled');
+});
+test('guided creativity: extra consent, unchanged cascade and navigation cleanup',async t=>{
+  const page=await fixture(t);await interpretGuide(page,'Quiero creatividad 5 minutos');await page.getByRole('spinbutton',{name:'Volumen de la guía (0–100)',exact:true}).fill('0');await recommendGuide(page);const rec=await downloadGuide(page);
+  assert.ok(await button(page,'Confirmar y escuchar propuesta').isDisabled());await page.getByRole('checkbox',{name:'Acepto la cascada experimental de la guía, sin promesas de resultados.',exact:true}).check();await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();
+  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),rec.proposal.schedule.steps.flatMap(s=>s.frequencies));
+  await page.getByRole('link',{name:'⚡ Dashboard',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{});assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
+});

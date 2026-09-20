@@ -12,6 +12,8 @@ import { proposeOctaveApply } from '@/lib/harmonic/octaveApply';
 import { planConstellationPlayback, type ConstellationPlaybackPlan } from '@/lib/harmonic/constellationPlayback';
 import { ConstellationStore } from '@/lib/harmonic/constellationStorage';
 import type { HarmonicConstellationV1 } from '@/lib/harmonic/constellations';
+import GuidedRecommendation from '../lab/GuidedRecommendation';
+import { validateGuidedRecommendation, type GuidedRecommendationV1 } from '@/lib/guided/recommendations';
 import styles from './voice.module.css';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
@@ -35,12 +37,12 @@ export default function HarmonicLab() {
     return () => { invalidate(); engine.dispose(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted', false); activeExperiment.current = null; document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', stop); };
   }, [engine]);
   const edit = (change: Partial<HarmonicConfig>) => { const next = { ...currentConfig.current, ...change }; currentConfig.current = next; setConfig(next); setConfirmed(false); ++previewRun.current; setConstellationPlan(null); setPreviewError(''); };
-  const startPlayback = async (plan?: ConstellationPlaybackPlan) => {
+  const startPlayback = async (plan?: ConstellationPlaybackPlan, guided?: GuidedRecommendationV1, consent = false) => {
         if (playing || startPending.current) return;
         ++previewRun.current;
         startPending.current = true; const run = ++startRun.current; setBusy(true); setError('');
         try {
-          let playbackConfig = config;
+          let playbackConfig = guided ? validateGuidedRecommendation(guided, consent) : config;
           if (plan) {
             const stored = (await new ConstellationStore(localStorage).load()).find(row => row.id === plan.constellation.id);
             if (!stored || JSON.stringify(stored) !== JSON.stringify(plan.constellation)) throw new Error('El registro guardado cambió o no está disponible. Prepara otra vista previa.');
@@ -62,6 +64,7 @@ export default function HarmonicLab() {
           if (run === startRun.current) { activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setError((e as Error).message); }
         } finally { if (run === startRun.current) { startPending.current = false; setBusy(false); } }
   };
+  const stopPlayback = () => { ++startRun.current; startPending.current = false; engine.stop(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'cancelled'); activeExperiment.current = null; setPlaying(false); setBusy(false); };
   const previewPlayback = async (record: HarmonicConstellationV1) => {
     if (startPending.current || engine.isPlaying()) return;
     const run = ++previewRun.current, expected = currentConfig.current;
@@ -73,7 +76,7 @@ export default function HarmonicLab() {
       if (run === previewRun.current && expected === currentConfig.current && !startPending.current && !engine.isPlaying()) setConstellationPlan(plan);
     } catch (e) { if (run === previewRun.current) setPreviewError((e as Error).message); }
   };
-  return <div className={styles.workspace}><span className={styles.tag}>Relaciones exactas · motor aislado</span><h1>Laboratorio Armónico</h1><p>Configura una exploración sonora. Las relaciones matemáticas no demuestran efectos médicos.</p><section><h2>Diseño manual</h2><fieldset disabled={playing || busy}><div className={styles.grid}>
+  return <div className={styles.workspace}><span className={styles.tag}>Relaciones exactas · motor aislado</span><h1>Laboratorio Armónico</h1><p>Configura una exploración sonora. Las relaciones matemáticas no demuestran efectos médicos.</p><GuidedRecommendation active={playing || busy} onConfirm={(value, consent) => startPlayback(undefined, value, consent)} onStop={stopPlayback}/><section><h2>Diseño manual</h2><fieldset disabled={playing || busy}><div className={styles.grid}>
     <label>Base (Hz)<input type="number" min={40} max={2000} step="any" value={config.baseHz} onChange={e => edit({ baseHz: Number(e.target.value) })} /></label>
     <label>Relación<select value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
     <label>Modo<select value={config.mode} onChange={e => edit({ mode: e.target.value as HarmonicConfig['mode'] })}><option value="sequence">Secuencia</option><option value="simultaneous">Simultáneo</option></select></label>
@@ -117,7 +120,7 @@ export default function HarmonicLab() {
       }}>Confirmar e iniciar</button>
 
     </section>}
-      {(playing || busy) && <button className={styles.stop} onClick={() => { ++startRun.current; startPending.current = false; engine.stop(); activeExperiment.current?.handle.finish(activeExperiment.current.id, 'cancelled'); activeExperiment.current = null; setPlaying(false); setBusy(false); }}>Detener sesión</button>}
+      {(playing || busy) && <button className={styles.stop} onClick={stopPlayback}>Detener sesión</button>}
       <p role="status">{playing ? 'Audio en curso' : busy ? 'Preparando audio…' : 'Audio detenido'}</p>
   </div>;
 }
