@@ -5,6 +5,7 @@ import { STATE_FIELDS, type ExperimentRecordV1, type ExperimentState, type Exper
 import { prepareExperiment, transitionExperiment, validateExperiment } from '@/lib/experiments/validation';
 import { EXPERIMENTS_KEY, ExperimentStore } from '@/lib/experiments/storage';
 import styles from '../voice/voice.module.css';
+import SavedExperimentReader from './SavedExperimentReader';
 
 export interface ExperimentSessionHandle {
   prepare(config: HarmonicConfig): string | null;
@@ -105,9 +106,7 @@ const ExperimentSession = forwardRef<ExperimentSessionHandle, { playbackActive: 
     <details><summary>Experimentos guardados ({history.length})</summary>
       <button onClick={() => { try { download(new ExperimentStore(localStorage).exportJSON(), 'frequency-healer-experiments.json'); } catch (e) { setError((e as Error).message); } }}>Exportar historial de experimentos</button>
       <button onClick={() => { try { download(localStorage.getItem(EXPERIMENTS_KEY) ?? 'null', 'frequency-healer-experiments-original.json'); } catch (e) { setError((e as Error).message); } }}>Exportar almacenamiento original</button>
-      {history.map(row => <details key={row.id} className={styles.panel}><summary>{new Date(row.createdAt).toLocaleString('es-MX')} · {statuses[row.status]} · {row.configurationSnapshot.baseHz} Hz</summary>
-        <pre>{JSON.stringify(row, null, 2)}</pre><button onClick={() => download(JSON.stringify(row, null, 2), `experimento-${row.id}.json`)}>Exportar registro guardado</button>
-      </details>)}
+      {history.map(row => <SavedExperimentReader key={row.id} record={row} onExport={() => download(JSON.stringify(row, null, 2), `experimento-${row.id}.json`)} />)}
     </details>
   </section>;
 });
