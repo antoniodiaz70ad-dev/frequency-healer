@@ -13,7 +13,7 @@ test('octave apply: every explorer offset is exact, including boundaries and fra
     for (const row of exploreHarmonics(seed).octaves) {
       const context = { ...base, baseHz: seed }; const before = structuredClone(context);
       const result = proposeOctaveApply(row.offset, context);
-      assert.equal(result.status, 'supported'); if (result.status !== 'supported') throw new Error(result.reason);
+      assert.equal(result.status, 'supported'); if (result.status !== 'supported') throw new Error('Expected supported proposal');
       assert.equal(result.config.baseHz, seed * 2 ** row.offset);
       assert.deepEqual(result.config, { ...context, baseHz: row.frequencyHz });
       assert.deepEqual(context, before); assert.ok(Object.isFrozen(result.config));
@@ -38,7 +38,7 @@ test('octave apply: preserves every other field, progression and exact cascade s
   for (const mode of ['sequence','simultaneous'] as const) for (const direction of ['ascending','descending','return'] as const) {
     for (const patch of [{ ratioId: 'fifth' as const }, { progression: ['minor-third','root','fifth'] as HarmonicConfig['progression'] }, { ratioId: 'cascade-13-12' as const }]) {
       const context = { ...base, mode, direction, durationSeconds: 90, uiVolume: 7, ...patch };
-      const result = proposeOctaveApply(1, context); assert.equal(result.status, 'supported'); if (result.status !== 'supported') throw new Error(result.reason);
+      const result = proposeOctaveApply(1, context); assert.equal(result.status, 'supported'); if (result.status !== 'supported') throw new Error('Expected supported proposal');
       assert.deepEqual(result.config, { ...context, baseHz: 864 });
       assert.deepEqual(buildSchedule(result.config), buildSchedule({ ...context, baseHz: 864 }));
       if (context.progression) { context.progression.reverse(); assert.deepEqual(result.config.progression, ['minor-third','root','fifth']); assert.ok(Object.isFrozen(result.config.progression)); }
@@ -65,7 +65,7 @@ test('octave apply: no storage/audio effects; existing experiment snapshot and e
     for (const key of keys) Object.defineProperty(globalThis,key,{configurable:true,get(){throw new Error(`Forbidden: ${key}`);}});
     let writes = 0; const map = new Map<string,string>();
     const store = new ExperimentStore({getItem:k=>map.get(k)??null,setItem:(k,v)=>{writes++;map.set(k,v);}},async task=>task());
-    const result = proposeOctaveApply(1, { ...base, ratioId: 'fifth' }); if (result.status !== 'supported') throw new Error(result.reason);
+    const result = proposeOctaveApply(1, { ...base, ratioId: 'fifth' }); if (result.status !== 'supported') throw new Error('Expected supported proposal');
     assert.equal(writes,0); assert.equal(store.load().length,0);
     const draft = prepareExperiment(result.config,{preState:{focus:0}},'phase1e-test','2026-09-19T12:00:00.000Z');
     assert.deepEqual(draft.configurationSnapshot,result.config); assert.equal(draft.configurationSnapshot.baseHz,864); assert.equal(draft.preState.energy,undefined); assert.equal(writes,0);
