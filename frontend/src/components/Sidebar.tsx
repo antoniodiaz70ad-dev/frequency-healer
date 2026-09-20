@@ -16,7 +16,7 @@ const navGroups = [
     { href: "/biblioteca", label: "Biblioteca", icon: "📚" },
   ] },
   { label: "Práctica OBE", items: [
-    { href: "/sesion-nueva", label: "Preparación OBE", icon: "🌙" },
+    { href: "/sesion-nueva", label: "Exploración OBE", icon: "🌙" },
     { href: "/diario", label: "Diario OBE", icon: "📓" },
   ] },
 ];

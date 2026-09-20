@@ -356,8 +356,8 @@ function ScheduleStep({
         {isLateNight ? (
           <div className="bg-[#0d1117] border border-[#fbbf2440] rounded-lg p-3 mb-4">
             <p className="text-xs text-[#fbbf24]">
-              🌙 Estás en la ventana WBTB ideal (1-5 a.m.). Salta la programación
-              y empieza ahora.
+              🌙 Estás en el horario WBTB configurado (1-5 a.m.). Si te sientes
+              descansado, puedes saltar la programación y empezar ahora.
             </p>
           </div>
         ) : (
@@ -365,7 +365,8 @@ function ScheduleStep({
             <p className="text-xs text-gray-400">
               <strong className="text-white">WBTB</strong> (Wake-Back-To-Bed):
               duerme 4-6 horas, despierta entre las 2:00 y 3:00 a.m., y entonces
-              haz la sesión. Es la ventana de máxima eficiencia.
+              haz la sesión. Es una pauta tradicional de práctica, no una
+              ventana fisiológica de eficacia demostrada.
             </p>
           </div>
         )}
@@ -434,8 +435,8 @@ function IntentionStep({
           Paso 4 · Declaración de intención
         </p>
         <p className="text-sm text-gray-400 mb-4">
-          Lee tu intención en voz baja, con autoridad serena. El subconsciente
-          actúa por mandato, no por petición. Personalízala si quieres.
+          Lee tu intención en voz baja y con serenidad. Úsala como un foco
+          personal para la práctica y personalízala si quieres.
         </p>
 
         <textarea

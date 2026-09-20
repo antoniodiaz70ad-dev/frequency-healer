@@ -112,9 +112,10 @@ export default function BibliotecaPage() {
           {/* Phase intro */}
           <div className="mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-4">
             <p className="text-sm text-gray-300 mb-2">
-              Memoriza estas tarjetas <strong className="text-white">antes</strong> de una sesión binaural profunda.
-              Una vez fuera del cuerpo la mente analítica está atenuada y no podrás
-              consultar la app — el material debe estar interiorizado.
+              Revisa estas tarjetas <strong className="text-white">antes</strong> de la práctica para no consultar la app durante la sesión.
+              Son instrucciones exploratorias basadas en relatos y tradiciones OBE;
+              describen experiencias subjetivas y no verifican separación corporal,
+              mecanismos fisiológicos ni contacto externo.
             </p>
             <p className="text-xs text-gray-500">
               Las tarjetas siguen el orden natural de una sesión: preparación →

@@ -68,12 +68,12 @@ export default function SessionLogItem({ log, onDelete }: Props) {
           </div>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {log.paralysisAchieved && (
-              <Badge label="Parálisis" color="#a78bfa" />
+              <Badge label="Parálisis percibida" color="#a78bfa" />
             )}
-            {log.vibrations && <Badge label="Vibraciones" color="#67e8f9" />}
-            {log.separation && <Badge label="Separación" color="#fbbf24" />}
+            {log.vibrations && <Badge label="Sensaciones vibratorias" color="#67e8f9" />}
+            {log.separation && <Badge label="Separación percibida" color="#fbbf24" />}
             <Badge label={clarity.label} color={clarity.color} />
-            {log.lookedBack && <Badge label="Snap-back" color="#f87171" />}
+            {log.lookedBack && <Badge label="Retorno percibido" color="#f87171" />}
           </div>
         </div>
 
@@ -111,13 +111,13 @@ export default function SessionLogItem({ log, onDelete }: Props) {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-gray-500">
-                Pre energía
+                Energía subjetiva previa
               </p>
               <p className="text-sm font-mono text-white">{log.preEnergy}/10</p>
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-widest text-gray-500">
-                Post energía
+                Energía subjetiva posterior
               </p>
               <p
                 className="text-sm font-mono"

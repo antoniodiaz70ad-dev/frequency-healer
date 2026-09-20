@@ -75,7 +75,7 @@ export default function DiarioPage() {
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">Diario</h1>
           <p className="text-sm text-gray-400">
-            Registro post-sesión y monitoreo de cooldown anti-burnout.
+            Registro de experiencias subjetivas y pausas conservadoras.
           </p>
         </div>
         {mode === "list" && (
@@ -110,10 +110,10 @@ export default function DiarioPage() {
                 style={{ color: cooldownStyle.text }}
               >
                 {cooldown.level === "clear"
-                  ? "Cooldown libre"
+                  ? "Pausa no requerida"
                   : cooldown.level === "caution"
-                  ? "Atención: riesgo de acumulación"
-                  : "Descanso requerido"}
+                  ? "Considera una pausa"
+                  : "Pausa recomendada"}
               </p>
               <p className="text-xs text-gray-400 mt-1 leading-relaxed">
                 {cooldown.reason}
@@ -142,12 +142,12 @@ export default function DiarioPage() {
                 color="#60a5fa"
               />
               <StatCard
-                label="Parálisis logradas"
+                label="Parálisis percibidas"
                 value={logs.filter((l) => l.paralysisAchieved).length.toString()}
                 color="#a78bfa"
               />
               <StatCard
-                label="Separaciones"
+                label="Separaciones percibidas"
                 value={logs.filter((l) => l.separation).length.toString()}
                 color="#fbbf24"
               />
@@ -169,8 +169,8 @@ export default function DiarioPage() {
                 Aún no hay registros
               </p>
               <p className="text-xs text-gray-500 mb-4">
-                Captura tu primera sesión inmediatamente al regresar — la
-                memoria del estado fuera del cuerpo se evapora rápido.
+                Registra recuerdos, sensaciones e interpretaciones después de
+                la práctica, sin asumir que describen eventos externos.
               </p>
               <button
                 onClick={() => setMode("form")}

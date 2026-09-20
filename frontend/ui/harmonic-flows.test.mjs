@@ -757,7 +757,7 @@ for (const mobile of [false,true]) test(`3B.1 ${mobile?'mobile':'desktop'}: guid
   assert.match(await entry.innerText(),/Describe lo que quieres explorar y Frequency Healer te propondrá una sesión\./);assert.match(await entry.innerText(),/El micrófono es opcional/);
   if(mobile)await button(page,'Menu').click();
   const nav=page.getByRole('navigation',{name:'Navegación principal',exact:true});
-  const expected=[['⚡ Inicio','/'],['✎ Sesión guiada','/voz'],['📋 Protocolos','/protocolos'],['∿ Laboratorio Armónico','/laboratorio-armonico'],['🔊 Generador manual','/generador'],['📚 Biblioteca','/biblioteca'],['🌙 Preparación OBE','/sesion-nueva'],['📓 Diario OBE','/diario']];
+  const expected=[['⚡ Inicio','/'],['✎ Sesión guiada','/voz'],['📋 Protocolos','/protocolos'],['∿ Laboratorio Armónico','/laboratorio-armonico'],['🔊 Generador manual','/generador'],['📚 Biblioteca','/biblioteca'],['🌙 Exploración OBE','/sesion-nueva'],['📓 Diario OBE','/diario']];
   for(const [name,path] of expected)assert.equal(await nav.getByRole('link',{name,exact:true}).getAttribute('href'),path);
   await nav.getByRole('link',{name:'✎ Sesión guiada',exact:true}).click();await page.waitForURL(harness.origin+'/voz');await page.getByRole('heading',{name:'Sesión guiada · tu privacidad',exact:true}).waitFor();assert.match(await page.locator('main').innerText(),/Puedes completar toda la sesión escribiendo/);
   assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
