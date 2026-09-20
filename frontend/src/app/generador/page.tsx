@@ -13,6 +13,8 @@ import AudioVisualizer from "@/components/AudioVisualizer";
 import SafetyDisclaimerModal, {
   hasAcceptedDisclaimer,
 } from "@/components/SafetyDisclaimerModal";
+import Link from "next/link";
+import { FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
 
 const PRESETS = [
   { label: "528 Hz Solfeggio", hz: 528, waveform: "sine" as Waveform, color: "#fbbf24" },
@@ -119,16 +121,12 @@ export default function GeneradorPage() {
   const freqInfo = FREQUENCY_DATABASE.find((f) => Math.abs(f.hz - frequency) < 0.5);
 
   return (
-    <div className="max-w-4xl animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Generador de Tonos</h1>
-        <p className="text-sm text-gray-400">
-          Genera frecuencias precisas para bocinas o bobinas electromagnéticas.
-        </p>
-      </div>
+    <FHPageShell width="default" className="legacy-page generator-page animate-fade-in">
+      <FHPageHeader eyebrow="INSTRUMENTO · AVANZADO" title="Generador manual" description="Configura una señal directamente. Para una experiencia guiada, usa Sesión guiada." />
+      <FHSurface variant="subtle" className="generator-note"><p>Esta es una herramienta manual avanzada. Frequency Healer no interpreta una frecuencia aislada como tratamiento o resultado garantizado.</p><Link href="/voz">Ir a Sesión guiada</Link></FHSurface>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-1 w-fit">
+      <div className="legacy-tabs" aria-label="Tipo de generador">
         <button
           onClick={() => {
             if (isPlaying) handleStop();
@@ -209,7 +207,7 @@ export default function GeneradorPage() {
           onCancel={() => setShowDisclaimer(false)}
         />
       )}
-    </div>
+    </FHPageShell>
   );
 }
 
@@ -266,6 +264,7 @@ function ToneTab({
 }: ToneTabProps) {
   return (
     <>
+      <p className="fh-label generator-stage">Configure · Configurar</p>
       {/* Visualizer */}
       <div className="mb-6">
         <AudioVisualizer isPlaying={isPlaying} color={freqInfo ? DOMAIN_INFO[freqInfo.domain[0]]?.color : "#60a5fa"} />
@@ -396,7 +395,13 @@ function ToneTab({
         </div>
       </div>
 
+      <p className="fh-label generator-stage">Review · Revisar</p>
+      <FHSurface variant="subtle" className="generator-review">
+        <span>Configuración resultante</span><code>{effectiveFreq.toFixed(2)} Hz · {waveform} · volumen {volume}% · {binaural ? `binaural Δ ${binauralDiff} Hz` : "tono directo"} · {dwellTime ? `${dwellTime} s` : "continuo"}</code>
+      </FHSurface>
+
       {/* Play / Stop */}
+      <p className="fh-label generator-stage">Play · Reproducir</p>
       <div className="flex justify-center mb-8">
         {!isPlaying ? (
           <button
@@ -470,6 +475,7 @@ function HemiSyncTab({
 
   return (
     <>
+      <p className="fh-label generator-stage">Configure · Configurar</p>
       <div className="mb-6">
         <AudioVisualizer isPlaying={isPlaying} color={selectedChord.color} />
       </div>
@@ -585,7 +591,11 @@ function HemiSyncTab({
         </div>
       </div>
 
+      <p className="fh-label generator-stage">Review · Revisar</p>
+      <FHSurface variant="subtle" className="generator-review"><span>Configuración resultante</span><code>{selectedChord.label} · {selectedChord.layers.length} capas · volumen {chordVolume}% · {effectiveDuration} min</code></FHSurface>
+
       {/* Play / Stop */}
+      <p className="fh-label generator-stage">Play · Reproducir</p>
       <div className="flex justify-center mb-8">
         {!isPlaying ? (
           <button

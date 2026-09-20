@@ -121,6 +121,13 @@ body {
 .protocol-steps { display: grid; gap: .5rem; padding-bottom: 1rem; }
 .protocol-steps li { display: flex; min-width: 0; justify-content: space-between; gap: 1rem; color: var(--fh-text-muted); font-size: .75rem; }
 .protocol-steps code { overflow-wrap: anywhere; color: var(--fh-text-secondary); text-align: right; }
+.generator-note { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; color: var(--fh-text-muted); font-size: .8125rem; }
+.generator-note a { flex: 0 0 auto; color: var(--fh-accent); font-weight: 600; }
+.generator-stage { margin-block: 1.5rem .75rem; }
+.generator-review { display: grid; gap: .35rem; margin-bottom: 1.5rem; padding: 1rem; }
+.generator-review span { color: var(--fh-text-muted); font-size: .75rem; }
+.generator-review code { color: var(--fh-text); overflow-wrap: anywhere; }
+@media (max-width: 36rem) { .generator-note { align-items: flex-start; flex-direction: column; } .generator-page .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* Slider styles */
 input[type="range"] {
