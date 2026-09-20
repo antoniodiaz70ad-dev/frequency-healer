@@ -43,3 +43,6 @@ next-env.d.ts
 .test-build/
 
 !.env.example
+
+# Isolated CI diagnostics (synthetic test contexts only)
+/artifacts/

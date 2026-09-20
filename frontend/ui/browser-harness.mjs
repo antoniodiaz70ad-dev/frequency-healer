@@ -1,44 +1,18 @@
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { createServer } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
 import { chromium } from 'playwright-core';
+import { startLocalServer } from '../scripts/local-test-server.mjs';
 
-// Run against a production build on an ephemeral LOCAL port, never a user's
-// browser profile or deployed origin. Build with the lab flag ON first.
 export async function startHarness() {
-  const reservation = createServer();
-  await new Promise(resolve => reservation.listen(0, '127.0.0.1', resolve));
-  const port = reservation.address().port;
-  await new Promise(resolve => reservation.close(resolve));
-  const origin = `http://127.0.0.1:${port}`;
-  const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', String(port)], {
-    env: { ...process.env, NEXT_PUBLIC_VOICE_JOURNEY_ENABLED: 'true', NEXT_PUBLIC_HARMONIC_LAB_ENABLED: 'true', VOICE_AI_ENABLED: 'false' },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
-  let log = '';
-  server.stdout.on('data', chunk => { log += chunk; });
-  server.stderr.on('data', chunk => { log += chunk; });
+  const server = await startLocalServer(true, process.env.FH_UI_ARTIFACTS_DIR ? `${process.env.FH_UI_ARTIFACTS_DIR}/server.log` : undefined);
   let browser;
-  const close = async () => {
-    try { await browser?.close(); } finally {
-      if (server.exitCode === null && server.signalCode === null) {
-        const exited = new Promise(resolve => server.once('exit', resolve));
-        server.kill('SIGTERM');
-        const timer = setTimeout(() => server.kill('SIGKILL'), 5000);
-        await exited; clearTimeout(timer);
-      }
-    }
-  };
+  const close = async () => { try { await browser?.close(); } finally { await server.close(); } };
   try {
-    await eventually(async () => {
-      assert.equal(server.exitCode, null, log);
-      const response = await fetch(origin + '/laboratorio-armonico');
-      assert.equal(response.status, 200, 'Build with NEXT_PUBLIC_HARMONIC_LAB_ENABLED=true before test:ui');
-    }, 20000);
-    browser = await chromium.launch({ headless: true, args: ['--mute-audio'],
-      ...(process.env.FH_UI_BROWSER_PATH ? { executablePath: process.env.FH_UI_BROWSER_PATH } : { channel: 'chrome' }) });
-    return { browser, origin, close };
+    const response = await fetch(server.origin + '/laboratorio-armonico', { signal: AbortSignal.timeout(5000) });
+    assert.equal(response.status, 200, 'Build with NEXT_PUBLIC_HARMONIC_LAB_ENABLED=true before test:ui');
+    browser = await chromium.launch({ headless: true, timeout: 20000, args: ['--mute-audio'],
+      ...(process.env.FH_UI_BROWSER_PATH ? { executablePath: process.env.FH_UI_BROWSER_PATH } : process.env.FH_UI_BROWSER === 'chromium' ? {} : { channel: 'chrome' }) });
+    return { browser, origin: server.origin, close };
   } catch (error) { await close(); throw error; }
 }
 

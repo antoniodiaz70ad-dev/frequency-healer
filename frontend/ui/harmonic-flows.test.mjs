@@ -1,11 +1,27 @@
-import { before, after, test } from 'node:test';
+import { before, after, test as nodeTest } from 'node:test';
 import assert from 'node:assert/strict';
 import { startHarness, observeBrowser, eventually } from './browser-harness.mjs';
 
+import { mkdir, writeFile } from 'node:fs/promises';
+const pages = new WeakMap();
+const test = (name, run) => nodeTest(name, { timeout: 45000 }, async t => {
+  try { await run(t); } catch (error) {
+    const page = pages.get(t), directory = process.env.FH_UI_ARTIFACTS_DIR;
+    if (directory) {
+      const stem = name.replace(/[^a-zA-Z0-9-]/g, '_');
+      try {
+        await mkdir(directory, { recursive: true });
+        await writeFile(`${directory}/${stem}.log`, String(error.stack ?? error));
+        if (page && !page.isClosed()) await page.screenshot({ path: `${directory}/${stem}.png`, timeout: 5000 });
+      } catch (captureError) { console.error('Failure artifact capture:', captureError.message); }
+    }
+    throw error;
+  }
+});
 const KEY = 'fh:experiment-sessions-v1';
 let harness;
-before(async () => { harness = await startHarness(); });
-after(async () => { await harness?.close(); });
+before(async () => { harness = await startHarness(); }, { timeout: 60000 });
+after(async () => { await harness?.close(); }, { timeout: 15000 });
 const button = (page, name) => page.getByRole('button', { name, exact: true });
 const field = (page, name) => page.getByRole('spinbutton', { name, exact: true });
 const ratio = page => page.getByRole('combobox', { name: 'Relación', exact: true });
@@ -16,7 +32,7 @@ async function fixture(t) {
   const context = await harness.browser.newContext();
   t.after(() => context.close());
   await context.addInitScript(observeBrowser);
-  const page = await context.newPage(); page.setDefaultTimeout(8000);
+  const page = await context.newPage(); pages.set(t, page); page.setDefaultTimeout(8000); page.setDefaultNavigationTimeout(10000);
   const errors = []; page.on('pageerror', error => errors.push(error.message));
   t.after(() => assert.deepEqual(errors, [], 'No uncaught browser errors'));
   await page.goto(harness.origin + '/laboratorio-armonico');
