@@ -513,23 +513,23 @@ test('V2 confirmation race during Web Crypto: changed source rejects without aud
 
 
 test('2B Voice Journey shares rationale and evidence without changing legacy proposal or starting early',async t=>{
-  const page=await fixture(t);await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const consentStorage=await storage(page);await button(page,'Escribir intención').click();
-  await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero enfoque profundo 5 minutos');await button(page,'Continuar').click();
-  await page.getByRole('combobox',{name:'Objetivo',exact:true}).waitFor();assert.equal((await probe(page)).contexts.length,0);
+  const page=await fixture(t);await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const consentStorage=await storage(page);
+  await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero enfoque profundo 5 minutos');await button(page,'Interpretar intención').click();
+  await page.getByText('Cambiar interpretación',{exact:true}).click();await page.getByRole('combobox',{name:'Objetivo',exact:true}).waitFor();assert.equal((await probe(page)).contexts.length,0);
   await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');
-  await button(page,'Generar propuesta').click();await page.getByText('¿Por qué esta sesión?',{exact:true}).click();
+  await button(page,'Generar recomendación').click();await page.getByText('¿Por qué esta sesión?',{exact:true}).click();await page.getByText('Detalles de la recomendación',{exact:true}).click();
   assert.match(await page.getByRole('region',{name:'Explicación del protocolo'}).innerText(),/144 Hz/);
-  assert.match(await page.getByRole('region',{name:'Evidencia personal de la sesión'}).innerText(),/Sesiones comparables: 0/);
+  await page.getByText('Evidencia personal',{exact:true}).click();assert.match(await page.getByRole('region',{name:'Evidencia personal de la sesión'}).innerText(),/Sesiones comparables: 0/);
   assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consentStorage);
-  await button(page,'Confirmar e iniciar').click();await button(page,'Detener sesión').waitFor();
+  await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();
   assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216,144,216]);
   await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consentStorage);
 });
 test('2B unknown intention requires human review; Voice medical text creates no proposal',async t=>{
   const page=await fixture(t);await interpretGuide(page,'Una cosa desconocida');assert.equal(await page.getByRole('combobox',{name:'Objetivo interpretado'}).inputValue(),'custom');
   assert.equal(await button(page,'Confirmar y escuchar propuesta').count(),0);await noPlayback(page);
-  await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const consentStorage=await storage(page);await button(page,'Escribir intención').click();await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero curar dolor de pecho');await button(page,'Continuar').click();
-  await page.getByRole('alert').filter({hasText:'no prescribe sesiones'}).waitFor();assert.equal(await button(page,'Generar propuesta').count(),0);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consentStorage);
+  await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const consentStorage=await storage(page);await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero curar dolor de pecho');await button(page,'Interpretar intención').click();
+  await page.getByRole('alert').filter({hasText:'no prescribe sesiones'}).waitFor();assert.equal(await button(page,'Generar recomendación').count(),0);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consentStorage);
 });
 
 const DISCOVERY_KEY='fh:protocol-discovery-plans-v1';
@@ -691,10 +691,10 @@ test('HIP sparse structural evidence shows insufficient sessions, never pattern 
   assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.equal((await probe(page)).contexts.length,0);
 });
 test('HIP Voice Journey explanation is optional, shows disclaimer and keeps existing confirmed playback',async t=>{
-  const page=await fixture(t);await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const before=await storage(page);await button(page,'Escribir intención').click();
-  await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero enfoque profundo 5 minutos');await button(page,'Continuar').click();await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar propuesta').click();
-  await page.getByText('¿Por qué esta sesión?',{exact:true}).click();const profile=await openStructure(page);assert.match(await profile.innerText(),/Miembros: 4/);assert.match(await profile.innerText(),/No mide fuerza terapéutica ni eficacia/);assert.equal((await probe(page)).contexts.length,0);
-  await button(page,'Confirmar e iniciar').click();await button(page,'Detener sesión').waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216,144,216]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),before);
+  const page=await fixture(t);await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const before=await storage(page);
+  await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero enfoque profundo 5 minutos');await button(page,'Interpretar intención').click();await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar recomendación').click();
+  await page.getByText('¿Por qué esta sesión?',{exact:true}).click();await page.getByText('Detalles de la recomendación',{exact:true}).click();const profile=await openStructure(page);assert.match(await profile.innerText(),/Miembros: 4/);assert.match(await profile.innerText(),/No mide fuerza terapéutica ni eficacia/);assert.equal((await probe(page)).contexts.length,0);
+  await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216,144,216]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),before);
 });
 test('HIP saved constellation preview retains exact multiplicity, immutable source and explicit playback',async t=>{
   const {page,raw}=await savedPlaybackFixture(t,'simultaneous');await previewConstellation(page);const scope=page.getByRole('region',{name:'Confirmación de constelación guardada',exact:true});const profile=await openStructure(scope);
@@ -767,7 +767,44 @@ for (const mobile of [false,true]) test(`3B.1 ${mobile?'mobile':'desktop'}: guid
 test('3B.1 text-only guided session works with microphone unavailable and keeps the existing proposal/storage contract',async t=>{
   const page=await fixture(t);await page.addInitScript(()=>{window.__micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.__micRequests++;throw new DOMException('Microphone unavailable','NotAllowedError');};});
   await page.goto(harness.origin+'/');await page.getByRole('link',{name:'Comenzar sesión guiada',exact:true}).click();await button(page,'Entendido, continuar').click();await page.getByRole('heading',{name:'Sesión guiada',exact:true}).waitFor();await page.getByText('Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.',{exact:true}).waitFor();
-  const consent=await storage(page);assert.deepEqual(Object.keys(consent),['fh:voice-consent-v1']);await button(page,'Escribir intención').click();await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero concentrarme durante cinco minutos');await button(page,'Continuar').click();await page.getByRole('combobox',{name:'Intensidad',exact:true}).selectOption('deep');await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar propuesta').click();assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consent);
-  await button(page,'Confirmar e iniciar').click();await button(page,'Detener sesión').waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216,144,216]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consent);await button(page,'Guardar sesión').click();await page.getByRole('status').filter({hasText:'Sesión guardada en este dispositivo.'}).waitFor();
+  const consent=await storage(page);assert.deepEqual(Object.keys(consent),['fh:voice-consent-v1']);await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero concentrarme durante cinco minutos');await button(page,'Interpretar intención').click();await page.getByText('Cambiar interpretación',{exact:true}).click();await page.getByRole('combobox',{name:'Intensidad',exact:true}).selectOption('deep');await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar recomendación').click();assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consent);
+  await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216,144,216]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consent);await button(page,'Guardar sesión').click();await page.getByRole('status').filter({hasText:'Sesión guardada en este dispositivo.'}).waitFor();
   const saved=await storage(page);assert.deepEqual(Object.keys(saved).sort(),['fh:voice-consent-v1','fh:voice-sessions-v1'].sort());assert.equal(saved['fh:voice-consent-v1'],consent['fh:voice-consent-v1']);const [record]=JSON.parse(saved['fh:voice-sessions-v1']);assert.equal(record.schemaVersion,1);assert.equal(record.status,'stopped');assert.equal(record.proposal.ruleVersion,'voice-rules-v1');assert.equal(record.proposal.ruleId,'voice-focus-deep');assert.deepEqual(record.proposal.harmonicConfig,{baseHz:144,uiVolume:0,mode:'sequence',ratioId:'fifth',increments:3,direction:'return',waveform:'sine',durationSeconds:300,progression:['root','fifth','root','fifth']});assert.equal(await page.evaluate(()=>window.__micRequests),0);
+});
+
+async function guidedProposal(t,mobile=false){
+  const page=await fixture(t);if(mobile)await page.setViewportSize({width:390,height:844});
+  await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();
+  await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero enfoque profundo 5 minutos');await button(page,'Interpretar intención').click();
+  await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar recomendación').click();return page;
+}
+for(const mobile of [false,true])test(`3B.2 ${mobile?'mobile':'desktop'} linear journey, disclosures, back, explicit save and missing ratings`,async t=>{
+  const page=await guidedProposal(t,mobile),before=await storage(page);
+  assert.equal(await page.getByRole('region',{name:'Explicación del protocolo'}).isVisible(),false);
+  await page.getByText('¿Por qué esta sesión?',{exact:true}).click();await page.getByText('Detalles de la recomendación',{exact:true}).click();assert.match(await page.getByRole('region',{name:'Explicación del protocolo'}).innerText(),/voice-focus-deep/);
+  await page.getByText('¿Por qué esta sesión?',{exact:true}).click();await button(page,'Continuar').click();
+  assert.equal(await page.evaluate(()=>document.activeElement?.textContent),'Lista para comenzar');assert.equal((await probe(page)).contexts.length,0);
+  await button(page,'Volver').click();await page.getByRole('heading',{name:'Sesión propuesta',exact:true}).waitFor();await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();
+  const stopButton=button(page,'Detener sesión');await stopButton.waitFor();const box=await stopButton.boundingBox();assert.ok(box.y>=0&&box.y+box.height<=(mobile?844:720));assert.equal(await field(page,'Base (Hz)').count(),0);
+  await stopButton.click();await clean(page);assert.deepEqual(await storage(page),before);
+  await page.getByRole('combobox',{name:'Claridad',exact:true}).selectOption('0');await button(page,'Guardar sesión').click();await page.getByRole('heading',{name:'Sesión guardada',exact:true}).waitFor();
+  const [record]=JSON.parse((await storage(page))['fh:voice-sessions-v1']);assert.deepEqual(record.after,{clarity:0});assert.deepEqual(record.before,{});assert.equal(record.status,'stopped');
+  await button(page,'Ver historial').click();assert.match(await page.evaluate(()=>document.activeElement?.textContent),/Historial de sesiones/);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await button(page,'Nueva sesión').click();await page.getByRole('heading',{name:'¿Qué quieres explorar hoy?',exact:true}).waitFor();assert.equal(await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).inputValue(),'');
+});
+test('3B.2 revised recommendation requires review and experimental consent at confirmation',async t=>{
+  const page=await guidedProposal(t);await button(page,'Editar propuesta').click();await page.getByText('Cambiar interpretación',{exact:true}).click();await field(page,'Duración (minutos)').fill('7');await page.getByRole('combobox',{name:'Intensidad',exact:true}).selectOption('experimental');await button(page,'Generar recomendación').click();
+  assert.equal(await button(page,'Iniciar sesión').count(),0);await button(page,'Continuar').click();const consent=page.getByRole('checkbox',{name:/Acepto explorar la cascada/});assert.equal(await consent.isVisible(),true);assert.equal(await button(page,'Iniciar sesión').isDisabled(),true);assert.equal((await probe(page)).contexts.length,0);await consent.check();
+  await button(page,'Volver').click();await button(page,'Editar propuesta').click();await button(page,'Generar recomendación').click();await button(page,'Continuar').click();assert.equal(await consent.isChecked(),false);assert.equal(await button(page,'Iniciar sesión').isDisabled(),true);
+  await consent.check();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').click();await clean(page);await button(page,'Guardar sesión').click();await page.getByRole('heading',{name:'Sesión guardada',exact:true}).waitFor();const [record]=JSON.parse((await storage(page))['fh:voice-sessions-v1']);assert.equal(record.proposal.harmonicConfig.durationSeconds,420);assert.equal(record.proposal.harmonicConfig.ratioId,'cascade-13-12');
+});
+test('3B.2 failed explicit save retains exportable memory draft and retries unchanged',async t=>{
+  const page=await guidedProposal(t);await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').click();await clean(page);
+  await page.evaluate(()=>{const original=Storage.prototype.setItem;window.__restoreSave=()=>{Storage.prototype.setItem=original;};Storage.prototype.setItem=function(k,v){if(k==='fh:voice-sessions-v1')throw new DOMException('Quota exceeded','QuotaExceededError');return original.call(this,k,v);};});
+  await button(page,'Guardar sesión').click();await page.getByRole('alert').filter({hasText:'Sesión disponible en memoria para exportar'}).waitFor();assert.equal((await storage(page))['fh:voice-sessions-v1'],undefined);assert.equal(await page.getByText('Historial de sesiones',{exact:true}).evaluate(e=>e.parentElement.open),true);
+  const download=page.waitForEvent('download');await button(page,'Exportar sesiones visibles').click();const stream=await(await download).createReadStream();let exported='';for await(const chunk of stream)exported+=chunk;const [draft]=JSON.parse(exported);assert.equal(draft.status,'stopped');
+  await page.evaluate(()=>window.__restoreSave());await button(page,'Guardar sesión').click();await page.getByRole('heading',{name:'Sesión guardada',exact:true}).waitFor();assert.deepEqual(JSON.parse((await storage(page))['fh:voice-sessions-v1']),[draft]);
+});
+test('3B.2 unsaved navigation stops playback without persisting a completed record',async t=>{
+  const page=await guidedProposal(t),before=await storage(page);await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();await page.getByRole('link',{name:'⚡ Inicio',exact:true}).click();await page.waitForURL(harness.origin+'/');await clean(page);assert.deepEqual(await storage(page),before);
 });
