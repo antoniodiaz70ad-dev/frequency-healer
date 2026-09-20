@@ -11,6 +11,7 @@ import { buildSchedule } from '@/lib/harmonic/math';
 import type { DiscoveryPlaybackRequest } from './ProtocolDiscovery';
 import ProtocolRationale from './ProtocolRationale';
 import StructuralAnalysis from './StructuralAnalysis';
+import AdaptiveExplorer from './AdaptiveExplorer';
 import SessionPlan from '../voice/SessionPlan';
 import styles from '../voice/voice.module.css';
 
@@ -95,6 +96,7 @@ export default function PersonalizedAdvisor({active,onConfirm,onStop}:{active:bo
         <button disabled={blocked} onClick={()=>{setChosen(r.candidateId);setExpectation('');setPre({});setPost({});setReflection('');setConsent(false);}}>Elegir {r.candidate.label} · vista previa</button>
       </article>)}
       <StructuralAnalysis evidence={recommendation}/>
+      <AdaptiveExplorer evidence={recommendation} plans={plans} active={active} disabled={working||!!record} onConfirm={onConfirm} onStop={onStop}/>
       <button onClick={()=>download(JSON.stringify(recommendation,null,2),'personalization-recommendation.json')}>Exportar recomendación y evidencia</button>
     </section>}
     {selected&&recommendation&&!record&&<section aria-label="Vista previa personalizada"><h3>Confirmar {selected.candidate.label}</h3>
