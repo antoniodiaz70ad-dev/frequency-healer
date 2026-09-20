@@ -1,236 +1,62 @@
 "use client";
 
-import { VOICE_ENABLED, HARMONIC_ENABLED } from "@/lib/voice/feature";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FREQUENCY_DATABASE, DOMAIN_INFO, CATEGORY_INFO } from "@/lib/frequencies";
-import { PROTOCOLS } from "@/lib/protocols";
+import { HARMONIC_ENABLED, VOICE_ENABLED } from "@/lib/voice/feature";
+import { VoiceStore } from "@/lib/voice/storage";
+import type { VoiceSessionRecordV1 } from "@/lib/voice/types";
+import { FHEmptyState, FHPageHeader, FHPageShell, FHPrimaryCard, FHSection, FHSurface } from "@/components/ui/FHLayout";
+import { FHStateBadge } from "@/components/ui/FHBadges";
+import FHMetric from "@/components/ui/FHMetric";
 
-const QUICK_FREQUENCIES = [
-  { id: "sol-528", label: "528 Hz Solfeggio", color: "#fbbf24" },
-  { id: "bw-gamma", label: "40 Hz Gamma", color: "#60a5fa" },
-  { id: "bw-schumann", label: "7.83 Hz Schumann", color: "#a78bfa" },
-  { id: "mus-432", label: "432 Hz Natural", color: "#4ade80" },
-  { id: "rife-727", label: "727 Hz Rife (histórico)", color: "#f87171" },
-  { id: "sol-963", label: "963 Hz Solfeggio", color: "#67e8f9" },
+const explore = [
+  { href: "/laboratorio-armonico", title: "Laboratorio Armónico", text: "Construye, escucha y comprende relaciones armónicas exactas.", gated: true },
+  { href: "/biblioteca", title: "Atlas de frecuencias", text: "Consulta el archivo histórico y exploratorio con su clasificación." },
+  { href: "/protocolos", title: "Protocolos históricos", text: "Revisa secuencias heredadas y su estado actual." },
+  { href: "/generador", title: "Generador manual", text: "Configura directamente una señal como herramienta avanzada." },
 ];
 
-const DOMAIN_CARDS = [
-  {
-    domain: "cuerpo" as const,
-    title: "Cuerpo",
-    icon: "🫀",
-    subtitle: "Exploraci\u00f3n corporal subjetiva",
-    description: "Frecuencias Rife, CAFL y Nogier para el cuerpo f\u00edsico.",
-    gradient: "from-[#f8717120] to-transparent",
-    borderColor: "#f87171",
-  },
-  {
-    domain: "alma" as const,
-    title: "Alma",
-    icon: "🧘",
-    subtitle: "Equilibrio Emocional",
-    description: "Solfeggio, binaural beats y ondas cerebrales para la mente.",
-    gradient: "from-[#a78bfa20] to-transparent",
-    borderColor: "#a78bfa",
-  },
-  {
-    domain: "espiritu" as const,
-    title: "Esp\u00edritu",
-    icon: "✨",
-    subtitle: "Conexi\u00f3n Espiritual",
-    description: "Frecuencias superiores Solfeggio y meditaci\u00f3n profunda.",
-    gradient: "from-[#67e8f920] to-transparent",
-    borderColor: "#67e8f9",
-  },
-];
+function formatDate(value: string | number) {
+  return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium" }).format(new Date(value));
+}
 
 export default function DashboardPage() {
-  const freqsByCat = Object.keys(CATEGORY_INFO) as Array<keyof typeof CATEGORY_INFO>;
-  const totalFrequencies = FREQUENCY_DATABASE.length;
-  const totalProtocols = PROTOCOLS.length;
-  const cuerpoCount = FREQUENCY_DATABASE.filter((f) => f.domain.includes("cuerpo")).length;
-  const almaCount = FREQUENCY_DATABASE.filter((f) => f.domain.includes("alma")).length;
-  const espirituCount = FREQUENCY_DATABASE.filter((f) => f.domain.includes("espiritu")).length;
+  const [latest, setLatest] = useState<VoiceSessionRecordV1 | null>(null);
+  const [historyAvailable, setHistoryAvailable] = useState(true);
 
-  return (
-    <div className="max-w-4xl animate-fade-in">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-1">Frequency Healer</h1>
-        <p className="text-sm text-gray-400">Exploración sonora personal para observar experiencias subjetivas.</p>
-      </div>
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const records = new VoiceStore(localStorage).load();
+        setLatest(records[0] ?? null);
+      } catch {
+        setHistoryAvailable(false);
+      }
+    });
+  }, []);
 
-      <nav aria-label="Formas de explorar" className="space-y-4 mb-8">
-        {VOICE_ENABLED && <section className="rounded-xl border border-cyan-700 bg-cyan-950/30 p-5">
-          <h2 className="text-xl font-semibold text-white">Sesión guiada</h2>
-          <p className="text-sm text-gray-300 mt-2">Describe lo que quieres explorar y Frequency Healer te propondrá una sesión.</p>
-          <p className="text-sm text-gray-400 mt-1">Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p>
-          <Link className="inline-flex items-center rounded-lg bg-cyan-300 text-slate-950 font-semibold px-5 py-3 mt-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cyan-300" href="/voz">Comenzar sesión guiada</Link>
-        </section>}
-        <div className="rounded-xl border border-slate-700 p-4">
-          <h2 className="text-sm font-semibold text-gray-300">Exploración avanzada</h2>
-          {HARMONIC_ENABLED && <div className="mt-3">
-            <Link className="text-cyan-300 underline underline-offset-4 focus-visible:outline-cyan-300" href="/laboratorio-armonico">Laboratorio Armónico</Link>
-            <p className="text-sm text-gray-400 mt-2">Explora frecuencias, relaciones, octavas, constelaciones y experimentos avanzados.</p>
-          </div>}
-          <Link className="inline-flex py-3 text-sm text-gray-300 underline underline-offset-4 focus-visible:outline-cyan-300" href="/generador">Abrir generador manual</Link>
+  return <FHPageShell>
+    <FHPageHeader eyebrow="Sistema personal de exploración acústica" title="Frequency Healer" description="Define una intención, escucha una estructura armónica y registra tu propia experiencia." />
+    <nav aria-label="Formas de explorar">
+      {VOICE_ENABLED && <FHPrimaryCard className="relative overflow-hidden">
+        <p className="fh-label">Sesión guiada</p>
+        <h2 className="mt-3 max-w-2xl text-3xl font-medium tracking-[-0.035em] text-[var(--fh-text)] md:text-4xl">¿Qué quieres explorar hoy?</h2>
+        <p className="mt-4 max-w-xl text-base leading-7 text-[var(--fh-text-secondary)]">Describe lo que quieres explorar y Frequency Healer te propondrá una sesión.</p>
+        <p className="mt-2 text-sm text-[var(--fh-text-muted)]">Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p>
+        <Link className="fh-action fh-action--primary mt-7" href="/voz">Comenzar sesión guiada <span aria-hidden="true">→</span></Link>
+      </FHPrimaryCard>}
+      <FHSection title="Tu actividad">
+        {!historyAvailable ? <FHEmptyState>El historial personal no está disponible en este dispositivo. No se modificó ningún dato.</FHEmptyState> : latest ? <FHSurface variant="subtle" className="grid gap-5 p-5 md:grid-cols-[1fr_auto] md:items-center">
+          <div><div className="flex flex-wrap items-center gap-2"><FHStateBadge state={latest.status}>Sesión {latest.status === "completed" ? "completada" : latest.status}</FHStateBadge><span className="text-xs text-[var(--fh-text-muted)]">{formatDate(latest.createdAt)}</span></div><h3 className="mt-3 text-lg font-medium text-[var(--fh-text)]">{latest.intent.intention}</h3><p className="mt-1 text-sm text-[var(--fh-text-secondary)]">Tu registro permanece en este dispositivo.</p></div>
+          <FHMetric label="Duración prevista" value={`${latest.intent.durationMinutes} min`} />
+        </FHSurface> : <FHEmptyState><h3 className="text-lg font-medium text-[var(--fh-text)]">Tu aprendizaje empieza con una sesión</h3><p className="mx-auto mt-2 max-w-lg">Cuando guardes una sesión, aquí aparecerá contexto real de tu actividad. No generamos datos personales de ejemplo.</p></FHEmptyState>}
+      </FHSection>
+      <FHSection title="Explorar con más detalle">
+        <div className="grid gap-3 md:grid-cols-2">
+          {explore.filter(item => !item.gated || HARMONIC_ENABLED).map(item => <Link key={item.href} href={item.href} className="group min-h-32 rounded-[var(--fh-radius-surface)] border border-[var(--fh-border)] bg-[var(--fh-surface)] p-5 transition-colors hover:border-[var(--fh-border-strong)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--fh-accent)]"><h3 className="font-medium text-[var(--fh-text)] group-hover:text-[var(--fh-accent)]">{item.title} <span aria-hidden="true">↗</span></h3><p className="mt-2 text-sm leading-6 text-[var(--fh-text-muted)]">{item.text}</p></Link>)}
         </div>
-      </nav>
-      {/* Domain cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        {DOMAIN_CARDS.map((card) => (
-          <Link
-            key={card.domain}
-            href="/biblioteca"
-            className={`bg-gradient-to-br ${card.gradient} bg-[#111827] border border-[#1f2937] rounded-xl p-5 hover:border-[#374151] transition-all group`}
-          >
-            <span className="text-3xl">{card.icon}</span>
-            <h3 className="text-lg font-bold text-white mt-2">{card.title}</h3>
-            <p className="text-xs font-medium mt-0.5" style={{ color: card.borderColor }}>
-              {card.subtitle}
-            </p>
-            <p className="text-xs text-gray-500 mt-2">{card.description}</p>
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick frequencies */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-white">Frecuencias R&aacute;pidas</h3>
-          <Link href="/generador" className="text-xs text-[#60a5fa] hover:text-white transition-colors">
-            Generador →
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {QUICK_FREQUENCIES.map((qf) => {
-            const freq = FREQUENCY_DATABASE.find((f) => f.id === qf.id);
-            return (
-              <Link
-                key={qf.id}
-                href="/generador"
-                className="p-3 rounded-lg border border-[#1f2937] hover:border-[#374151] transition-all group"
-              >
-                <p className="text-xl font-bold font-mono group-hover:brightness-125 transition-all" style={{ color: qf.color }}>
-                  {freq?.hz ?? ""}
-                  <span className="text-xs text-gray-600 ml-1">Hz</span>
-                </p>
-                <p className="text-[10px] text-gray-500 mt-0.5">{qf.label}</p>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Protocols quick access */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-white">Protocolos históricos</h3>
-          <Link href="/protocolos" className="text-xs text-[#60a5fa] hover:text-white transition-colors">
-            Ver todos →
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {PROTOCOLS.slice(0, 4).map((protocol) => (
-            <Link
-              key={protocol.id}
-              href="/protocolos"
-              className="flex items-center gap-3 p-3 rounded-lg border border-[#1f2937] hover:border-[#374151] transition-all"
-            >
-              <span className="text-xl">{protocol.icon}</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{protocol.name}</p>
-                <p className="text-[10px] text-gray-500">
-                  {protocol.totalDurationMinutes} min &middot; {protocol.steps.length} pasos
-                </p>
-              </div>
-              <div className="flex gap-0.5">
-                {protocol.domain.map((d) => (
-                  <span
-                    key={d}
-                    className="w-4 h-4 rounded-full flex items-center justify-center text-[8px]"
-                    style={{ backgroundColor: DOMAIN_INFO[d].color + "20" }}
-                  >
-                    {DOMAIN_INFO[d].icon}
-                  </span>
-                ))}
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold font-mono text-[#60a5fa]">{totalFrequencies}</p>
-          <p className="text-[10px] text-gray-500 mt-1">Frecuencias</p>
-        </div>
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold font-mono text-[#fbbf24]">{totalProtocols}</p>
-          <p className="text-[10px] text-gray-500 mt-1">Protocolos</p>
-        </div>
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold font-mono text-[#4ade80]">5</p>
-          <p className="text-[10px] text-gray-500 mt-1">Categor&iacute;as</p>
-        </div>
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold font-mono text-[#a78bfa]">22 kHz</p>
-          <p className="text-[10px] text-gray-500 mt-1">Rango M&aacute;x</p>
-        </div>
-      </div>
-
-      {/* Category breakdown */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 mb-6">
-        <h3 className="text-sm font-bold text-white mb-3">Por Categor&iacute;a</h3>
-        <div className="space-y-2">
-          {freqsByCat.map((cat) => {
-            const count = FREQUENCY_DATABASE.filter((f) => f.category === cat).length;
-            const pct = (count / totalFrequencies) * 100;
-            return (
-              <div key={cat} className="flex items-center gap-3">
-                <span className="text-sm w-6 text-center">{CATEGORY_INFO[cat].icon}</span>
-                <span className="text-xs text-gray-400 w-28">{CATEGORY_INFO[cat].label}</span>
-                <div className="flex-1 bg-[#1f2937] rounded-full h-2">
-                  <div
-                    className="h-2 rounded-full transition-all"
-                    style={{ width: `${pct}%`, backgroundColor: CATEGORY_INFO[cat].color }}
-                  />
-                </div>
-                <span className="text-xs text-gray-500 w-8 text-right">{count}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Domain breakdown */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5">
-        <h3 className="text-sm font-bold text-white mb-3">Por Dominio</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl" style={{ backgroundColor: "#f8717120" }}>
-              🫀
-            </div>
-            <p className="text-sm font-bold text-white mt-2">Cuerpo</p>
-            <p className="text-lg font-mono font-bold" style={{ color: "#f87171" }}>{cuerpoCount}</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl" style={{ backgroundColor: "#a78bfa20" }}>
-              🧘
-            </div>
-            <p className="text-sm font-bold text-white mt-2">Alma</p>
-            <p className="text-lg font-mono font-bold" style={{ color: "#a78bfa" }}>{almaCount}</p>
-          </div>
-          <div className="text-center">
-            <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center text-2xl" style={{ backgroundColor: "#67e8f920" }}>
-              ✨
-            </div>
-            <p className="text-sm font-bold text-white mt-2">Esp&iacute;ritu</p>
-            <p className="text-lg font-mono font-bold" style={{ color: "#67e8f9" }}>{espirituCount}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+      </FHSection>
+      <FHSection><FHSurface variant="subtle" className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="fh-label">Exploración avanzada</p><h2 className="mt-2 font-medium text-[var(--fh-text)]">Práctica y diario OBE</h2><p className="mt-1 text-sm text-[var(--fh-text-muted)]">Herramientas exploratorias separadas del recorrido principal.</p></div><Link className="fh-action fh-action--secondary" href="/sesion-nueva">Abrir exploración OBE</Link></FHSurface></FHSection>
+    </nav>
+  </FHPageShell>;
 }
