@@ -31,7 +31,7 @@ For OFF builds use the existing HTTP and landing smoke scripts, not this enabled
 
 `.github/workflows/regression.yml` runs on every pull request update and on pushes to `main`, with no path filters. Development pushes to an open PR are covered by the PR event instead of a second duplicate push run. Manual dispatch is also available after the workflow reaches the default branch. Older runs of the same PR/ref are cancelled.
 
-Jobs: `Quality` runs existing tests, typecheck and lint once. `Flags ON` and `Flags OFF` independently build and run existing HTTP/landing smokes. ON also runs all 18 UI cases. Permissions are read-only; checkout credentials are not persisted. No secrets, deploys or branch-protection changes are involved.
+Jobs: `Quality` runs existing tests, typecheck and lint once. `Flags ON` and `Flags OFF` independently build and run existing HTTP/landing smokes. ON also runs the full UI suite. Permissions are read-only; checkout credentials are not persisted. No secrets, deploys or branch-protection changes are involved.
 
 Node is fixed at 22.14.0, matching the validated baseline; `npm ci` uses the existing lockfile without dependency updates. CI explicitly installs the Chromium revision associated with pinned playwright-core, including Linux dependencies:
 
@@ -55,3 +55,7 @@ Timeouts: readiness 20 seconds (2 seconds per HTTP attempt); browser launch 20 s
 On failure, Actions retains only `frontend/artifacts/` for 7 days: command output, server logs and best-effort viewport screenshots/error logs for failing UI cases. An early setup failure may have no screenshot. The contexts contain only synthetic test data. No storage dumps, browser profiles, network traces, environment dumps or audio recordings are uploaded. Local diagnostics are gitignored. Successful runs keep normal Actions logs without artifact uploads.
 
 Recommended required checks once validated: `Quality`, `Flags ON`, `Flags OFF`. Keep all three so an OFF regression cannot be hidden by successful ON tests. This recommendation does not change repository protection settings.
+
+## Saved experiment reader (Phase 1H)
+
+Nine additional UI cases exercise all five saved lifecycle states, missing fields versus explicit zero, every snapshot field including progression, exact supported summary, unsupported cascade summary, unchanged export and corrupt JSON/schema rejection. Synthetic records use the existing storage loader in an isolated context. View/return/export must preserve the original payload byte-for-byte with zero storage writes and no AudioContext. The UI suite now contains 27 cases; the 18 playback/experiment-flow cases remain unchanged.

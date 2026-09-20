@@ -206,3 +206,101 @@ for (const direction of ['ascending','descending','return']) test(`cascade ${dir
   const exponents = direction==='descending' ? [0,-1,-2,-3] : direction==='return' ? [0,1,2,3,2,1,0] : [0,1,2,3];
   await graph(page,exponents.map(k=>432*(13/12)**k)); await stop(page); assert.deepEqual(await storage(page),{});
 });
+
+function readerRecord(status = 'completed', configPatch = {}, optional = true) {
+  return {
+    id: `reader-${status}`, schemaVersion: 1, source: 'harmonic-lab', status,
+    createdAt: '2026-09-19T10:00:00.000Z',
+    ...(status === 'prepared' ? {} : { startedAt: '2026-09-19T10:00:01.000Z' }),
+    ...(['completed','cancelled','interrupted'].includes(status) ? { endedAt: '2026-09-19T10:01:01.000Z' } : {}),
+    ...(status === 'completed' ? { completedAt: '2026-09-19T10:01:01.000Z' } : {}),
+    ...(optional ? { intention: 'Lectura histórica sintética', context: 'Prueba local', expectationScore: 0 } : {}),
+    configurationSnapshot: { baseHz: 432, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 60, uiVolume: 0, waveform: 'sine', ...configPatch },
+    preState: optional ? { clarity: 0, tension: 1, focus: 2, energy: 3, mood: 4 } : {},
+    postState: optional ? { clarity: 5, tension: 6, focus: 7, energy: 8, mood: 9 } : {},
+    ...(optional ? { reflection: 'Reflexión sin interpretación causal.' } : {}),
+  };
+}
+async function historical(t, payload) {
+  const page = await fixture(t);
+  const raw = typeof payload === 'string' ? payload : JSON.stringify(payload, null, 3);
+  await page.evaluate(({key, raw}) => localStorage.setItem(key, raw), {key:KEY, raw});
+  await page.reload();
+  await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).waitFor();
+  return {page, raw};
+}
+async function reader(page, id) {
+  await page.getByText(/^Experimentos guardados \(/).click();
+  await page.getByText(/^Ver detalles ·/).click();
+  const article = page.getByRole('article',{name:`Experimento guardado ${id}`,exact:true});
+  await article.waitFor(); return article;
+}
+const detail = (scope, label) => scope.locator('dt').filter({hasText:new RegExp(`^${label}$`)}).locator('..').locator('dd');
+async function readOnly(page, raw) {
+  assert.deepEqual(await storage(page),{[KEY]:raw});
+  assert.deepEqual((await probe(page)).writes,[]);
+  assert.equal((await probe(page)).contexts.length,0);
+}
+
+for (const status of ['prepared','started','completed','cancelled','interrupted']) test(`reader ${status}: exact lifecycle, missing optionals and no writes`, async t => {
+  const record = readerRecord(status,{},false); const {page, raw} = await historical(t,[record]);
+  const article = await reader(page,record.id);
+  assert.equal(await detail(article,'Estado').innerText(),status);
+  assert.equal(await detail(article,'ID').innerText(),record.id);
+  assert.equal(await detail(article,'Origen').innerText(),'harmonic-lab');
+  for (const label of ['Intención','Expectativa','Contexto','Reflexión']) assert.equal(await detail(article,label).innerText(),'Sin registrar');
+  for (const section of ['Estado previo','Estado posterior']) for (const label of ['Claridad','Tensión','Enfoque','Energía','Ánimo']) {
+    assert.equal(await detail(article.getByRole('region',{name:section,exact:true}),label).innerText(),'Sin registrar');
+  }
+  for (const [label, value] of [['Creado',record.createdAt],['Iniciado',record.startedAt],['Terminado',record.endedAt],['Completado',record.completedAt]]) {
+    if (value === undefined) assert.equal(await detail(article,label).innerText(),'Sin registrar');
+    else assert.ok((await detail(article,label).innerText()).includes(value));
+  }
+  assert.equal(await detail(article,'progression').innerText(),'Sin registrar');
+  const summary = article.getByRole('region',{name:'Resumen armónico',exact:true});
+  await eventually(async () => assert.match(await detail(summary,'Firma de constelación').innerText(),/^sha256:[a-f0-9]{64}$/));
+  assert.match(await summary.getByRole('table').innerText(),/648 Hz/);
+  assert.equal(await article.locator('input,select,textarea,button').count(),0);
+  await readOnly(page,raw);
+  await button(page,'Volver al historial').click(); await eventually(async () => assert.equal(await article.count(),0));
+  await readOnly(page,raw);
+});
+
+test('reader complete: all stored fields, zeros, explicit progression and unchanged export', async t => {
+  const record = readerRecord('completed',{baseHz:432.123456789,ratioId:'fourth',mode:'simultaneous',direction:'return',increments:5,progression:['minor-third','root','fifth']});
+  const {page,raw} = await historical(t,[record]); const article = await reader(page,record.id);
+  for (const [label,value] of [['Intención',record.intention],['Contexto',record.context],['Reflexión',record.reflection],['Expectativa','0 / 10']]) assert.equal(await detail(article,label).innerText(),value);
+  const config = article.getByRole('region',{name:'Configuración guardada',exact:true});
+  const expected = {baseHz:'432.123456789 Hz',ratioId:'fourth · Cuarta justa',increments:'5',direction:'return',mode:'simultaneous',durationSeconds:'60 s',uiVolume:'0 / 100',waveform:'sine',progression:'minor-third → root → fifth'};
+  for (const [label,value] of Object.entries(expected)) assert.equal(await detail(config,label).innerText(),value);
+  for (const [section, values] of [['Estado previo',[0,1,2,3,4]],['Estado posterior',[5,6,7,8,9]]]) {
+    for (const [i,label] of ['Claridad','Tensión','Enfoque','Energía','Ánimo'].entries()) assert.equal(await detail(article.getByRole('region',{name:section,exact:true}),label).innerText(),`${values[i]} / 10`);
+  }
+  const summary = article.getByRole('region',{name:'Resumen armónico',exact:true});
+  await eventually(async () => assert.match(await detail(summary,'Firma de constelación').innerText(),/^sha256:[a-f0-9]{64}$/));
+  assert.equal(await detail(summary,'Frecuencia semilla').innerText(),'432.123456789 Hz');
+  const cells = await summary.locator('tbody tr').allTextContents(); assert.equal(cells.length,3);
+  for (const [i, [relationship,hz]] of [['6:5',432.123456789*6/5],['1:1',432.123456789],['3:2',432.123456789*3/2]].entries()) {
+    assert.ok(cells[i].includes(relationship)); assert.ok(cells[i].includes(`${hz} Hz`));
+  }
+  const downloadEvent = page.waitForEvent('download'); await button(page,'Exportar registro guardado').click();
+  const download = await downloadEvent; assert.equal(download.suggestedFilename(),`experimento-${record.id}.json`);
+  const stream = await download.createReadStream(); let text = ''; for await (const chunk of stream) text += chunk;
+  assert.deepEqual(JSON.parse(text),record); await readOnly(page,raw);
+});
+
+test('reader cascade: exact stored configuration with unavailable harmonic representation', async t => {
+  const record = readerRecord('interrupted',{ratioId:'cascade-13-12'}); const {page,raw} = await historical(t,[record]);
+  const article = await reader(page,record.id);
+  await article.getByText('La representación detallada de la constelación no está disponible para esta configuración.',{exact:true}).waitFor();
+  assert.equal(await detail(article,'ratioId').innerText(),'cascade-13-12 · Cascada experimental');
+  assert.equal(await article.getByRole('region',{name:'Resumen armónico',exact:true}).getByRole('table').count(),0);
+  await readOnly(page,raw);
+});
+
+for (const payload of ['{broken json', JSON.stringify([{...readerRecord(),schemaVersion:99}])]) test(`reader invalid storage (${payload.startsWith('{')?'JSON':'schema'}): no repair or rendering`, async t => {
+  const {page,raw} = await historical(t,payload);
+  await page.getByRole('alert').filter({hasText:'Historial de experimentos inválido'}).waitFor();
+  assert.equal(await page.getByText(/^Ver detalles ·/).count(),0); assert.equal(await page.getByRole('article').count(),0);
+  await readOnly(page,raw);
+});
