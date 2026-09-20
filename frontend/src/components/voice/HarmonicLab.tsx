@@ -7,6 +7,7 @@ import SessionPlan from './SessionPlan';
 import ExperimentSession, { type ExperimentSessionHandle } from '../lab/ExperimentSession';
 import HarmonicExplorer from '../lab/HarmonicExplorer';
 import { inverseHarmonicConfig } from '@/lib/harmonic/apply';
+import { proposeOctaveApply } from '@/lib/harmonic/octaveApply';
 import styles from './voice.module.css';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
@@ -43,6 +44,12 @@ export default function HarmonicLab() {
       if (changed()) return 'La configuración o reproducción cambió durante la validación. No se aplicó la propuesta.';
       if (result.status !== 'supported') return result.reason;
       edit(result.config);
+      return null;
+    }} onApplyOctave={(offset, expectedConfig) => {
+      if (currentConfig.current !== expectedConfig || startPending.current || engine.isPlaying()) return 'La configuración o reproducción cambió. Selecciona de nuevo con el audio detenido.';
+      const result = proposeOctaveApply(offset, expectedConfig);
+      if (result.status !== 'supported') return result.reason;
+      edit({ baseHz: result.config.baseHz });
       return null;
     }} />
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />

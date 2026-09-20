@@ -6,6 +6,8 @@ import { exploreHarmonics } from '@/lib/harmonic/explorer';
 import type { HarmonicConfig } from '@/lib/harmonic/math';
 import styles from './HarmonicExplorer.module.css';
 import RelationshipApply, { type ExplorerApplyProps } from './RelationshipApply';
+import OctaveApply, { type OctaveApplyProps } from './OctaveApply';
+type ExplorerProps = ExplorerApplyProps & OctaveApplyProps;
 
 const format = new Intl.NumberFormat('es', { maximumFractionDigits: 6 });
 function Hz({ value }: { value: number }) {
@@ -44,13 +46,13 @@ function CurrentConstellation({ config }: { config: HarmonicConfig }) {
   </>;
 }
 
-function ExplorerContent({ config, playbackActive, onApply }: ExplorerApplyProps) {
+function ExplorerContent({ config, playbackActive, onApply, onApplyOctave }: ExplorerProps) {
   let data;
   try { data = exploreHarmonics(config.baseHz); } catch { return <p role="status">Introduce una frecuencia semilla válida entre 40 y 2000 Hz para explorar sus relaciones.</p>; }
   return <>
     <p>Explora relaciones armónicas y estructuras de octavas. Seleccionar una relación solo muestra una vista previa. Aplicar a controles requiere otra acción y nunca inicia audio.</p>
     <div className={styles.grid}>
-      <div><h3>Octavas</h3><table><caption>Octavas válidas de la semilla · solo exploración</caption><thead><tr><th scope="col">Desplazamiento</th><th scope="col">Frecuencia</th></tr></thead><tbody>{data.octaves.map(octave => <tr key={octave.offset}><th scope="row">{octave.offset > 0 ? '+' : ''}{octave.offset}</th><td><Hz value={octave.frequencyHz} /></td></tr>)}</tbody></table></div>
+      <div><h3>Octavas</h3><OctaveApply config={config} playbackActive={playbackActive} onApplyOctave={onApplyOctave} octaves={data.octaves} /></div>
       <div><h3>Relaciones</h3><RelationshipApply config={config} playbackActive={playbackActive} onApply={onApply} ratios={data.ratios} /></div>
     </div>
     <p className={styles.note}>Se omiten resultados fuera de 40–2000 Hz. El cálculo no redondea; la tabla muestra hasta seis decimales y cada valor tiene su precisión completa en la ayuda emergente.</p>
@@ -60,10 +62,10 @@ function ExplorerContent({ config, playbackActive, onApply }: ExplorerApplyProps
 }
 
 /** Read-only exploration plus an explicit, separately validated Apply bridge. */
-export default function HarmonicExplorer({ config, playbackActive, onApply }: ExplorerApplyProps) {
+export default function HarmonicExplorer({ config, playbackActive, onApply, onApplyOctave }: ExplorerProps) {
   const [open, setOpen] = useState(false);
   return <details className={styles.explorer} onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>Explorador armónico · explorar y aplicar</summary>
-    {open && <ExplorerContent config={config} playbackActive={playbackActive} onApply={onApply} />}
+    {open && <ExplorerContent config={config} playbackActive={playbackActive} onApply={onApply} onApplyOctave={onApplyOctave} />}
   </details>;
 }
