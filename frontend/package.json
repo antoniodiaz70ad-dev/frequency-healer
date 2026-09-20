@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "tsc -p tsconfig.test.json && node --test .test-build/tests/*.test.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:ui": "node --test --test-concurrency=1 ui/*.test.mjs"
   },
   "dependencies": {
     "next": "16.2.0",
@@ -22,6 +23,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.0",
+    "playwright-core": "1.63.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
