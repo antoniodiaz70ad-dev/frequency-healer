@@ -46,7 +46,7 @@ export default function BibliotecaPage() {
   const handlePlayFrequency = useCallback((freq: FrequencyEntry) => {
     const engine = getAudioEngine();
     if (playingId === freq.id) {
-      engine.stop();
+      engine.stopWithFade();
       setPlayingId(null);
     } else {
       engine.stop();
