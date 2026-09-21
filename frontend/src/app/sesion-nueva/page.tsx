@@ -4,6 +4,8 @@ import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import BreathingGuide from "@/components/BreathingGuide";
 import { downloadICS } from "@/lib/icsAlarm";
+import { FHEvidenceBadge } from "@/components/ui/FHBadges";
+import { FHPageHeader, FHPageShell } from "@/components/ui/FHLayout";
 
 type Step = "config" | "schedule" | "breathe" | "intention" | "ready";
 
@@ -118,14 +120,15 @@ export default function SesionNuevaPage() {
   }, [wbtbHour, focus.label, intention, duration]);
 
   return (
-    <div className="max-w-2xl animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Nueva sesión</h1>
-        <p className="text-sm text-gray-400">
+    <FHPageShell width="narrow" className="obe-page obe-preparation animate-fade-in">
+      <FHPageHeader
+        eyebrow={<span className="obe-header-label"><span>AVANZADO · PRÁCTICA CONTEMPLATIVA</span><FHEvidenceBadge category="EXPLORATORY">EXPLORATORIO</FHEvidenceBadge></span>}
+        title="Exploración OBE"
+        description={<>
           Wizard guiado: configurar → programar (opcional) → respirar →
           declarar intención → iniciar.
-        </p>
-      </div>
+        </>}
+      />
 
       <StepIndicator step={step} />
 
@@ -150,7 +153,7 @@ export default function SesionNuevaPage() {
       )}
 
       {step === "breathe" && (
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+        <div className="obe-surface obe-surface--centered">
           <div className="text-center mb-2">
             <p className="text-[10px] uppercase tracking-widest text-gray-500">
               Paso 3 · Respiración 4-7-8
@@ -185,7 +188,7 @@ export default function SesionNuevaPage() {
           onBack={() => setStep("intention")}
         />
       )}
-    </div>
+    </FHPageShell>
   );
 }
 
@@ -203,14 +206,14 @@ function StepIndicator({ step }: { step: Step }) {
   };
 
   return (
-    <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
+    <nav className="obe-progress" aria-label="Progreso de preparación">
       {order.map((s, i) => {
         const active = i === currentIdx;
         const done = i < currentIdx;
         return (
-          <div key={s} className="flex items-center gap-2 flex-shrink-0">
+          <div key={s} className={`obe-progress__step ${active ? "obe-progress__step--active" : ""} ${done ? "obe-progress__step--done" : ""}`} aria-current={active ? "step" : undefined}>
             <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+              className={`obe-progress__number ${
                 active
                   ? "bg-[#60a5fa] text-white"
                   : done
@@ -227,13 +230,10 @@ function StepIndicator({ step }: { step: Step }) {
             >
               {labels[s]}
             </span>
-            {i < order.length - 1 && (
-              <span className="text-gray-700 text-xs">›</span>
-            )}
           </div>
         );
       })}
-    </div>
+    </nav>
   );
 }
 
@@ -256,7 +256,7 @@ function ConfigStep({
 }: ConfigStepProps) {
   return (
     <div className="space-y-4">
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5">
+      <div className="obe-surface">
         <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-3">
           Paso 1 · Nivel de Enfoque
         </p>
@@ -288,7 +288,7 @@ function ConfigStep({
         </div>
       </div>
 
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5">
+      <div className="obe-surface">
         <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-3">
           Duración: {duration} min
         </p>
@@ -348,20 +348,20 @@ function ScheduleStep({
 
   return (
     <div className="space-y-4">
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5">
+      <div className="obe-surface">
         <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-3">
           Paso 2 · Programar (opcional)
         </p>
 
         {isLateNight ? (
-          <div className="bg-[#0d1117] border border-[#fbbf2440] rounded-lg p-3 mb-4">
+          <div className="obe-context-note obe-context-note--exploratory">
             <p className="text-xs text-[#fbbf24]">
               🌙 Estás en el horario WBTB configurado (1-5 a.m.). Si te sientes
               descansado, puedes saltar la programación y empezar ahora.
             </p>
           </div>
         ) : (
-          <div className="bg-[#0d1117] border border-[#1f2937] rounded-lg p-3 mb-4">
+          <div className="obe-context-note">
             <p className="text-xs text-gray-400">
               <strong className="text-white">WBTB</strong> (Wake-Back-To-Bed):
               duerme 4-6 horas, despierta entre las 2:00 y 3:00 a.m., y entonces
@@ -430,7 +430,7 @@ function IntentionStep({
 }: IntentionStepProps) {
   return (
     <div className="space-y-4">
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6">
+      <div className="obe-surface">
         <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-3">
           Paso 4 · Declaración de intención
         </p>
@@ -446,7 +446,7 @@ function IntentionStep({
           className="w-full bg-[#0d1117] border border-[#1f2937] rounded-lg px-4 py-3 text-white text-base leading-relaxed focus:outline-none focus:border-[#60a5fa] transition-colors resize-none"
         />
 
-        <div className="mt-4 p-4 bg-[#0d1117] border border-[#60a5fa40] rounded-lg">
+        <div className="obe-context-note mt-4">
           <p className="text-[10px] uppercase tracking-widest text-[#60a5fa] mb-2">
             Tu intención ahora
           </p>
@@ -502,7 +502,7 @@ function ReadyStep({
   return (
     <div className="space-y-4">
       <div
-        className="border rounded-xl p-6"
+        className="obe-surface obe-ready"
         style={{
           backgroundColor: focus.color + "08",
           borderColor: focus.color + "40",
@@ -518,7 +518,7 @@ function ReadyStep({
           <Row label="Intención" value={intention} multiline />
         </div>
 
-        <div className="bg-[#0d1117] border border-[#1f2937] rounded-lg p-3 mb-4 space-y-1">
+        <div className="obe-context-note mb-4 space-y-1">
           <p className="text-[10px] uppercase tracking-widest text-gray-500">
             Antes de pulsar iniciar
           </p>

@@ -129,6 +129,26 @@ body {
 .generator-review code { color: var(--fh-text); overflow-wrap: anywhere; }
 @media (max-width: 36rem) { .generator-note { align-items: flex-start; flex-direction: column; } .generator-page .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+/* Phase 3B.3D OBE surfaces */
+.obe-page { color: var(--fh-text-secondary); }
+.obe-header-label { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; }
+.obe-progress { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; margin-bottom: 1.5rem; }
+.obe-progress__step { display: grid; min-width: 0; gap: .4rem; border-top: 1px solid var(--fh-border); padding-top: .65rem; color: var(--fh-text-muted); font-size: .72rem; }
+.obe-progress__step--active { border-color: var(--fh-accent); color: var(--fh-text); }
+.obe-progress__step--done { border-color: var(--fh-success); color: var(--fh-text-secondary); }
+.obe-progress__number { display: inline-flex; width: 1.75rem; height: 1.75rem; align-items: center; justify-content: center; border: 1px solid var(--fh-border); border-radius: 999px; color: inherit; font-family: var(--font-geist-mono), monospace; }
+.obe-progress__step--active .obe-progress__number { border-color: var(--fh-accent); background: var(--fh-accent); color: var(--fh-accent-ink); }
+.obe-progress__step--done .obe-progress__number { border-color: var(--fh-success); }
+.obe-surface { border: 1px solid var(--fh-border); border-radius: var(--fh-radius-surface); padding: clamp(1rem, 3vw, 1.5rem); background: var(--fh-surface); }
+.obe-surface--centered { text-align: center; }
+.obe-context-note { border: 1px solid var(--fh-border); border-radius: var(--fh-radius-control); padding: 1rem; background: var(--fh-bg-raised); }
+.obe-context-note--exploratory { border-color: color-mix(in srgb, var(--fh-exploratory) 42%, transparent); }
+.obe-ready { border-color: var(--fh-border-strong) !important; background: var(--fh-surface-strong); box-shadow: var(--fh-shadow); }
+@media (max-width: 36rem) {
+  .obe-progress { grid-template-columns: repeat(5, 7.25rem); overflow-x: auto; padding-bottom: .5rem; }
+  .obe-progress__step { min-height: 3.75rem; }
+}
+
 /* Slider styles */
 input[type="range"] {
   -webkit-appearance: none;
