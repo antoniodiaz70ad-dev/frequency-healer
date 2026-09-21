@@ -19,6 +19,18 @@ test('commands are closed whole utterances; ambiguous phrases cannot reconfigure
   assert.equal(parseCommand('cambia a algo más estable').type, 'none');
   assert.equal(parseCommand('Detén la sesión').type, 'stop_session');
 });
+
+test('visible volume adjustments clamp during active guided playback', async () => {
+  const engine = new EngineStub(), o = new VoiceOrchestrator(engine as unknown as HarmonicEngine);
+  const intent = parseLocalIntent('enfoque 5 minutos');
+  o.move('review_transcript'); o.interpret('enfoque 5 minutos'); o.propose(intent);
+  await o.start(false);
+  assert.equal(o.adjustVolume(5), 25);
+  engine.volume = 99; assert.equal(o.adjustVolume(5), 100);
+  engine.volume = 1; assert.equal(o.adjustVolume(-5), 0);
+  o.stop('user'); assert.equal(o.adjustVolume(5), 0);
+});
+
 test('orchestrator requires proposal and confirmation; commands record monotonic snapshots', async () => {
   const engine = new EngineStub(), o = new VoiceOrchestrator(engine as unknown as HarmonicEngine);
   await o.start(false); assert.equal(engine.active, false);

@@ -82,12 +82,18 @@ export class VoiceOrchestrator {
     this.engine.restore(); this.move('playing');
   }
   cancelMarkerCapture() { this.markerDraft = null; this.endMarkerCapture(); }
+  adjustVolume(delta: -10 | -5 | 5 | 10) {
+    if (!['playing', 'marker_listening'].includes(this.state)) return this.engine.getVolume();
+    const next = Math.max(0, Math.min(100, this.engine.getVolume() + delta));
+    this.engine.setVolume(next);
+    return next;
+  }
   applyMarker(raw: string, confirmStop = false) {
     if (this.state !== 'playing' || !this.record) return;
     const note = text(raw), command = parseCommand(note);
     if (command.type === 'stop_session' && !confirmStop) return 'confirm_stop';
     const marker = this.markerDraft ?? this.markerSnapshot();
-    if (command.type === 'volume_relative') this.engine.setVolume(this.engine.getVolume() + command.delta);
+    if (command.type === 'volume_relative') this.adjustVolume(command.delta);
     if (this.record.markers.length >= 500) throw new Error('Límite de 500 marcadores por sesión.');
     this.record.markers.push({ ...marker, kind: command.type === 'none' ? 'observation' : 'command', note });
     this.markerDraft = null;
