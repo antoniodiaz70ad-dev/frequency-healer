@@ -15,6 +15,8 @@ import SafetyDisclaimerModal, {
 } from "@/components/SafetyDisclaimerModal";
 import Link from "next/link";
 import { FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
+import { FHDangerAction, FHPrimaryAction } from "@/components/ui/FHActions";
+import FHDisclosure from "@/components/ui/FHDisclosure";
 
 const PRESETS = [
   { label: "528 Hz Solfeggio", hz: 528, waveform: "sine" as Waveform, color: "#fbbf24" },
@@ -482,7 +484,7 @@ function HemiSyncTab({
 
       {/* Selected chord card */}
       <div
-        className="bg-[#111827] border rounded-xl p-6 mb-6"
+        className="obe-session-card"
         style={{ borderColor: selectedChord.color + "40" }}
       >
         <div className="flex items-start justify-between gap-4 mb-3">
@@ -506,32 +508,20 @@ function HemiSyncTab({
         </div>
 
         {/* Layer breakdown */}
-        <div className="mt-4 space-y-2">
-          <p className="text-[10px] uppercase tracking-widest text-gray-500">
-            Capas binaurales
-          </p>
-          {selectedChord.layers.map((layer, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between text-xs bg-[#0d1117] border border-[#1f2937] rounded-lg px-3 py-2"
-            >
-              <span className="font-mono text-gray-400">
-                Capa {i + 1}
-              </span>
-              <span className="font-mono text-white">
-                {layer.carrierHz} Hz / {layer.carrierHz + layer.beatHz} Hz
-              </span>
-              <span className="font-mono text-[#60a5fa]">
-                Δ {layer.beatHz.toFixed(1)} Hz
-              </span>
-            </div>
-          ))}
-        </div>
+        <FHDisclosure summary="Detalles acústicos">
+          <div className="obe-session-layers">
+            {selectedChord.layers.map((layer, i) => (
+              <div key={i} className="obe-session-layer">
+                <span>Capa {i + 1}</span><code>{layer.carrierHz} Hz / {layer.carrierHz + layer.beatHz} Hz</code><code>Δ {layer.beatHz.toFixed(1)} Hz</code>
+              </div>
+            ))}
+          </div>
+        </FHDisclosure>
       </div>
 
       {/* Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
+        <div className="obe-surface">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
             Volumen: {chordVolume}%
           </p>
@@ -545,7 +535,7 @@ function HemiSyncTab({
           />
         </div>
 
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
+        <div className="obe-surface">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500 uppercase tracking-wider">
               Ruido rosa de fondo
@@ -565,7 +555,7 @@ function HemiSyncTab({
           </p>
         </div>
 
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 md:col-span-2">
+        <div className="obe-surface md:col-span-2">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
             Duración: {effectiveDuration} min
           </p>
@@ -596,27 +586,17 @@ function HemiSyncTab({
 
       {/* Play / Stop */}
       <p className="fh-label generator-stage">Play · Reproducir</p>
-      <div className="flex justify-center mb-8">
+      <div className="obe-session-actions" role="group" aria-label="Controles de reproducción de la sesión">
         {!isPlaying ? (
-          <button
-            onClick={onPlay}
-            className="w-20 h-20 rounded-full text-white flex items-center justify-center text-3xl transition-all hover:scale-105 glow-active"
-            style={{ backgroundColor: selectedChord.color }}
-          >
-            ▶
-          </button>
+          <FHPrimaryAction onClick={onPlay} aria-label="Iniciar sesión binaural">▶ Iniciar sesión</FHPrimaryAction>
         ) : (
-          <button
-            onClick={onStop}
-            className="w-20 h-20 rounded-full bg-[#f87171] hover:bg-[#ef4444] text-white flex items-center justify-center text-2xl transition-all hover:scale-105"
-          >
-            ■
-          </button>
+          <FHDangerAction onClick={onStop} aria-label="Detener sesión binaural">■ Detener sesión</FHDangerAction>
         )}
+        <span role="status" className="obe-session-status">{isPlaying ? "Sesión en curso" : "Sesión detenida"}</span>
       </div>
 
       {/* Focus Levels grid */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 mb-4">
+      <div className="obe-surface mb-4">
         <h3 className="font-bold text-white text-sm mb-3">Niveles de Enfoque</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {FOCUS_LEVEL_PRESETS.map((p) => (
@@ -645,7 +625,7 @@ function HemiSyncTab({
         </div>
       </div>
 
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5">
+      <div className="obe-surface">
         <h3 className="font-bold text-white text-sm mb-3">Acordes Solfeggio</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {SOLFEGGIO_CHORDS.map((p) => (
