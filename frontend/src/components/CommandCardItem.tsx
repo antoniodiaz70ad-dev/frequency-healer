@@ -94,7 +94,7 @@ export default function CommandCardItem({ card }: Props) {
 
           <div>
             <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">
-              Por qué funciona
+              Propósito subjetivo
             </p>
             <p className="text-sm text-gray-400 leading-relaxed">{card.why}</p>
           </div>
