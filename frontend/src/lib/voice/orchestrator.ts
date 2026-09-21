@@ -3,7 +3,7 @@ import { RunScope, transition, type JourneyState } from './stateMachine';
 import { buildProposal, validateProposal, type ProposalEdits } from './rules';
 import { parseCommand } from './commands';
 import { validateRatings, parseIntentJSON, text } from './validation';
-import { parseLocalIntent } from './intentParser';
+import { interpretCanonicalIntent } from './intentParser';
 import type { ParsedIntentionV1, VoiceSessionProposalV1, VoiceSessionRecordV1, SelfRatingV1, SessionMarkerV1 } from './types';
 import type { SeedEvidenceInputV1 } from './seedSelection';
 
@@ -27,7 +27,7 @@ export class VoiceOrchestrator {
   }
   interpret(raw: string) {
     if (!this.move('interpreting')) return;
-    try { this.intent = parseLocalIntent(raw); this.error = ''; this.move('review_intent'); }
+    try { this.intent = interpretCanonicalIntent(raw).intent; this.error = ''; this.move('review_intent'); }
     catch (e) { this.error = (e as Error).message; this.move('interpretation_error'); }
   }
   async interpretRemote(raw: string) {
@@ -42,7 +42,7 @@ export class VoiceOrchestrator {
     } catch {
       if (!this.runs.current(runId)) return;
       this.error = 'El asistente no devolvió una intención válida. Revisa el formulario local.';
-      try { this.intent = parseLocalIntent(raw); } catch { this.intent = { ...parseLocalIntent('Exploración personal'), intention: raw.slice(0, 500) || 'Exploración personal' }; }
+      try { this.intent = interpretCanonicalIntent(raw).intent; } catch { this.intent = { ...interpretCanonicalIntent('Exploración personal').intent, intention: raw.slice(0, 500) || 'Exploración personal' }; }
       this.move('review_intent');
     }
   }

@@ -1,35 +1,19 @@
 import { recommendationRule, type HarmonicRecommendationRuleV1 } from './rationale';
-import { parseLocalIntent } from '../voice/intentParser';
+import { interpretCanonicalIntent, guidanceBoundary, CANONICAL_INTENT_TAXONOMY_VERSION } from '../voice/intentParser';
 import { buildProposal } from '../voice/rules';
 import { validateIntent, text } from '../voice/validation';
 import { validateRecord } from '../voice/storage';
 import { n1Summary, type N1Metric } from '../voice/analytics';
-import type { DesiredState, ParsedIntentionV1, VoiceGoal, VoiceSessionProposalV1 } from '../voice/types';
+import type { ParsedIntentionV1, VoiceSessionProposalV1 } from '../voice/types';
 import { dictionaries } from '../voice/i18n';
 import { discoverySeedEvidence, evidenceFingerprint, personalSeedEvidence } from '../voice/seedSelection';
 import type { ProtocolDiscoveryPlanV1 } from '../discovery/model';
 
-export const GUIDED_TAXONOMY_VERSION = 'guided-mapping-v1';
-// Aliases into GOALS/desired states, not a second acoustic rule table.
-const ALIASES: Array<{ pattern: RegExp; goal: VoiceGoal; states: DesiredState[]; explanation: string }> = [
-  {pattern:/drenad|drenaje|agotad|recuper|sin energ[ií]a|cansad|\benerg[ií]a\b|deplet|recover/,goal:'relaxation',states:['calm','grounded'],explanation:'Interpretamos esta expresión como una intención de recuperación y centrado subjetivos. No asumimos un mecanismo de drenaje energético.'},
-  {pattern:/centrad|centrarme|arraig|ground|presencia/,goal:'relaxation',states:['grounded'],explanation:'Centrado y presencia se mapean a Relajación; no existe una categoría acústica separada de grounding.'},
-  {pattern:/tens[oa]|estr[eé]s|regula.*emoci/,goal:'relaxation',states:['calm'],explanation:'La tensión percibida se interpreta como intención de calma, sin diagnosticar su causa.'},
-  {pattern:/dispers|distrai/,goal:'focus',states:['focus'],explanation:'La dispersión se interpreta como intención de enfoque.'},
-  {pattern:/medita|integraci|integrar/,goal:'reflection',states:['calm','openness'],explanation:'Meditación e integración se mapean a Reflexión y apertura.'},
-];
-export function guidanceBoundary(raw: string): string | null {
-  return /dolor|mareo|desmayo|falta de aire|dificultad.*respir|palpitaci|curar|curaci[oó]n|tratar.*(?:enfermedad|ansiedad|depresi)|diagn[oó]st|medicaci[oó]n|suicid/i.test(raw)
-    ? 'Esta guía no prescribe sesiones para síntomas o tratamientos. Busca evaluación profesional si describes síntomas; ante síntomas intensos o repentinos, atención urgente. Puedes volver a expresar una intención de exploración no clínica.' : null;
-}
+export const GUIDED_TAXONOMY_VERSION = CANONICAL_INTENT_TAXONOMY_VERSION;
+export { guidanceBoundary };
 export interface GuidedInterpretationV1 { schemaVersion: 1; taxonomyVersion: typeof GUIDED_TAXONOMY_VERSION; rawText: string; intent: ParsedIntentionV1; explanation: string }
 export function interpretGuidedIntent(raw: string): GuidedInterpretationV1 {
-  const rawText=text(raw);const boundary=guidanceBoundary(rawText);if(boundary)throw new Error(boundary);
-  const parsed=parseLocalIntent(rawText);const aliases=ALIASES.filter(a=>a.pattern.test(rawText.toLowerCase()));
-  // Explicit legacy vocabulary wins over aliases when both are present; always review.
-  const alias=parsed.goal==='custom'?aliases[0]:undefined;
-  const intent=alias?validateIntent({...parsed,goal:alias.goal,desiredStates:alias.states,confidence:{...parsed.confidence,goal:aliases.length===1?1:0},requiresReview:[...new Set([...parsed.requiresReview,'goal'])]}):parsed;
-  return {schemaVersion:1,taxonomyVersion:GUIDED_TAXONOMY_VERSION,rawText,intent,explanation:alias?.explanation??(aliases.length?'Hay varias pistas en el texto. Priorizamos el objetivo explícito reconocido; revisa y corrige la interpretación.':'Interpretación local revisable. Si falta información, se proponen 15 minutos y diseño suave; no se infiere eficacia.')};
+  return interpretCanonicalIntent(raw);
 }
 export interface PersonalEvidenceV1 { available: boolean; comparableSessions: number | null; evidenceLevel: 'none'|'insufficient'|'preliminary'|'descriptive'; metrics: N1Metric[]; explanation: string }
 function configKey(p: VoiceSessionProposalV1) {

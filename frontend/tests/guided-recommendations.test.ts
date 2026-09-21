@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { interpretGuidedIntent, recommendGuided, validateGuidedRecommendation, personalEvidence } from '../src/lib/guided/recommendations';
-import { buildProposal } from '../src/lib/voice/rules';
+import { buildLegacyProposal, buildProposal, validateProposal } from '../src/lib/voice/rules';
+import { parseLocalIntent } from '../src/lib/voice/intentParser';
 import { buildSchedule } from '../src/lib/harmonic/math';
 import type { VoiceSessionRecordV1 } from '../src/lib/voice/types';
+import { readFileSync } from 'node:fs';
 const cases=[['Quiero calma','relaxation'],['Necesito concentrarme','focus'],['Quiero dormir mejor','sleep_preparation'],['Quiero recuperarme después de una reunión','relaxation'],['Quiero sentirme más centrado','relaxation'],['Quiero creatividad','creative_exploration'],['Quiero meditar','reflection'],['quiero evitar drenaje energético','relaxation'],['Me siento disperso','focus'],['Estoy muy tenso','relaxation']] as const;
 for(const [raw,goal] of cases)test(`guided intent: ${raw}`,()=>{
   const interpretation=interpretGuidedIntent(raw);assert.equal(interpretation.intent.goal,goal);
@@ -31,4 +33,49 @@ test('guided correction, boundaries and confirmation reject injected executable 
   const creative=recommendGuided(interpretGuidedIntent('Quiero creatividad'));assert.throws(()=>validateGuidedRecommendation(creative,false),/consentimiento/);assert.ok(validateGuidedRecommendation(creative,true));
   const bad=structuredClone(recommendGuided(original));bad.proposal.harmonicConfig.baseHz=528;assert.throws(()=>validateGuidedRecommendation(bad,false));
   const badSchedule=structuredClone(recommendGuided(original));badSchedule.proposal.schedule.steps[0].frequencies[0]=999;assert.throws(()=>validateGuidedRecommendation(badSchedule,false));
+});
+
+test('canonical intent parser maps recovery and energy-drain phrases consistently across /voz and guided flow', () => {
+  const examples = [
+    'quiero evitar drenaje energético',
+    'me siento agotado',
+    'quiero recuperar mi energía',
+    'me siento sin energía',
+    'QUIERO EVITAR DRENAJE ENERGETICO!!!',
+    '¿Me siento AGOTADO?',
+  ];
+  for (const raw of examples) {
+    const voiceIntent = parseLocalIntent(raw);
+    const guidedIntent = interpretGuidedIntent(raw).intent;
+    assert.deepEqual(voiceIntent, guidedIntent);
+    assert.equal(voiceIntent.goal, 'relaxation');
+    assert.deepEqual(voiceIntent.desiredStates, ['calm', 'grounded']);
+    assert.equal(voiceIntent.intention, raw);
+    assert.ok(voiceIntent.requiresReview.includes('goal'));
+  }
+});
+
+test('unknown guided intent stays custom and requires review instead of silent focus or creative mapping', () => {
+  const intent = interpretGuidedIntent('quiero explorar algo que no sé nombrar').intent;
+  assert.equal(intent.goal, 'custom');
+  assert.deepEqual(intent.desiredStates, []);
+  assert.ok(intent.requiresReview.includes('goal'));
+});
+
+test('new guided proposals use voice-rules-v2 while legacy v1 records remain valid', () => {
+  const intent = interpretGuidedIntent('quiero recuperar mi energía').intent;
+  const proposal = buildProposal(intent);
+  assert.equal(proposal.ruleVersion, 'voice-rules-v2');
+  assert.ok(proposal.seedSelection);
+  const legacy = buildLegacyProposal(intent);
+  assert.equal(validateProposal(legacy).ruleVersion, 'voice-rules-v1');
+});
+
+
+test('new session creation path does not import or call buildLegacyProposal', () => {
+  for (const file of ['src/lib/voice/orchestrator.ts', 'src/components/voice/VoiceJourney.tsx']) {
+    const source = readFileSync(file, 'utf8');
+    assert.equal(source.includes('buildLegacyProposal'), false, file);
+    assert.equal(source.includes('voice-rules-v1'), false, file);
+  }
 });
