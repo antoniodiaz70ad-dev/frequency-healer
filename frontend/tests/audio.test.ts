@@ -41,28 +41,30 @@ test('resume cancellation cannot create a late graph', async () => {
   ctx.resume = () => new Promise<void>(r => { resolve = r; });
   const e = new HarmonicEngine(() => ctx as unknown as AudioContext);
   const pending = e.start(config); e.stop(); resolve(); assert.equal(await pending, false);
-  assert.equal(ctx.oscs.length, 0); assert.equal(ctx.state, 'closed'); e.dispose();
+  assert.equal(ctx.oscs.length, 1); assert.ok(ctx.oscs[0].disconnected); assert.equal(ctx.state, 'closed'); e.dispose();
 });
 test('audio clock schedule, stop cancels future nodes, callback A cannot finish B', async () => {
   const contexts: FakeContext[] = [];
   const e = new HarmonicEngine(() => { const c = new FakeContext(); contexts.push(c); return c as unknown as AudioContext; });
-  let completed = 0; await e.start(config, () => completed++); const a = contexts[0]; const late = a.oscs[1].onended!;
-  assert.deepEqual(a.oscs.map(o => o.starts[0]), [0.01, 150.01]);
+  let completed = 0; await e.start(config, () => completed++); const a = contexts[0]; const late = a.oscs[2].onended!;
+  assert.deepEqual(a.oscs.slice(1).map(o => o.starts[0]), [0.01, 150.01]);
+  assert.deepEqual(a.oscs[0].starts, [0]);
+  assert.deepEqual(a.oscs[0].stops, [0.03]);
   await e.start(config); late(); assert.equal(completed, 0); assert.equal(e.isPlaying(), true);
-  assert.ok(a.oscs.every(o => o.stops.at(-1) === 0.03));
+  assert.ok(a.oscs.slice(1).every(o => o.stops.at(-1) === 0.03));
   e.stop(); e.stop(); assert.equal(e.isPlaying(), false);
 });
 test('duck is a separate factor, cancellation resolves wait and cannot restore audio', async () => {
   const ctx = new FakeContext(); const e = new HarmonicEngine(() => ctx as unknown as AudioContext);
   await e.start({ ...config, mode: 'simultaneous' });
-  assert.equal(ctx.gains[1].gain.events[1][0], 1 / 2);
-  const pending = e.duck(); assert.equal(ctx.gains[0].gain.value, 0.0125); assert.equal(e.getVolume(), 20);
+  assert.equal(ctx.gains[2].gain.events[1][0], 1 / 2);
+  const pending = e.duck(); assert.equal(ctx.gains[1].gain.value, 0.0125); assert.equal(e.getVolume(), 20);
   e.stop(); assert.equal(await pending, false); e.restore(); assert.equal(ctx.gains[0].gain.value, 0);
 });
 test('normal completion disconnects/ closes context once, including previously ended steps', async () => {
   const ctx = new FakeContext(); const e = new HarmonicEngine(() => ctx as unknown as AudioContext);
   let completed = 0; await e.start(config, () => completed++);
-  ctx.oscs[0].onended!(); ctx.oscs[1].onended!();
+  ctx.oscs[0].onended!(); ctx.oscs[1].onended!(); ctx.oscs[2].onended!();
   assert.equal(completed, 1); assert.equal(ctx.state, 'closed'); assert.ok(ctx.oscs.every(o => o.disconnected));
 });
 test('resume rejection is recoverable', async () => {
@@ -77,6 +79,7 @@ test('suspended context that cannot become running is rejected instead of report
   const e = new HarmonicEngine(() => ctx as unknown as AudioContext);
   await assert.rejects(e.start(config), /No se pudo/);
   assert.equal(e.isPlaying(), false);
-  assert.equal(ctx.oscs.length, 0);
+  assert.equal(ctx.oscs.length, 1);
+  assert.ok(ctx.oscs[0].disconnected);
   assert.equal(ctx.state, 'closed');
 });

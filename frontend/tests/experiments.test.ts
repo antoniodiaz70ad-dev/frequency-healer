@@ -154,7 +154,7 @@ test('experiment/audio: logging does not alter programmed tones/times; stop clos
   const pendingDuck = logged.duck(); record = transitionExperiment(record, 'interrupted', ended); logged.stop();
   for (const osc of loggedContext.oscs) osc.onended?.();
   assert.equal(await pendingDuck, false); assert.equal(logged.isPlaying(), false); assert.equal(loggedContext.state, 'closed');
-  assert.ok(loggedContext.oscs.every(o => o.disconnected && o.stops.at(-1) === 0.03));
+  assert.ok(loggedContext.oscs.slice(1).every(o => o.disconnected && o.stops.at(-1) === 0.03));
   lateCompletion(); assert.equal(record.status, 'interrupted'); assert.equal(record.completedAt, undefined);
   plain.stop(); for (const osc of plainContext.oscs) osc.onended?.();
 });
@@ -168,7 +168,7 @@ test('experiment/audio: stop while resume is pending keeps the draft prepared an
   const pending = engine.start(selected, () => { record = transitionExperiment(record, 'completed', ended); });
   engine.dispose(); record = transitionExperiment(record, 'interrupted', ended); resume();
   assert.equal(await pending, false); assert.equal(record.status, 'prepared'); assert.equal(record.startedAt, undefined);
-  assert.equal(context.oscs.length, 0); assert.equal(context.state, 'closed');
+  assert.equal(context.oscs.length, 1); assert.ok(context.oscs[0].disconnected); assert.equal(context.state, 'closed');
 });
 
 test('experiment/audio: only natural engine completion assigns completedAt', async () => {
@@ -176,7 +176,7 @@ test('experiment/audio: only natural engine completion assigns completedAt', asy
   let record = fixture();
   await engine.start(selected, () => { record = transitionExperiment(record, 'completed', ended); });
   record = transitionExperiment(record, 'started', started);
-  context.oscs[0].onended!(); assert.equal(record.status, 'started');
-  context.oscs[1].onended!();
+  context.oscs[0].onended!(); context.oscs[1].onended!(); assert.equal(record.status, 'started');
+  context.oscs[2].onended!();
   assert.equal(record.status, 'completed'); assert.equal(record.completedAt, ended); assert.equal(context.state, 'closed');
 });

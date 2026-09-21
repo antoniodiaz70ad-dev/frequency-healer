@@ -19,6 +19,7 @@ export class HarmonicEngine {
   private context: AudioContext | null = null;
   private bus: GainNode | null = null;
   private nodes: Array<{ osc: OscillatorNode; gain: GainNode }> = [];
+  private unlockNodes: Array<{ osc: OscillatorNode; gain: GainNode }> = [];
   private origin = 0;
   private schedule: HarmonicSchedule | null = null;
   private volume = 20;
@@ -34,6 +35,7 @@ export class HarmonicEngine {
     const ctx = this.createContext();
     this.context = ctx;
     try {
+      this.unlockOutput(ctx);
       await this.ensureRunning(ctx);
       if (run !== this.generation) return false;
       this.volume = config.uiVolume; this.factor = 1;
@@ -78,6 +80,23 @@ export class HarmonicEngine {
   isPlaying() { return this.active; }
   getVolume() { return this.volume; }
   setVolume(volume: number) { masterGain(volume); this.volume = volume; this.ramp(0.03); }
+  private unlockOutput(ctx: AudioContext) {
+    const osc = ctx.createOscillator(), gain = ctx.createGain();
+    const now = ctx.currentTime, end = now + 0.03;
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(0, end);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    this.unlockNodes.push({ osc, gain });
+    osc.onended = () => {
+      osc.disconnect(); gain.disconnect();
+      this.unlockNodes = this.unlockNodes.filter(node => node.osc !== osc);
+    };
+    osc.start(now);
+    osc.stop(end);
+  }
   private async ensureRunning(ctx: AudioContext) {
     if (ctx.state === 'suspended') await ctx.resume();
     await Promise.resolve();
@@ -107,10 +126,11 @@ export class HarmonicEngine {
   stop() {
     ++this.generation; this.active = false;
     for (const [timer, resolve] of this.waits) { clearTimeout(timer); resolve(); } this.waits.clear();
-    const ctx = this.context, nodes = this.nodes, bus = this.bus;
-    this.context = null; this.nodes = []; this.bus = null; this.schedule = null;
+    const ctx = this.context, nodes = this.nodes, unlockNodes = this.unlockNodes, bus = this.bus;
+    this.context = null; this.nodes = []; this.unlockNodes = []; this.bus = null; this.schedule = null;
     if (!ctx) return;
     const close = () => { bus?.disconnect(); if (ctx.state !== 'closed') void ctx.close().catch(() => {}); };
+    for (const { osc, gain } of unlockNodes) { osc.onended = null; try { osc.stop(); } catch {} osc.disconnect(); gain.disconnect(); }
     if (!nodes.length || ctx.state !== 'running') {
       for (const { osc, gain } of nodes) { osc.onended = null; try { osc.stop(); } catch {} osc.disconnect(); gain.disconnect(); }
       close(); return;
