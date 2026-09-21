@@ -8,6 +8,7 @@ import type { VoiceSessionRecordV1 } from "@/lib/voice/types";
 import { FHEmptyState, FHPageHeader, FHPageShell, FHPrimaryCard, FHSection, FHSurface } from "@/components/ui/FHLayout";
 import { FHStateBadge } from "@/components/ui/FHBadges";
 import FHMetric from "@/components/ui/FHMetric";
+import UnifiedDataExport from "@/components/data/UnifiedDataExport";
 
 const explore = [
   { href: "/laboratorio-armonico", title: "Laboratorio Armónico", text: "Construye, escucha y comprende relaciones armónicas exactas.", gated: true },
@@ -57,6 +58,7 @@ export default function DashboardPage() {
         </div>
       </FHSection>
       <FHSection><FHSurface variant="subtle" className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="fh-label">Exploración avanzada</p><h2 className="mt-2 font-medium text-[var(--fh-text)]">Práctica y diario OBE</h2><p className="mt-1 text-sm text-[var(--fh-text-muted)]">Herramientas exploratorias separadas del recorrido principal.</p></div><Link className="fh-action fh-action--secondary" href="/sesion-nueva">Abrir exploración OBE</Link></FHSurface></FHSection>
+      <FHSection title="Tus datos"><UnifiedDataExport /></FHSection>
     </nav>
   </FHPageShell>;
 }

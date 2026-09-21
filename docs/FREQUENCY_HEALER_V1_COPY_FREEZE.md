@@ -164,3 +164,15 @@ The post-freeze Seed Selection Engine exception adds only the clarity required t
 - `Semillas sugeridas estructuralmente`
 
 The explanation must state that the 0.10-octave structural-tier tolerance is a V1 product rule, not a scientific threshold, and that a base frequency is not considered therapeutic by itself. The exception does not change the frozen evidence taxonomy or permit folklore, efficacy or medical claims.
+
+## Approved critical-clarity delta: Data / Export Integrity
+
+Phase 3F adds the minimum labels needed to operate and audit the requested read-only export:
+
+- `Datos y exportación`
+- `Exportación unificada V1`
+- `Preparar exportación unificada`
+- `Descargar exportación V1`
+- `Exportación verificada`
+
+The supporting copy states that only Frequency Healer namespaces in the explicit allowlist are read, invalid payloads are preserved without repair, and Seed Selection V1 provenance is verified. These labels are a permitted critical-clarity change. They do not introduce import, cloud sync, backup claims, product logic or a new evidence category.
