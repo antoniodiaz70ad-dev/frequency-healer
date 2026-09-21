@@ -108,6 +108,7 @@ export default function BibliotecaPage() {
         <>
           {/* Phase intro */}
           <div className="mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2"><p className="fh-label">Marco OBE exploratorio</p><FHEvidenceBadge category="EXPLORATORY">EXPLORATORIO</FHEvidenceBadge></div>
             <p className="text-sm text-gray-300 mb-2">
               Revisa estas tarjetas <strong className="text-white">antes</strong> de la práctica para no consultar la app durante la sesión.
               Son instrucciones exploratorias basadas en relatos y tradiciones OBE;
@@ -189,7 +190,7 @@ export default function BibliotecaPage() {
                 if (!items || items.length === 0) return null;
                 const info = PHASE_INFO[phase];
                 return (
-                  <div key={phase}>
+                  <section key={phase} className="obe-command-phase">
                     <div className="flex items-baseline gap-2 mb-3">
                       <h2
                         className="text-sm font-bold uppercase tracking-wider"
@@ -201,12 +202,12 @@ export default function BibliotecaPage() {
                         {info.description}
                       </span>
                     </div>
-                    <div className="space-y-2">
+                    <div className="obe-command-list">
                       {items.map((c) => (
                         <CommandCardItem key={c.id} card={c} />
                       ))}
                     </div>
-                  </div>
+                  </section>
                 );
               })}
             </div>

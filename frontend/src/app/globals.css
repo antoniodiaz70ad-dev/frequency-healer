@@ -144,6 +144,20 @@ body {
 .obe-context-note { border: 1px solid var(--fh-border); border-radius: var(--fh-radius-control); padding: 1rem; background: var(--fh-bg-raised); }
 .obe-context-note--exploratory { border-color: color-mix(in srgb, var(--fh-exploratory) 42%, transparent); }
 .obe-ready { border-color: var(--fh-border-strong) !important; background: var(--fh-surface-strong); box-shadow: var(--fh-shadow); }
+.obe-command-phase { display: grid; gap: .25rem; }
+.obe-command-list { display: grid; gap: .75rem; }
+.obe-command-card { min-width: 0; overflow: hidden; border: 1px solid var(--fh-border); border-radius: var(--fh-radius-surface); background: var(--fh-surface); transition: border-color var(--fh-transition-fast); }
+.obe-command-card:hover, .obe-command-card--expanded { border-color: var(--fh-border-strong); }
+.obe-command-card--expanded { box-shadow: 0 0 0 1px var(--fh-accent); }
+.obe-command-card__header { display: flex; width: 100%; min-height: 4.5rem; align-items: flex-start; gap: .9rem; padding: 1rem; text-align: left; }
+.obe-command-card__number { display: inline-flex; width: 2.5rem; height: 2.5rem; flex: 0 0 auto; align-items: center; justify-content: center; border: 1px solid; border-radius: 999px; font-family: var(--font-geist-mono), monospace; font-size: .72rem; }
+.obe-command-card__timing { margin-top: .35rem; color: var(--fh-text-muted); font-size: .78rem; line-height: 1.45; }
+.obe-command-card__content { display: grid; gap: 1rem; border-top: 1px solid var(--fh-border); padding: 1rem; }
+.obe-command-card__command { border-left: 2px solid; padding: .75rem 1rem; background: var(--fh-bg-raised); overflow-wrap: anywhere; }
+.obe-command-card__metadata { display: grid; gap: .75rem; padding-bottom: 1rem; color: var(--fh-text-muted); font-size: .75rem; }
+.obe-command-card__metadata p { display: grid; grid-template-columns: 5rem minmax(0, 1fr); gap: .75rem; }
+.obe-command-card__metadata code, .obe-command-card__metadata span { overflow-wrap: anywhere; color: var(--fh-text-secondary); }
+.obe-tag { border: 1px solid var(--fh-border); border-radius: 999px; padding: .2rem .5rem; color: var(--fh-text-muted); font-family: var(--font-geist-mono), monospace; font-size: .65rem; }
 @media (max-width: 36rem) {
   .obe-progress { grid-template-columns: repeat(5, 7.25rem); overflow-x: auto; padding-bottom: .5rem; }
   .obe-progress__step { min-height: 3.75rem; }
