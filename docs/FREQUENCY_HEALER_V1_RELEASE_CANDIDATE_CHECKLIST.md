@@ -1,11 +1,13 @@
 # Frequency Healer — V1 Release Candidate Checklist
 
-Freeze date: 2026-09-21
+RC status: **CLOSED BETA RC READY**
+Closeout date: 2026-09-21
 Branch: `codex/voice-journey-grant`
-Current RC commit at creation: `2e003c9` (`docs: add v1 release candidate checklist`)
+Tested commit SHA: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`
+Rollback/reference commit: `e8b323a0f37d80f2ee1bb6702e57a214812df864` (`docs: add v1 release candidate checklist`)
 Preview to test: https://frequency-healer-git-codex-voice-journey-grant-leviathan1.vercel.app
 
-This document defines the remaining closeout work for V1. It does not introduce new product functionality. During RC, changes should be limited to release blockers, safety defects, broken routes, data/export defects, severe mobile audio defects, or critical copy clarity.
+This document defines the closed-beta release candidate state for V1. It does not introduce new product functionality. During closed beta, changes should be limited to release blockers, safety defects, broken routes, data/export defects, severe mobile audio defects, or critical copy clarity.
 
 ## 1. Canonical preview and stale deployments
 
@@ -193,3 +195,150 @@ Production promotion can be considered only after:
 - the owner explicitly approves production promotion.
 
 Until then, continue using the branch alias preview for testing.
+
+
+## 11. CLOSED BETA RC READY record
+
+Final RC status: **CLOSED BETA RC READY**.
+
+This status authorizes closed-beta testing on the branch alias preview only. It does not authorize merging to `main`, production deployment, product behavior changes or new feature work.
+
+### Tested build
+
+- Branch: `codex/voice-journey-grant`
+- Tested commit SHA: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`
+- Commit summary: `fix: add guided session volume controls`
+- Rollback/reference commit: `e8b323a0f37d80f2ee1bb6702e57a214812df864`
+- Preview URL: `https://frequency-healer-git-codex-voice-journey-grant-leviathan1.vercel.app`
+- Vercel deployment check: PASS
+
+### CI status
+
+Workflow run for `43ba25b2690b3f35600ae34ea0a3acfe52f2171b` completed successfully.
+
+- Quality: PASS
+- Flags ON: PASS
+- Flags OFF: PASS
+- Vercel: PASS
+
+### Automated test totals
+
+Latest local verification before this documentation-only closeout:
+
+- Unit/integration: 214/214 PASS
+- TypeScript: PASS
+- ESLint: PASS
+
+CI additionally ran the configured regression matrix for Quality, Flags ON and Flags OFF successfully.
+
+### Completed physical validations
+
+Closed-beta readiness is based on the following reported physical observations plus automated regression:
+
+- iPhone playback: PASS — audio became audible after the iOS audio unlock fixes.
+- iPhone no-output blocker: RESOLVED for basic playback.
+- Samsung playback: PASS — user reported audio works.
+- Atlas stop click/pop: PASS — user reported it now works without noise.
+- Safari/macOS supervised audio: PASS for audible output, no perceived distortion and silence after Stop.
+- Guided Session volume discoverability issue: FIXED in `43ba25b` with visible `Bajar volumen` / `Subir volumen` controls during playback.
+
+These physical observations are suitable for closed beta. They are not a final production physical-audio certification.
+
+### NOT TESTED items
+
+These do not block **CLOSED BETA RC READY**, but remain release gates before final production approval:
+
+1. Mobile unified export: **NOT TESTED**
+2. Stereo headphones / binaural physical listening: **NOT TESTED**
+
+Additional validation note to preserve during beta/manual testing:
+
+- Prior macOS/CoreAudio close behavior should be watched during beta/manual physical testing. If audio remains active after Stop, navigation or tab close in any environment, record it as a release blocker candidate.
+
+### Known non-blocking limitations
+
+- Old Vercel deployment-specific URLs may still serve historical bundles. Use only the branch alias preview for closed beta evidence.
+- Legacy `voice-rules-v1` records may remain visible in local history. They are valid historical records and should not be migrated or deleted as part of beta testing.
+- Closed beta does not include import, cloud sync, backup, analytics expansion or production deployment.
+- Mobile export and stereo/binaural listening remain unverified release gates.
+
+### Closed-beta acceptance criteria
+
+A closed-beta run is accepted when:
+
+- tester used the branch alias preview;
+- `/voz` shows `Sesión guiada`, not `Viaje por voz` as the active page title;
+- `Información técnica` reports the tested build and `voice-rules-v2`;
+- a text-only guided session can be generated, confirmed, started, volume-adjusted and stopped;
+- stop leaves no audible stuck oscillator;
+- Atlas play/stop has no severe click/pop;
+- Harmonic Lab remains accessible and separated from the simple journey;
+- no required route returns 404;
+- no unsupported medical or mechanism claim appears in active UI;
+- no session is saved until the tester explicitly saves it.
+
+### Beta tester checklist
+
+For each tester/device/browser, record:
+
+- tester initials or anonymous tester ID:
+- date:
+- device:
+- OS/browser:
+- preview URL:
+- Build shown in `/voz` → `Información técnica`:
+- Rules shown in `/voz` → `Información técnica`:
+
+Required actions:
+
+1. Open Home.
+2. Open `Sesión guiada`.
+3. Open `Información técnica` and record Build/Rules.
+4. Enter one text intention, preferably `quiero evitar drenaje energético`.
+5. Confirm that the reviewed recommendation does not make a diagnosis or medical claim.
+6. Continue to confirmation.
+7. Start playback.
+8. Press `Subir volumen` and confirm the displayed volume increases.
+9. Press `Bajar volumen` and confirm the displayed volume decreases.
+10. Stop playback and confirm silence.
+11. Optionally save or end without saving; record which action was taken.
+12. Open `Atlas de frecuencias`, play one item, stop it and listen for clicks/pops.
+13. Open `Laboratorio Armónico` and confirm the route loads.
+14. Attempt data export if this test run is assigned to the export gate.
+
+### PASS / FAIL / NOT TESTED result template
+
+Use one result row per scenario.
+
+| Scenario | Result | Notes |
+| --- | --- | --- |
+| Branch alias preview used | PASS / FAIL / NOT TESTED |  |
+| `/voz` Build/Rules visible | PASS / FAIL / NOT TESTED |  |
+| Text-only guided session | PASS / FAIL / NOT TESTED |  |
+| Volume up/down controls | PASS / FAIL / NOT TESTED |  |
+| Guided stop leaves silence | PASS / FAIL / NOT TESTED |  |
+| Atlas play/stop no click/pop | PASS / FAIL / NOT TESTED |  |
+| Harmonic Lab route loads | PASS / FAIL / NOT TESTED |  |
+| Mobile unified export | PASS / FAIL / NOT TESTED |  |
+| Stereo headphones / binaural | PASS / FAIL / NOT TESTED |  |
+| No unsupported claims observed | PASS / FAIL / NOT TESTED |  |
+| No false autosave/completion | PASS / FAIL / NOT TESTED |  |
+
+### Severity definitions
+
+- **P0**: Blocks closed beta or production immediately. Examples: app cannot load, playback cannot be stopped, audio remains stuck after stop/navigation, production data is corrupted, unsupported medical claims appear prominently, or new sessions use `voice-rules-v1`.
+- **P1**: Blocks production approval but may allow limited closed beta. Examples: mobile export fails, stereo/binaural physical listening is unverified or fails, one major supported mobile browser cannot play audio, or a required route intermittently 404s.
+- **P2**: Should be fixed before broad beta or production if practical. Examples: confusing labels, non-critical layout problems, unclear save/export wording, or a recoverable browser-specific issue.
+- **P3**: Minor polish or documentation issue. Examples: typo, low-impact copy clarification, or non-blocking visual alignment.
+
+### Remaining production gates
+
+Before final production approval, complete and record:
+
+1. Mobile unified export: PASS on at least one mobile browser.
+2. Stereo headphones / binaural physical listening: PASS with stereo isolation.
+3. Closed-beta feedback triage: no open P0/P1 issues.
+4. CI green on the final production-candidate commit.
+5. Explicit owner approval to merge/promote.
+
+No merge to `main` and no production deployment are authorized by this RC closeout.
