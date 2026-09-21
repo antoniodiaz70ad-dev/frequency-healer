@@ -35,3 +35,8 @@ test('experimental consent cannot be bypassed by a proposal boolean', async () =
   o.proposal!.requiresExplicitExperimentalConsent = false;
   await assert.rejects(o.start(false), /Confirma/); assert.equal(engine.active, false);
 });
+test('confirmation rejects a stale evidence/provenance preview before audio',async()=>{
+  const engine=new EngineStub(),o=new VoiceOrchestrator(engine as unknown as HarmonicEngine);
+  o.move('review_transcript');o.interpret('enfoque 5 minutos');o.propose(o.intent!,{},{fingerprint:'seed-evidence-v1-preview'});
+  await assert.rejects(o.start(false,{},'seed-evidence-v1-changed'),/evidencia cambió/);assert.equal(engine.active,false);assert.equal(o.state,'review_session');
+});

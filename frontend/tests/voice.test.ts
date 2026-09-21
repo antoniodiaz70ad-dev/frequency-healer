@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseLocalIntent } from '../src/lib/voice/intentParser';
 import { parseIntentJSON } from '../src/lib/voice/validation';
-import { buildProposal, validateProposal } from '../src/lib/voice/rules';
+import { buildLegacyProposal, buildProposal, validateProposal } from '../src/lib/voice/rules';
 import { transition, RunScope, type JourneyState } from '../src/lib/voice/stateMachine';
 test('local extraction ES/EN, transparent defaults, ambiguity and limits', () => {
   assert.equal(parseLocalIntent('Quiero claridad durante veinte minutos').durationMinutes, 20);
@@ -19,7 +19,8 @@ test('untrusted JSON cannot add frequencies or actions, invalid JSON is rejected
 });
 test('deterministic proposals require review, exact duration and extra experimental consent', () => {
   const intent = parseLocalIntent('claridad 20 minutos'); const a = buildProposal(intent), b = buildProposal(intent);
-  assert.deepEqual(a, b); assert.equal(a.harmonicConfig.baseHz, 144); assert.equal(a.schedule.durationSeconds, 1200);
+  assert.deepEqual(a, b); assert.equal(a.harmonicConfig.baseHz, 256); assert.equal(a.ruleVersion,'voice-rules-v2'); assert.equal(a.schedule.durationSeconds, 1200);
+  assert.equal(buildLegacyProposal(intent).harmonicConfig.baseHz,144);assert.equal(validateProposal(buildLegacyProposal(intent)).ruleVersion,'voice-rules-v1');
   assert.equal(buildProposal(parseLocalIntent('creative 10 minutes')).requiresExplicitExperimentalConsent, true);
   assert.throws(() => buildProposal(intent, { baseHz: 1900, ratioId: 'fifth' }));
   const injected = structuredClone(a); injected.schedule.steps[0].frequencies[0] = 1;

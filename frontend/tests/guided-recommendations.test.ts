@@ -7,14 +7,14 @@ import type { VoiceSessionRecordV1 } from '../src/lib/voice/types';
 const cases=[['Quiero calma','relaxation'],['Necesito concentrarme','focus'],['Quiero dormir mejor','sleep_preparation'],['Quiero recuperarme después de una reunión','relaxation'],['Quiero sentirme más centrado','relaxation'],['Quiero creatividad','creative_exploration'],['Quiero meditar','reflection'],['quiero evitar drenaje energético','relaxation'],['Me siento disperso','focus'],['Estoy muy tenso','relaxation']] as const;
 for(const [raw,goal] of cases)test(`guided intent: ${raw}`,()=>{
   const interpretation=interpretGuidedIntent(raw);assert.equal(interpretation.intent.goal,goal);
-  const a=recommendGuided(interpretation),b=recommendGuided(interpretation);assert.deepEqual(a,b);assert.equal(a.proposal.ruleId,`voice-${goal}-gentle`);assert.equal(a.proposal.ruleVersion,'voice-rules-v1');
+  const a=recommendGuided(interpretation),b=recommendGuided(interpretation);assert.deepEqual(a,b);assert.equal(a.proposal.ruleId,`voice-${goal}-gentle`);assert.equal(a.proposal.ruleVersion,'voice-rules-v2');
   assert.deepEqual(a.proposal,buildProposal(interpretation.intent));assert.deepEqual(a.proposal.schedule,buildSchedule(a.proposal.harmonicConfig));assert.ok(a.explanation.length);assert.equal(a.interpretation.rawText,raw);assert.equal(a.personalEvidence.comparableSessions,0);assert.equal(a.personalEvidence.evidenceLevel,'none');
   assert.deepEqual(validateGuidedRecommendation(a,true),a.proposal.harmonicConfig);
 });
 const interpretation=interpretGuidedIntent('Quiero calma 5 minutos'),proposal=recommendGuided(interpretation).proposal;
 function record(i:number):VoiceSessionRecordV1{return {schemaVersion:1,id:`evidence-${i}`,createdAt:'2026-09-01T12:00:00.000Z',completedAt:'2026-09-01T12:05:00.000Z',status:'completed',intent:proposal.intent,proposal,markers:[],before:{clarity:0,stress:5,focus:2},after:{clarity:1,stress:3,focus:3},technical:{actualDurationMs:300000,stopReason:'completed'}};}
 for(const [n,level] of [[0,'none'],[4,'insufficient'],[5,'preliminary'],[9,'preliminary'],[10,'descriptive'],[12,'descriptive']] as const)test(`guided evidence N=${n}`,()=>{
-  const rows=Array.from({length:n},(_,i)=>record(i));const r=recommendGuided(interpretation,rows);assert.equal(r.personalEvidence.comparableSessions,n);assert.equal(r.personalEvidence.evidenceLevel,level);assert.equal(r.personalEvidence.metrics.length,n<5?0:3);assert.deepEqual(r.proposal,proposal);
+  const rows=Array.from({length:n},(_,i)=>record(i));const r=recommendGuided(interpretation,rows);assert.equal(r.personalEvidence.comparableSessions,n);assert.equal(r.personalEvidence.evidenceLevel,level);assert.equal(r.personalEvidence.metrics.length,n<5?0:3);assert.deepEqual(r.proposal.harmonicConfig,proposal.harmonicConfig);
   if(n>=5){assert.equal(r.personalEvidence.metrics[0].mean,1);assert.equal(r.personalEvidence.metrics[0].n,n);}
 });
 test('guided comparability: exact config, complete outcomes, completion, commands and corruption',()=>{

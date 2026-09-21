@@ -19,11 +19,16 @@ import { protocolRationale } from '@/lib/guided/rationale';
 import SessionPlan from './SessionPlan';
 import styles from './voice.module.css';
 import { FHPageHeader, FHPageShell } from '../ui/FHLayout';
+import { DiscoveryStore, DISCOVERY_KEY } from '@/lib/discovery/storage';
+import type { ProtocolDiscoveryPlanV1 } from '@/lib/discovery/model';
+import { discoverySeedEvidence, evidenceFingerprint, personalSeedEvidence } from '@/lib/voice/seedSelection';
+import { buildProposal } from '@/lib/voice/rules';
 
 export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled = false }: { transcriptionEnabled?: boolean; aiEnabled?: boolean }) {
   const [flow] = useState(() => new VoiceOrchestrator());
   const state = useSyncExternalStore(flow.subscribe, flow.getState, () => 'idle');
   const [records, setRecords] = useState<VoiceSessionRecordV1[]>([]); const [memory, setMemory] = useState<VoiceSessionRecordV1[]>([]); const [storageError, setStorageError] = useState(''); const [keepOriginal, setKeepOriginal] = useState(false);
+  const [discoveryPlans,setDiscoveryPlans]=useState<ProtocolDiscoveryPlanV1[]>([]);
   const [marker, setMarker] = useState(''); const [markerMessage, setMarkerMessage] = useState('');
   const [useAI, setUseAI] = useState(false);
   const [words, setWords] = useState(''); const [intent, setIntent] = useState<ParsedIntentionV1 | null>(null);
@@ -36,9 +41,9 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
   const active = ['playing', 'marker_listening', 'starting'].includes(state);
   useEffect(() => {
     let alive = true;
-    const refresh = () => { if (!alive) return; try { setRecords(new VoiceStore(localStorage).load()); setKeepOriginal(loadSettings(localStorage).keepOriginal); setStorageError(''); } catch (e) { setStorageError((e as Error).message); } };
+    const refresh = () => { if (!alive) return; try { setRecords(new VoiceStore(localStorage).load()); setKeepOriginal(loadSettings(localStorage).keepOriginal); setStorageError(''); void new DiscoveryStore(localStorage).load().then(rows=>{if(alive)setDiscoveryPlans(rows);}).catch(()=>{if(alive)setDiscoveryPlans([]);}); } catch (e) { setStorageError((e as Error).message); } };
     queueMicrotask(refresh);
-    const changed = (e: StorageEvent) => { if (e.key === SESSIONS_KEY || e.key === SETTINGS_KEY || e.key === null) refresh(); };
+    const changed = (e: StorageEvent) => { if (e.key === SESSIONS_KEY || e.key === SETTINGS_KEY || e.key === DISCOVERY_KEY || e.key === null) refresh(); };
     window.addEventListener('storage', changed);
     return () => { alive = false; window.removeEventListener('storage', changed); };
   }, []);
@@ -69,10 +74,10 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
     {(error || flow.error) && <p role="alert" className={styles.error}>{error || flow.error}</p>}
     {['idle', 'review_transcript', 'interpretation_error', 'requesting_permission', 'listening', 'transcribing', 'permission_denied', 'unsupported', 'transcription_error'].includes(state) && <section><h2 ref={heading} tabIndex={-1}>¿Qué quieres explorar hoy?</h2><p>Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p><form onSubmit={async e => { e.preventDefault(); const boundary = guidanceBoundary(words); if (boundary) { setError(boundary); return; } setError(''); if (state === 'idle' || state === 'interpretation_error') flow.move('review_transcript'); if (useAI) await flow.interpretRemote(words); else flow.interpret(words); setIntent(flow.intent); }}><label>¿Qué quieres explorar?<textarea maxLength={500} value={words} onChange={e => setWords(e.target.value)} placeholder="Quiero explorar una decisión con claridad durante veinte minutos." required /></label>{aiEnabled && <label className={styles.check}><input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />Enviar este texto al asistente remoto (opcional)</label>}<button type="submit" disabled={!['idle', 'review_transcript', 'interpretation_error'].includes(state)}>Interpretar intención</button><button type="button" onClick={reset}>Cancelar</button></form><details><summary>Usar voz · opcional</summary><VoiceCapture kind="intention" remoteEnabled={transcriptionEnabled} onPhase={p => flow.move(p)} onCancel={() => { flow.cancel(); flow.move('review_transcript'); }} onText={result => { if (result) setWords(result); if (flow.state !== 'review_transcript') { flow.cancel(); flow.move('review_transcript'); } }} /></details></section>}
     {state === 'interpreting' && <section><p role="status">Estructurando la intención…</p><button onClick={reset}>Cancelar</button></section>}
-    {state === 'review_intent' && intent && <section><h2 ref={heading} tabIndex={-1}>Entendimos</h2><p>{intent.intention}</p><p>Objetivo: {goalLabels[intent.goal]}</p><p>Estado buscado: {intent.desiredStates.map(s => stateLabels[s]).join(", ") || "No indicado"} · {intent.durationMinutes} minutos</p>{intent.requiresReview.length > 0 && <p role="status">Revisa y ajusta la interpretación antes de continuar.</p>}<form onSubmit={e => { e.preventDefault(); const boundary = guidanceBoundary(intent.intention); if (boundary) { setError(boundary); return; } setError(''); setExperimental(false); flow.propose(intent, edits); }}>
+    {state === 'review_intent' && intent && <section><h2 ref={heading} tabIndex={-1}>Entendimos</h2><p>{intent.intention}</p><p>Objetivo: {goalLabels[intent.goal]}</p><p>Estado buscado: {intent.desiredStates.map(s => stateLabels[s]).join(", ") || "No indicado"} · {intent.durationMinutes} minutos</p>{intent.requiresReview.length > 0 && <p role="status">Revisa y ajusta la interpretación antes de continuar.</p>}<form onSubmit={e => { e.preventDefault(); const boundary = guidanceBoundary(intent.intention); if (boundary) { setError(boundary); return; } setError(''); setExperimental(false);const baseline=buildProposal(intent,edits); flow.propose(intent, edits,{personal:personalSeedEvidence(intent,baseline.harmonicConfig,records),discovery:discoverySeedEvidence(intent,baseline.harmonicConfig,discoveryPlans),fingerprint:evidenceFingerprint(localStorage.getItem(SESSIONS_KEY),localStorage.getItem(DISCOVERY_KEY))}); }}>
       <details><summary>Cambiar interpretación</summary><IntentFields value={intent} onChange={setIntent} /></details>
       <details><summary>Ajustes armónicos avanzados</summary><div className={styles.grid}>
-        <label>Base (Hz)<input type="number" min={40} max={2000} step="any" value={edits.baseHz ?? 144} onChange={e => setEdits({ ...edits, baseHz: Number(e.target.value) })} /></label>
+        <label>Base personalizada (Hz, opcional)<input type="number" min={40} max={2000} step="any" value={edits.baseHz ?? ''} placeholder="Selección automática" onChange={e => {const next={...edits};if(e.target.value==='')delete next.baseHz;else next.baseHz=Number(e.target.value);setEdits(next);}} /></label>
         <label>Volumen inicial (0–100)<input type="number" min={0} max={100} value={edits.uiVolume ?? (intent.intensity === 'gentle' || intent.goal === 'sleep_preparation' ? 15 : 20)} onChange={e => setEdits({ ...edits, uiVolume: Number(e.target.value) })} /></label>
         <label>Modo<select value={edits.mode ?? 'sequence'} onChange={e => setEdits({ ...edits, mode: e.target.value as 'sequence' | 'simultaneous' })}><option value="sequence">Secuencia</option><option value="simultaneous">Simultáneo</option></select></label>
         <label>Relación<select value={edits.ratioId ?? 'rule'} onChange={e => { const next = { ...edits }; if (e.target.value === 'rule') delete next.ratioId; else next.ratioId = e.target.value as RatioId; setEdits(next); }}><option value="rule">Regla según mi objetivo</option>{Object.entries(RATIOS).filter(([id]) => id !== 'root').map(([id, r]) => <option key={id} value={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
@@ -82,7 +87,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
     </form></section>}
     {['review_session', 'audio_error'].includes(state) && proposal && <section>
       <h2 ref={heading} tabIndex={-1}>{confirming ? 'Lista para comenzar' : 'Sesión propuesta'}</h2>
-      <p><strong>{goalLabels[proposal.intent.goal]}</strong></p><p>{proposal.intent.durationMinutes} minutos · {{ gentle: 'Suave', deep: 'Profunda', experimental: 'Experimental' }[proposal.intent.intensity]} · {sessionStyle}</p>
+      <p><strong>{goalLabels[proposal.intent.goal]}</strong></p><p>Frecuencia base sugerida: <strong>{proposal.harmonicConfig.baseHz} Hz</strong></p><p>{proposal.intent.durationMinutes} minutos · {{ gentle: 'Suave', deep: 'Profunda', experimental: 'Experimental' }[proposal.intent.intensity]} · {sessionStyle}</p>
       {!confirming ? <>
         <p>{evidenceLabel}.</p><p>Basada en tu intención mediante reglas locales. El historial aporta observaciones descriptivas, sin modificar esta propuesta.</p>
         <details><summary>¿Por qué esta sesión?</summary>
@@ -90,6 +95,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
           <p>{proposal.source === 'local-rule' ? 'Seleccionada mediante una regla local según la intención revisada.' : 'Incluye tus ajustes sobre una regla local.'}</p>
           <ProtocolRationale summaryLabel="Detalles de la recomendación" value={protocolRationale(proposal)} config={proposal.harmonicConfig}>
             <p>Fuente: {proposal.source} · {proposal.ruleId} · {proposal.ruleVersion}</p>{proposal.rationale.map(r => <p key={r}>{r}</p>)}
+            {proposal.seedSelection&&<details><summary>¿Por qué esta frecuencia base?</summary><p>{proposal.harmonicConfig.baseHz} Hz · {proposal.seedSelection.seedRegistryVersion} · {proposal.seedSelection.seedSelectionVersion}.</p><p>{proposal.seedSelection.candidates.filter(c=>c.valid).length} candidatas válidas. La tolerancia de 0.10 octava define equivalencia estructural para este producto V1; no es un umbral científico.</p><p>Esta base organiza una estructura acústica; no se considera terapéutica por sí misma.</p></details>}
           </ProtocolRationale>
           {evidence && <details><summary>Evidencia personal</summary><PersonalEvidence value={evidence}/></details>}
           <details><summary>Detalles armónicos</summary><SessionPlan config={proposal.harmonicConfig} schedule={proposal.schedule} /></details>
@@ -102,7 +108,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
         <details><summary>Detalles armónicos</summary><SessionPlan config={proposal.harmonicConfig} schedule={proposal.schedule} /></details>
         <details><summary>Cómo te sientes antes · opcional</summary><RatingFields title="Antes de empezar" value={before} onChange={setBefore} /></details>
         {proposal.requiresExplicitExperimentalConsent && <label className={styles.check}><input type="checkbox" checked={experimental} onChange={e => setExperimental(e.target.checked)} />Acepto explorar la cascada o intensidad experimental, sin promesas de resultados.</label>}
-      <button className={styles.primary} disabled={proposal.requiresExplicitExperimentalConsent && !experimental} onClick={async () => { setError(''); try { if (state === 'audio_error') flow.move('review_session'); getAudioEngine().stopProtocol(); await flow.start(experimental, before); } catch (e) { setError((e as Error).message); } }}>Iniciar sesión</button>
+      <button className={styles.primary} disabled={proposal.requiresExplicitExperimentalConsent && !experimental} onClick={async () => { setError(''); try { if (state === 'audio_error') flow.move('review_session'); getAudioEngine().stopProtocol(); await flow.start(experimental, before,evidenceFingerprint(localStorage.getItem(SESSIONS_KEY),localStorage.getItem(DISCOVERY_KEY))); } catch (e) { setError((e as Error).message); } }}>Iniciar sesión</button>
         <button onClick={() => setConfirmationFor(null)}>Volver</button>
       </>}
     </section>}

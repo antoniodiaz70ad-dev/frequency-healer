@@ -152,3 +152,15 @@ Stylistic rewriting, new marketing language, new claims, altered protocol meanin
 ## Unresolved items
 
 Zero unresolved critical copy items. Any future request to change frozen language must name one of the three permitted classes and preserve all protected contracts.
+
+## Approved functional exception: Seed Selection Engine V1
+
+The post-freeze Seed Selection Engine exception adds only the clarity required to disclose deterministic base-frequency selection:
+
+- `Frecuencia base sugerida`
+- `¿Por qué esta frecuencia base?`
+- `Base personalizada (Hz, opcional)`
+- `Selección automática`
+- `Semillas sugeridas estructuralmente`
+
+The explanation must state that the 0.10-octave structural-tier tolerance is a V1 product rule, not a scientific threshold, and that a base frequency is not considered therapeutic by itself. The exception does not change the frozen evidence taxonomy or permit folklore, efficacy or medical claims.

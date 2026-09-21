@@ -5,6 +5,7 @@ import { parseCommand } from './commands';
 import { validateRatings, parseIntentJSON, text } from './validation';
 import { parseLocalIntent } from './intentParser';
 import type { ParsedIntentionV1, VoiceSessionProposalV1, VoiceSessionRecordV1, SelfRatingV1, SessionMarkerV1 } from './types';
+import type { SeedEvidenceInputV1 } from './seedSelection';
 
 export class VoiceOrchestrator {
   state: JourneyState = 'idle';
@@ -45,14 +46,15 @@ export class VoiceOrchestrator {
       this.move('review_intent');
     }
   }
-  propose(intent: ParsedIntentionV1, edits: ProposalEdits = {}) {
+  propose(intent: ParsedIntentionV1, edits: ProposalEdits = {}, evidence:SeedEvidenceInputV1 = {}) {
     if (!this.move('building_session')) return;
-    try { this.proposal = buildProposal(intent, edits); this.intent = this.proposal.intent; this.error = ''; this.move('review_session'); }
+    try { this.proposal = buildProposal(intent, edits, evidence); this.intent = this.proposal.intent; this.error = ''; this.move('review_session'); }
     catch (e) { this.error = (e as Error).message; this.move('interpretation_error'); }
   }
-  async start(experimentalConsent: boolean, before: Partial<SelfRatingV1> = {}) {
+  async start(experimentalConsent: boolean, before: Partial<SelfRatingV1> = {}, currentEvidenceFingerprint?:string) {
     if (this.state !== 'review_session' || !this.proposal) return;
     const proposal = validateProposal(this.proposal);
+    if(proposal.seedSelection&&currentEvidenceFingerprint!==undefined&&proposal.seedSelection.evidenceFingerprint!==currentEvidenceFingerprint)throw new Error('La evidencia cambió desde la vista previa. Genera de nuevo la propuesta.');
     const ratings = validateRatings(before);
     if (proposal.requiresExplicitExperimentalConsent && !experimentalConsent) throw new Error('Confirma la exploración experimental.');
     if (!this.move('starting')) return;

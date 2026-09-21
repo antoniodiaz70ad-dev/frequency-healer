@@ -6,6 +6,8 @@ import { validateRecord } from '../voice/storage';
 import { n1Summary, type N1Metric } from '../voice/analytics';
 import type { DesiredState, ParsedIntentionV1, VoiceGoal, VoiceSessionProposalV1 } from '../voice/types';
 import { dictionaries } from '../voice/i18n';
+import { discoverySeedEvidence, evidenceFingerprint, personalSeedEvidence } from '../voice/seedSelection';
+import type { ProtocolDiscoveryPlanV1 } from '../discovery/model';
 
 export const GUIDED_TAXONOMY_VERSION = 'guided-mapping-v1';
 // Aliases into GOALS/desired states, not a second acoustic rule table.
@@ -51,18 +53,23 @@ export interface GuidedRecommendationV1 {
   explanation: string[];
   rule: HarmonicRecommendationRuleV1;
 }
-export function recommendGuided(interpretation: GuidedInterpretationV1, values: readonly unknown[] | null = [], volume?: number): GuidedRecommendationV1 {
+export function recommendGuided(interpretation: GuidedInterpretationV1, values: readonly unknown[] | null = [], volume?: number,seedContext?:{discoveryPlans?:readonly ProtocolDiscoveryPlanV1[];fingerprint?:string}): GuidedRecommendationV1 {
   if(interpretation.schemaVersion!==1||interpretation.taxonomyVersion!==GUIDED_TAXONOMY_VERSION)throw new Error('Versión de interpretación desconocida.');
   const rawText=text(interpretation.rawText),intent=validateIntent(interpretation.intent);
   const boundary=guidanceBoundary(rawText)||guidanceBoundary(intent.intention);if(boundary)throw new Error(boundary);
-  const proposal=buildProposal(intent,volume===undefined?{}:{uiVolume:volume});
+  const validatedRecords=values===null?null:values.map(validateRecord);
+  const baseline=buildProposal(intent,volume===undefined?{}:{uiVolume:volume});
+  const seedEvidence=validatedRecords===null?{fingerprint:seedContext?.fingerprint??evidenceFingerprint(null,null)}:(validatedRecords.length||seedContext?.discoveryPlans?.length)?{personal:personalSeedEvidence(intent,baseline.harmonicConfig,validatedRecords),...(seedContext?.discoveryPlans?{discovery:discoverySeedEvidence(intent,baseline.harmonicConfig,seedContext.discoveryPlans)}:{}),fingerprint:seedContext?.fingerprint??evidenceFingerprint(JSON.stringify(values),null)}:seedContext?.fingerprint?{fingerprint:seedContext.fingerprint}:{};
+  const proposal=buildProposal(intent,volume===undefined?{}:{uiVolume:volume},seedEvidence);
   return {schemaVersion:1,interpretation:{...interpretation,rawText,intent},proposal,rule:recommendationRule(proposal),personalEvidence:personalEvidence(proposal,values),explanation:[`Objetivo revisado: ${dictionaries.es.goals[intent.goal]}. Regla ${proposal.ruleId} (${proposal.ruleVersion}).`,...proposal.rationale,'Una sola opción validada por las reglas actuales. Suave/profunda describen el diseño, no potencia médica. El historial no cambia la selección ni el orden de recomendaciones.','Las observaciones personales no demuestran eficacia médica ni causalidad.']};
 }
 /** Rebuild executable output at confirmation. Never trust a supplied schedule. */
 export function validateGuidedRecommendation(value: GuidedRecommendationV1, experimentalConsent: boolean) {
   if(value.schemaVersion!==1)throw new Error('Versión de recomendación desconocida.');
-  const edits=value.proposal.source==='user-customized'?value.proposal.harmonicConfig.uiVolume:undefined;
-  const rebuilt=recommendGuided(value.interpretation,[],edits).proposal;
+  const edits=value.proposal.source==='user-customized'?{uiVolume:value.proposal.harmonicConfig.uiVolume}:{};
+  const selection=value.proposal.seedSelection;
+  const seedEvidence=selection?{personal:Object.fromEntries(selection.candidates.filter(c=>c.personalEvidence).map(c=>[c.seedHz,c.personalEvidence!])),discovery:Object.fromEntries(selection.candidates.filter(c=>c.discoveryEvidence).map(c=>[c.seedHz,c.discoveryEvidence!])),fingerprint:selection.evidenceFingerprint}:{};
+  const rebuilt=buildProposal(value.interpretation.intent,edits,seedEvidence);
   if(JSON.stringify(recommendationRule(rebuilt))!==JSON.stringify(value.rule))throw new Error('La explicación o la regla cambió. Genera otra propuesta.');
   if(JSON.stringify(rebuilt)!==JSON.stringify(value.proposal))throw new Error('La propuesta no coincide con la regla local. Genera otra.');
   if(rebuilt.requiresExplicitExperimentalConsent&&!experimentalConsent)throw new Error('La cascada experimental requiere consentimiento adicional.');

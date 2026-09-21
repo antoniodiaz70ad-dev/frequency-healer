@@ -4,6 +4,8 @@ import { interpretGuidedIntent, recommendGuided, type GuidedInterpretationV1, ty
 import { GOALS, type VoiceGoal } from '@/lib/voice/types';
 import { dictionaries } from '@/lib/voice/i18n';
 import { VoiceStore, SESSIONS_KEY } from '@/lib/voice/storage';
+import { DiscoveryStore, DISCOVERY_KEY } from '@/lib/discovery/storage';
+import { evidenceFingerprint } from '@/lib/voice/seedSelection';
 import ProtocolRationale from './ProtocolRationale';
 import SessionPlan from '../voice/SessionPlan';
 import styles from '../voice/voice.module.css';
@@ -32,11 +34,11 @@ export default function GuidedRecommendation({active,onConfirm,onStop}:{active:b
           <label>Volumen de la guía (0–100)<input type="number" min={0} max={100} value={volume??(interpretation.intent.intensity==='gentle'||interpretation.intent.goal==='sleep_preparation'?15:20)} onChange={e=>{setVolume(Number(e.target.value));setRecommendation(null);setConsent(false);}}/></label>
         </div>
         <button onClick={()=>{setInterpretation(null);setRecommendation(null);setConsent(false);}}>No era lo que quería decir · editar texto</button>
-        <button onClick={()=>{
+        <button onClick={()=>void (async()=>{
           setError('');setConsent(false);setRecommendation(null);let records=null;
           try{records=new VoiceStore(localStorage).load();setHistoryError('');}catch(e){setHistoryError((e as Error).message);}
-          try{setRecommendation(recommendGuided(interpretation,records,volume));}catch(e){setError((e as Error).message);}
-        }}>Revisé mi intención · generar recomendación</button>
+          try{const plans=await new DiscoveryStore(localStorage).load();setRecommendation(recommendGuided(interpretation,records,volume,{discoveryPlans:plans,fingerprint:evidenceFingerprint(localStorage.getItem(SESSIONS_KEY),localStorage.getItem(DISCOVERY_KEY))}));}catch(e){setError((e as Error).message);}
+        })()}>Revisé mi intención · generar recomendación</button>
       </div>}
     </fieldset>
     {error&&<p role="alert">{error}</p>}
@@ -63,7 +65,7 @@ export default function GuidedRecommendation({active,onConfirm,onStop}:{active:b
       <p>Empieza con volumen cómodo. No conduzcas ni manejes maquinaria. Detente si aparece incomodidad, dolor, mareo o síntomas inusuales. No se requieren auriculares para este diseño. Al ocultar la pestaña, el audio se detiene.</p>
       <p>Exploración personal, sin promesas médicas; no sustituye una evaluación profesional si describes síntomas de salud. El registro experimental opcional de abajo conserva la configuración acústica; la explicación se exporta por separado y no se guarda automáticamente.</p>
       {recommendation.proposal.requiresExplicitExperimentalConsent&&<label className={styles.check}><input type="checkbox" checked={consent} disabled={active} onChange={e=>setConsent(e.target.checked)}/>Acepto la cascada experimental de la guía, sin promesas de resultados.</label>}
-      <button className={styles.primary} disabled={active||(recommendation.proposal.requiresExplicitExperimentalConsent&&!consent)} onClick={()=>void onConfirm(recommendation,consent)}>Confirmar y escuchar propuesta</button>
+      <button className={styles.primary} disabled={active||(recommendation.proposal.requiresExplicitExperimentalConsent&&!consent)} onClick={()=>{if(recommendation.proposal.seedSelection?.evidenceFingerprint!==evidenceFingerprint(localStorage.getItem(SESSIONS_KEY),localStorage.getItem(DISCOVERY_KEY))){setError('La evidencia cambió desde la vista previa. Genera de nuevo la propuesta.');setRecommendation(null);return;}void onConfirm(recommendation,consent);}}>Confirmar y escuchar propuesta</button>
       <button disabled={active} onClick={()=>{setRecommendation(null);setConsent(false);}}>Corregir interpretación</button>
       <button onClick={()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(recommendation,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='recomendacion-guiada-v1.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}}>Exportar propuesta y explicación</button>
     </div>}

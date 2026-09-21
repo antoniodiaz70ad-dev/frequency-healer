@@ -1,4 +1,5 @@
 import type { HarmonicConfig, HarmonicSchedule } from '../harmonic/math';
+import type { SeedSelectionV1 } from './seedSelection';
 export const GOALS = ['clarity', 'focus', 'relaxation', 'reflection', 'creative_exploration', 'sleep_preparation', 'custom'] as const;
 export const DESIRED_STATES = ['calm', 'focus', 'openness', 'grounded', 'creative', 'restful'] as const;
 export type VoiceGoal = typeof GOALS[number];
@@ -9,10 +10,12 @@ export interface ParsedIntentionV1 {
   sessionKind: 'exploratory'; language: string; confidence: Record<string, number>; requiresReview: string[];
 }
 export interface VoiceSessionProposalV1 {
-  schemaVersion: 1; proposalId: string; ruleId: string; ruleVersion: 'voice-rules-v1';
+  schemaVersion: 1; proposalId: string; ruleId: string; ruleVersion: 'voice-rules-v1'|'voice-rules-v2';
   source: 'local-rule' | 'user-customized'; intent: ParsedIntentionV1;
   harmonicConfig: HarmonicConfig; schedule: HarmonicSchedule; rationale: string[]; warnings: string[];
   requiresExplicitExperimentalConsent: boolean;
+  seedSelection?: SeedSelectionV1;
+  proposalIdentity?: { ruleVersion:'voice-rules-v2';seedRegistryVersion:'seed-registry-v1';seedSelectionVersion:'seed-selection-v1';intent:ParsedIntentionV1;effectiveProgression:readonly string[];selectedSeed:number;finalHarmonicConfig:HarmonicConfig };
 }
 export interface SelfRatingV1 { clarity: number; stress: number; focus: number }
 export interface SessionMarkerV1 {

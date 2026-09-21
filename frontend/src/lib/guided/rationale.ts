@@ -1,5 +1,5 @@
 import { RATIOS } from '../harmonic/math';
-import { buildProposal, validateProposal } from '../voice/rules';
+import { buildLegacyProposal, buildProposal, validateProposal } from '../voice/rules';
 import type { VoiceSessionProposalV1 } from '../voice/types';
 
 export const EVIDENCE_LABELS = {
@@ -23,7 +23,7 @@ export interface ProtocolRationaleV1 {
 export interface HarmonicRecommendationRuleV1 {
   schemaVersion: 1;
   id: string;
-  generationVersion: 'voice-rules-v1';
+  generationVersion: VoiceSessionProposalV1['ruleVersion'];
   intentCategory: VoiceSessionProposalV1['intent']['goal'];
   intensity: VoiceSessionProposalV1['intent']['intensity'];
   candidateType: 'legacy-harmonic-config';
@@ -32,12 +32,15 @@ export interface HarmonicRecommendationRuleV1 {
 /** Explanation only: frequencies/order come from the validated existing schedule. */
 export function protocolRationale(value: VoiceSessionProposalV1): ProtocolRationaleV1 {
   const proposal = validateProposal(value), config = proposal.harmonicConfig;
-  const original = buildProposal(proposal.intent).harmonicConfig;
+  const original = (proposal.ruleVersion==='voice-rules-v1'?buildLegacyProposal(proposal.intent):buildProposal(proposal.intent)).harmonicConfig;
+  const selection=proposal.seedSelection;
   const components: ProtocolComponentRationaleV1[] = [{
     componentType: 'seed', value: `${config.baseHz} Hz`, role: 'Referencia de las relaciones sonoras', basis: 'protocol-design',
-    explanation: config.baseHz === original.baseHz
-      ? `La regla existente ${proposal.ruleId} usa esta base de referencia. Es una elección de diseño; no una frecuencia demostrada para producir el estado solicitado.`
-      : 'Base elegida por ti sobre la regla existente; no se atribuye eficacia al valor elegido.',
+    explanation: selection?.source==='automatic'
+      ? `${config.baseHz} Hz fue seleccionada entre ${selection.candidates.filter(c=>c.valid).length} bases estructuralmente válidas. La progresión completa queda dentro del rango admitido y conserva margen respecto a sus límites. La tolerancia estructural de 0.10 octava es una regla de producto V1, no un umbral científico. No se atribuye un efecto terapéutico a esta frecuencia.`
+      : config.baseHz === original.baseHz
+        ? `La regla existente ${proposal.ruleId} usa esta base de referencia. Es una elección de diseño; no una frecuencia demostrada para producir el estado solicitado.`
+        : 'Base elegida por ti sobre la regla existente; la selección personal reemplazó la selección automática y no se atribuye eficacia al valor elegido.',
   }];
   // Include every audible occurrence, including repeated roots and cascade return.
   proposal.schedule.steps.forEach((step, index) => step.frequencies.forEach((hz, voice) => {

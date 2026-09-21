@@ -19,7 +19,8 @@ export function validateRecord(value: unknown): VoiceSessionRecordV1 {
   const config = validateConfig(p.harmonicConfig), intent = validateIntent(v.intent);
   if (!Array.isArray(p.rationale) || !Array.isArray(p.warnings) || !['local-rule', 'user-customized'].includes(String(p.source))) throw new Error('Propuesta inválida.');
   const proposal = validateProposal({ schemaVersion: p.schemaVersion, proposalId: text(p.proposalId, 100), ruleId: text(p.ruleId, 100), ruleVersion: p.ruleVersion, source: p.source,
-    intent: validateIntent(p.intent), harmonicConfig: config, schedule: p.schedule, rationale: p.rationale.map(x => text(x)), warnings: p.warnings.map(x => text(x)), requiresExplicitExperimentalConsent: p.requiresExplicitExperimentalConsent } as VoiceSessionProposalV1);
+    intent: validateIntent(p.intent), harmonicConfig: config, schedule: p.schedule, rationale: p.rationale.map(x => text(x)), warnings: p.warnings.map(x => text(x)), requiresExplicitExperimentalConsent: p.requiresExplicitExperimentalConsent,
+    ...(p.seedSelection===undefined?{}:{seedSelection:p.seedSelection as VoiceSessionProposalV1['seedSelection']}),...(p.proposalIdentity===undefined?{}:{proposalIdentity:p.proposalIdentity as VoiceSessionProposalV1['proposalIdentity']}) } as VoiceSessionProposalV1);
   if (JSON.stringify(intent) !== JSON.stringify(proposal.intent)) throw new Error('Intención inconsistente.');
   if (!Array.isArray(v.markers) || v.markers.length > 500) throw new Error('Marcadores inválidos.');
   const duration = finite(tech.actualDurationMs, 0, 3600000);
