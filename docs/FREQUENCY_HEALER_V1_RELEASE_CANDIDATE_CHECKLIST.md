@@ -1,6 +1,6 @@
 # Frequency Healer — V1 Release Candidate Checklist
 
-RC status: **CLOSED BETA RC READY**
+RC status: **READY FOR OWNER APPROVAL**
 Closeout date: 2026-09-21
 Branch: `codex/voice-journey-grant`
 Tested commit SHA: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`
@@ -244,12 +244,12 @@ Closed-beta readiness is based on the following reported physical observations p
 
 These physical observations are suitable for closed beta. They are not a final production physical-audio certification.
 
-### NOT TESTED items
+### Final manual release gates
 
-These do not block **CLOSED BETA RC READY**, but remain release gates before final production approval:
+The owner completed the remaining physical release gates after closed-beta RC preparation:
 
-1. Mobile unified export: **NOT TESTED**
-2. Stereo headphones / binaural physical listening: **NOT TESTED**
+1. Mobile unified export: **PASS**
+2. Stereo headphones / binaural physical listening: **PASS**
 
 Additional validation note to preserve during beta/manual testing:
 
@@ -260,7 +260,7 @@ Additional validation note to preserve during beta/manual testing:
 - Old Vercel deployment-specific URLs may still serve historical bundles. Use only the branch alias preview for closed beta evidence.
 - Legacy `voice-rules-v1` records may remain visible in local history. They are valid historical records and should not be migrated or deleted as part of beta testing.
 - Closed beta does not include import, cloud sync, backup, analytics expansion or production deployment.
-- Mobile export and stereo/binaural listening remain unverified release gates.
+- Mobile export and stereo/binaural listening are PASS as of the final RC1 manual release gate update.
 
 ### Closed-beta acceptance criteria
 
@@ -333,12 +333,86 @@ Use one result row per scenario.
 
 ### Remaining production gates
 
-Before final production approval, complete and record:
+The former physical release gates for mobile unified export and stereo/headphone listening are now PASS as of the final RC1 manual release gate update. Before final production approval, complete and record:
 
-1. Mobile unified export: PASS on at least one mobile browser.
-2. Stereo headphones / binaural physical listening: PASS with stereo isolation.
-3. Closed-beta feedback triage: no open P0/P1 issues.
-4. CI green on the final production-candidate commit.
-5. Explicit owner approval to merge/promote.
+1. Owner review of this RC1 report.
+2. Explicit owner approval to merge/promote.
+3. CI green on the exact final production-candidate commit if the branch changes after this RC1 closeout.
+4. Production smoke after owner-approved promotion.
 
 No merge to `main` and no production deployment are authorized by this RC closeout.
+
+## 12. Final RC1 owner-approval gate
+
+Final status: **READY FOR OWNER APPROVAL**
+
+Manual release gate phase: **COMPLETE**
+
+Branch: `codex/voice-journey-grant`
+
+Final product candidate SHA: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`
+
+Preview URL: https://frequency-healer-git-codex-voice-journey-grant-leviathan1.vercel.app
+
+CI status: GitHub Actions run 35634546043: PASS — Quality, Flags ON and Flags OFF completed successfully for product candidate 43ba25b.
+
+Vercel result: Vercel preview check: PASS — deployment check completed successfully for product candidate 43ba25b.
+
+Automated regression record:
+
+- Unit/integration suite: PASS — 214/214 tests passing.
+- TypeScript: PASS.
+- ESLint: PASS.
+- CI feature flags ON: PASS.
+- CI feature flags OFF: PASS.
+- CI HTTP smoke and landing smoke: PASS through the existing workflow gates.
+
+Manual validation gates recorded as PASS:
+
+- iPhone physical validation: PASS
+- Samsung / Android Chrome physical validation: PASS
+- Guided Session: PASS
+- voice-rules-v2: PASS
+- Seed Selection V1: PASS
+- Audio start/stop: PASS
+- Silence after stop: PASS
+- Atlas stop fade / no click-pop: PASS
+- Harmonic Lab load: PASS
+- Responsive mobile behavior: PASS
+- Save/persistence: PASS
+- Mobile unified export: PASS
+- Stereo headphones / binaural physical listening: PASS
+
+Open blocker count:
+
+- P0: 0
+- P1: 0
+
+Remaining issues by severity:
+
+| Severity | Count | Notes |
+| --- | ---: | --- |
+| P0 | 0 | No release-blocking failure recorded. |
+| P1 | 0 | No closed-beta blocker recorded. |
+| P2 | 0 | No known major non-blocking defect recorded at RC1 closeout. |
+| P3 | 2 | Watch for stale preview URLs/browser caches during tester onboarding; continue watching prior macOS/CoreAudio close behavior during beta/manual physical testing. |
+
+Production smoke checklist for owner approval:
+
+- Open production after promotion and confirm the build/rules diagnostic matches the approved release.
+- Verify `/`, `/voz`, `/sesion-nueva`, `/laboratorio-armonico`, `/biblioteca`, `/protocolos`, `/generador` and `/diario` load.
+- Complete one Guided Session by text, confirm voice-rules-v2 and Seed Selection V1 provenance, start playback, adjust volume and stop.
+- Confirm silence after stop on iPhone and Android Chrome.
+- Play and stop one Atlas frequency and confirm the stop fade has no click/pop.
+- Open Harmonic Lab and confirm no 404 on the promoted domain.
+- Save one record locally, reload, and export unified data on mobile.
+- Confirm safety/copy freeze language remains neutral and no medical or mechanism guarantees appear.
+
+Rollback plan:
+
+- Do not merge or promote if any P0/P1 appears before owner approval.
+- If a production issue appears after promotion, roll back Vercel to the previous known-good production deployment.
+- Product reference SHA for this RC1 candidate: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`.
+- Pre-RC rollback/reference commit retained in history: `e8b323a0f37d80f2ee1bb6702e57a214812df864`.
+
+Owner approval remains required before merge to `main` or production promotion.

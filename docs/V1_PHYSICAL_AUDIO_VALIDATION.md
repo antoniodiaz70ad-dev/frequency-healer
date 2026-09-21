@@ -1,5 +1,44 @@
 # Frequency Healer V1 — physical audio validation
 
+## RC1 manual release gate update — 2026-09-21
+
+Status: **PASS — manual release gate phase complete**
+
+Branch: `codex/voice-journey-grant`
+
+Final product candidate SHA: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`
+
+Preview URL: https://frequency-healer-git-codex-voice-journey-grant-leviathan1.vercel.app
+
+Manual validations recorded by owner as PASS:
+
+- iPhone physical validation: PASS
+- Samsung / Android Chrome physical validation: PASS
+- Guided Session: PASS
+- voice-rules-v2: PASS
+- Seed Selection V1: PASS
+- Audio start/stop: PASS
+- Silence after stop: PASS
+- Atlas stop fade / no click-pop: PASS
+- Harmonic Lab load: PASS
+- Responsive mobile behavior: PASS
+- Save/persistence: PASS
+- Mobile unified export: PASS
+- Stereo headphones / binaural physical listening: PASS
+
+Blockers:
+
+- P0: 0
+- P1: 0
+
+Notes preserved for beta monitoring:
+
+- Prior macOS/CoreAudio close behavior should continue to be watched during beta/manual physical testing.
+- Old preview URLs or cached browsers may still show earlier UI; testers should use the approved preview URL or production URL after promotion.
+
+This update supersedes earlier NOT TESTED entries for mobile unified export, iPhone, Android and stereo headphones / binaural physical listening. Historical observations below are retained for traceability.
+
+
 Phase 3E.1 validation record. This document records observed results and leaves
 auditory or unavailable-device checks as `NOT TESTED`; automated browser tests
 are not treated as physical-audio evidence.
