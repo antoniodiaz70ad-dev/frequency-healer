@@ -165,12 +165,29 @@ body {
 .obe-session-actions { display: flex; min-height: 5rem; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
 .obe-session-actions .fh-action { min-width: 12rem; }
 .obe-session-status { color: var(--fh-text-muted); font-size: .75rem; }
+.obe-diary__header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.obe-diary__header .fh-page-header { margin-bottom: 1.5rem; }
+.obe-cooldown { display: flex; align-items: flex-start; gap: .75rem; margin-bottom: 1.5rem; border: 1px solid var(--fh-border); border-radius: var(--fh-radius-surface); padding: 1rem; background: var(--fh-surface); }
+.obe-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
+.obe-metric { min-width: 0; border-top: 2px solid; border-radius: var(--fh-radius-control); padding: 1rem; background: var(--fh-surface); }
+.obe-log-card { min-width: 0; overflow: hidden; border: 1px solid var(--fh-border); border-radius: var(--fh-radius-surface); background: var(--fh-surface); }
+.obe-log-card:hover, .obe-log-card--expanded { border-color: var(--fh-border-strong); }
+.obe-log-card--expanded { box-shadow: 0 0 0 1px var(--fh-accent); }
+.obe-log-card__header { display: flex; width: 100%; min-height: 4.75rem; align-items: flex-start; gap: .75rem; padding: 1rem; text-align: left; }
+.obe-log-card__content { display: grid; gap: 1rem; border-top: 1px solid var(--fh-border); padding: 1rem; }
+.obe-log-card__metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; padding-bottom: .75rem; }
+.obe-log-card__metrics > div { min-width: 0; }
+.obe-safety-note { border: 1px solid color-mix(in srgb, var(--fh-danger) 42%, transparent); border-radius: var(--fh-radius-control); padding: .75rem; background: color-mix(in srgb, var(--fh-danger) 9%, transparent); }
 @media (max-width: 36rem) {
   .obe-progress { grid-template-columns: repeat(5, 7.25rem); overflow-x: auto; padding-bottom: .5rem; }
   .obe-progress__step { min-height: 3.75rem; }
   .obe-session-layer { grid-template-columns: 1fr; gap: .25rem; }
   .obe-session-actions { align-items: stretch; flex-direction: column; }
   .obe-session-actions .fh-action { width: 100%; }
+  .obe-diary__header { align-items: stretch; flex-direction: column; }
+  .obe-diary__header .fh-action { width: 100%; }
+  .obe-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .obe-log-card__metrics { grid-template-columns: 1fr; }
 }
 
 /* Slider styles */

@@ -65,7 +65,7 @@ export default function SessionLogForm({
   return (
     <div className="space-y-4">
       {/* Header info */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 space-y-3">
+      <section className="obe-surface space-y-3">
         <p className="text-[10px] uppercase tracking-widest text-gray-500">
           Sesión registrada
         </p>
@@ -92,10 +92,10 @@ export default function SessionLogForm({
             />
           </label>
         </div>
-      </div>
+      </section>
 
       {/* Markers */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 space-y-3">
+      <section className="obe-surface space-y-3">
         <p className="text-[10px] uppercase tracking-widest text-gray-500">
           Marcadores fenomenológicos
         </p>
@@ -144,10 +144,10 @@ export default function SessionLogForm({
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Energy */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 space-y-4">
+      <section className="obe-surface space-y-4">
         <p className="text-[10px] uppercase tracking-widest text-gray-500">
           Energía subjetiva (1-10)
         </p>
@@ -162,17 +162,17 @@ export default function SessionLogForm({
           onChange={setPostEnergy}
         />
         {postEnergy <= 3 && (
-          <div className="bg-[#f8717115] border border-[#f8717140] rounded-lg p-3">
+          <div className="obe-safety-note">
             <p className="text-xs text-[#f87171]">
               ⚠️ Registraste energía subjetiva baja. El sistema mostrará la
               pausa conservadora ya prevista para esta puntuación.
             </p>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Notes */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 space-y-3">
+      <section className="obe-surface space-y-3">
         <p className="text-[10px] uppercase tracking-widest text-gray-500">
           Registro narrativo
         </p>
@@ -213,19 +213,19 @@ export default function SessionLogForm({
             className="w-full bg-[#0d1117] border border-[#1f2937] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#60a5fa] transition-colors"
           />
         </label>
-      </div>
+      </section>
 
       {/* Actions */}
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onCancel}
-          className="py-3 bg-[#0d1117] border border-[#1f2937] hover:border-[#374151] text-gray-400 hover:text-white text-sm rounded-xl transition-colors"
+          className="fh-action fh-action--secondary"
         >
           Cancelar
         </button>
         <button
           onClick={submit}
-          className="py-3 bg-[#60a5fa] hover:bg-[#3b82f6] text-white text-sm font-semibold rounded-xl transition-colors"
+          className="fh-action fh-action--primary"
         >
           Guardar registro
         </button>
