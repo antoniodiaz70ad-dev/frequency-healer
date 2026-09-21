@@ -161,6 +161,7 @@ test('experiment/audio: logging does not alter programmed tones/times; stop clos
 
 test('experiment/audio: stop while resume is pending keeps the draft prepared and creates no late oscillators', async () => {
   const context = new ContextMock(); let resume!: () => void;
+  context.state = 'suspended';
   context.resume = () => new Promise<void>(resolve => { resume = resolve; });
   const engine = new HarmonicEngine(() => context as unknown as AudioContext);
   let record = fixture();

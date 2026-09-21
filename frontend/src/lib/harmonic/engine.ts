@@ -1,5 +1,18 @@
 import { buildSchedule, masterGain, voiceGain, type HarmonicConfig, type HarmonicSchedule } from './math';
 
+type BrowserAudioContextConstructor = new () => AudioContext;
+
+function browserAudioContextConstructor(): BrowserAudioContextConstructor {
+  const scope = globalThis as typeof globalThis & { webkitAudioContext?: BrowserAudioContextConstructor };
+  const AudioContextConstructor = scope.AudioContext ?? scope.webkitAudioContext;
+  if (!AudioContextConstructor) throw new Error('AudioContext is not available.');
+  return AudioContextConstructor;
+}
+
+export function createBrowserAudioContext(): AudioContext {
+  return new (browserAudioContextConstructor())();
+}
+
 /** Isolated audio graph; never shares the legacy singleton or its visualizer. */
 export class HarmonicEngine {
   private generation = 0;
@@ -12,7 +25,7 @@ export class HarmonicEngine {
   private factor = 1;
   private active = false;
   private waits = new Map<ReturnType<typeof setTimeout>, () => void>();
-  constructor(private createContext: () => AudioContext = () => new AudioContext()) {}
+  constructor(private createContext: () => AudioContext = createBrowserAudioContext) {}
 
   async start(config: HarmonicConfig, onComplete: () => void = () => {}) {
     const schedule = buildSchedule(config); // Recompute, never trust supplied frequencies.
@@ -21,7 +34,7 @@ export class HarmonicEngine {
     const ctx = this.createContext();
     this.context = ctx;
     try {
-      await ctx.resume();
+      await this.ensureRunning(ctx);
       if (run !== this.generation) return false;
       this.volume = config.uiVolume; this.factor = 1;
       this.bus = ctx.createGain();
@@ -51,7 +64,8 @@ export class HarmonicEngine {
       }
       return true;
     } catch {
-      if (run === this.generation) this.stop();
+      if (run !== this.generation) return false;
+      this.stop();
       throw new Error('No se pudo iniciar el audio. Confirma de nuevo o usa otro navegador.');
     }
   }
@@ -64,10 +78,23 @@ export class HarmonicEngine {
   isPlaying() { return this.active; }
   getVolume() { return this.volume; }
   setVolume(volume: number) { masterGain(volume); this.volume = volume; this.ramp(0.03); }
+  private async ensureRunning(ctx: AudioContext) {
+    if (ctx.state === 'suspended') await ctx.resume();
+    await Promise.resolve();
+    if (ctx.state === 'suspended') await ctx.resume();
+    if (ctx.state !== 'running') throw new Error('AudioContext did not start.');
+  }
+  private cancelGain(param: AudioParam, time: number) {
+    if ('cancelAndHoldAtTime' in param && typeof param.cancelAndHoldAtTime === 'function') param.cancelAndHoldAtTime(time);
+    else {
+      param.cancelScheduledValues(time);
+      param.setValueAtTime(param.value, time);
+    }
+  }
   private ramp(seconds: number) {
     if (!this.active || !this.context || !this.bus) return;
     const param = this.bus.gain, now = this.context.currentTime;
-    param.cancelAndHoldAtTime(now);
+    this.cancelGain(param, now);
     param.linearRampToValueAtTime(masterGain(this.volume) * this.factor, now + seconds);
   }
   async duck() {
@@ -89,7 +116,7 @@ export class HarmonicEngine {
       close(); return;
     }
     const end = ctx.currentTime + 0.03;
-    bus?.gain.cancelAndHoldAtTime(ctx.currentTime); bus?.gain.linearRampToValueAtTime(0, end);
+    if (bus) { this.cancelGain(bus.gain, ctx.currentTime); bus.gain.linearRampToValueAtTime(0, end); }
     let remaining = nodes.length;
     for (const { osc, gain } of nodes) {
       osc.onended = () => { osc.disconnect(); gain.disconnect(); if (--remaining === 0) close(); };

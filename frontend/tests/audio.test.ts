@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { HarmonicEngine } from '../src/lib/harmonic/engine';
+import { createBrowserAudioContext, HarmonicEngine } from '../src/lib/harmonic/engine';
 import type { HarmonicConfig } from '../src/lib/harmonic/math';
 const config: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 class Param {
@@ -19,8 +19,25 @@ export class FakeContext {
   createGain() { const g = new Gain(); this.gains.push(g); return g; }
   createOscillator() { const o = new Osc(); this.oscs.push(o); return o; }
 }
+test('browser context uses webkit fallback when standard AudioContext is unavailable', () => {
+  const scope = globalThis as typeof globalThis & { AudioContext?: unknown; webkitAudioContext?: unknown };
+  const originalAudioContext = Object.getOwnPropertyDescriptor(scope, 'AudioContext');
+  const originalWebkitAudioContext = Object.getOwnPropertyDescriptor(scope, 'webkitAudioContext');
+  class WebKitContext extends FakeContext {}
+  try {
+    Object.defineProperty(scope, 'AudioContext', { configurable: true, value: undefined });
+    Object.defineProperty(scope, 'webkitAudioContext', { configurable: true, value: WebKitContext });
+    assert.ok(createBrowserAudioContext() instanceof WebKitContext);
+  } finally {
+    if (originalAudioContext) Object.defineProperty(scope, 'AudioContext', originalAudioContext);
+    else Reflect.deleteProperty(scope, 'AudioContext');
+    if (originalWebkitAudioContext) Object.defineProperty(scope, 'webkitAudioContext', originalWebkitAudioContext);
+    else Reflect.deleteProperty(scope, 'webkitAudioContext');
+  }
+});
 test('resume cancellation cannot create a late graph', async () => {
   const ctx = new FakeContext(); let resolve!: () => void;
+  ctx.state = 'suspended';
   ctx.resume = () => new Promise<void>(r => { resolve = r; });
   const e = new HarmonicEngine(() => ctx as unknown as AudioContext);
   const pending = e.start(config); e.stop(); resolve(); assert.equal(await pending, false);
@@ -50,6 +67,16 @@ test('normal completion disconnects/ closes context once, including previously e
 });
 test('resume rejection is recoverable', async () => {
   const ctx = new FakeContext(); ctx.resume = async () => { throw new Error('blocked'); };
+  ctx.state = 'suspended';
   const e = new HarmonicEngine(() => ctx as unknown as AudioContext);
   await assert.rejects(e.start(config), /No se pudo/); assert.equal(ctx.state, 'closed');
+});
+test('suspended context that cannot become running is rejected instead of reporting playback', async () => {
+  const ctx = new FakeContext(); ctx.state = 'suspended';
+  ctx.resume = async () => {};
+  const e = new HarmonicEngine(() => ctx as unknown as AudioContext);
+  await assert.rejects(e.start(config), /No se pudo/);
+  assert.equal(e.isPlaying(), false);
+  assert.equal(ctx.oscs.length, 0);
+  assert.equal(ctx.state, 'closed');
 });
