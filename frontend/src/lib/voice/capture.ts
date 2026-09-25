@@ -50,8 +50,10 @@ export class VoiceCaptureController {
           this.cleanup();
           try { validateVoiceBlob(result); resolve(result); } catch (e) { reject(e); }
         };
-        // stop() stops hardware immediately; metadata uses the monotonic capture clock.
-        this.endRecording = () => { stoppedAt = performance.now(); this.stopTracks(); if (recorder.state !== 'inactive') recorder.stop(); };
+        // Stop MediaRecorder before closing tracks. Safari/iOS can emit an empty blob if
+        // the input track is stopped before recorder.stop() has flushed data. cleanup()
+        // stops hardware after onstop validates the captured blob.
+        this.endRecording = () => { stoppedAt = performance.now(); if (recorder.state !== 'inactive') recorder.stop(); else this.stopTracks(); };
         recorder.start(250); onListening();
         this.timer = setTimeout(() => this.stop(), limit);
       });
