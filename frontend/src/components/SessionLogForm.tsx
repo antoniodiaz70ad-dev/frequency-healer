@@ -13,7 +13,7 @@ interface Props {
 }
 
 const CLARITY_OPTIONS: { value: VisualClarity; label: string; color: string }[] = [
-  { value: "none", label: "No salí / oscuro", color: "#6b7280" },
+  { value: "none", label: "Sin sensación de salida / sin claridad", color: "#6b7280" },
   { value: "partial", label: "Borroso o parcial", color: "#fbbf24" },
   { value: "full", label: "Cristalino", color: "#4ade80" },
 ];
@@ -65,7 +65,7 @@ export default function SessionLogForm({
   return (
     <div className="space-y-4">
       {/* Header info */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 space-y-3">
+      <section className="obe-surface space-y-3">
         <p className="text-[10px] uppercase tracking-widest text-gray-500">
           Sesión registrada
         </p>
@@ -92,37 +92,37 @@ export default function SessionLogForm({
             />
           </label>
         </div>
-      </div>
+      </section>
 
       {/* Markers */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 space-y-3">
+      <section className="obe-surface space-y-3">
         <p className="text-[10px] uppercase tracking-widest text-gray-500">
           Marcadores fenomenológicos
         </p>
 
         <ToggleRow
-          label="Parálisis del sueño alcanzada"
+          label="Parálisis del sueño percibida"
           checked={paralysisAchieved}
           onChange={setParalysisAchieved}
         />
         <ToggleRow
-          label="Vibraciones / hormigueo / electricidad"
+          label="Sensaciones de vibración / hormigueo / electricidad"
           checked={vibrations}
           onChange={setVibrations}
         />
         <ToggleRow
-          label="Separación del cuerpo (rodar, sentarse, despegar)"
+          label="Sensación subjetiva de separación (rodar, sentarse, despegar)"
           checked={separation}
           onChange={setSeparation}
         />
         <ToggleRow
-          label="Miré hacia mi cuerpo (snap-back)"
+          label="Miré hacia la imagen percibida de mi cuerpo"
           checked={lookedBack}
           onChange={setLookedBack}
         />
 
         <div>
-          <p className="text-xs text-gray-400 mb-2">Claridad visual fuera</p>
+          <p className="text-xs text-gray-400 mb-2">Claridad visual percibida</p>
           <div className="flex gap-2 flex-wrap">
             {CLARITY_OPTIONS.map((opt) => (
               <button
@@ -144,12 +144,12 @@ export default function SessionLogForm({
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Energy */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 space-y-4">
+      <section className="obe-surface space-y-4">
         <p className="text-[10px] uppercase tracking-widest text-gray-500">
-          Energía (1-10)
+          Energía subjetiva (1-10)
         </p>
         <EnergySlider
           label="Antes de la sesión"
@@ -162,17 +162,17 @@ export default function SessionLogForm({
           onChange={setPostEnergy}
         />
         {postEnergy <= 3 && (
-          <div className="bg-[#f8717115] border border-[#f8717140] rounded-lg p-3">
+          <div className="obe-safety-note">
             <p className="text-xs text-[#f87171]">
-              ⚠️ Energía baja registrada. El sistema activará una recomendación
-              de descanso de 7 días para prevenir burnout.
+              ⚠️ Registraste energía subjetiva baja. El sistema mostrará la
+              pausa conservadora ya prevista para esta puntuación.
             </p>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Notes */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 space-y-3">
+      <section className="obe-surface space-y-3">
         <p className="text-[10px] uppercase tracking-widest text-gray-500">
           Registro narrativo
         </p>
@@ -190,13 +190,13 @@ export default function SessionLogForm({
 
         <label>
           <p className="text-xs text-gray-400 mb-1">
-            Notas (lo que recuerdes, sensaciones, presencias, lugares)
+            Notas (recuerdos, sensaciones, imágenes e interpretaciones)
           </p>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={5}
-            placeholder="Escribe ahora antes de que la memoria del estado disociado se evapore..."
+            placeholder="Describe lo que recuerdes sin asumir una explicación objetiva..."
             className="w-full bg-[#0d1117] border border-[#1f2937] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#60a5fa] transition-colors resize-none"
           />
         </label>
@@ -209,23 +209,23 @@ export default function SessionLogForm({
             type="text"
             value={tagsInput}
             onChange={(e) => setTagsInput(e.target.value)}
-            placeholder="vibraciones, claridad, guia, sanación..."
+            placeholder="sensaciones, claridad, imágenes, calma..."
             className="w-full bg-[#0d1117] border border-[#1f2937] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#60a5fa] transition-colors"
           />
         </label>
-      </div>
+      </section>
 
       {/* Actions */}
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={onCancel}
-          className="py-3 bg-[#0d1117] border border-[#1f2937] hover:border-[#374151] text-gray-400 hover:text-white text-sm rounded-xl transition-colors"
+          className="fh-action fh-action--secondary"
         >
           Cancelar
         </button>
         <button
           onClick={submit}
-          className="py-3 bg-[#60a5fa] hover:bg-[#3b82f6] text-white text-sm font-semibold rounded-xl transition-colors"
+          className="fh-action fh-action--primary"
         >
           Guardar registro
         </button>

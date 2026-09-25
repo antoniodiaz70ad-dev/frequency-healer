@@ -11,6 +11,9 @@ import {
 } from "@/lib/sessionLog";
 import SessionLogForm from "@/components/SessionLogForm";
 import SessionLogItem from "@/components/SessionLogItem";
+import { FHEvidenceBadge } from "@/components/ui/FHBadges";
+import { FHEmptyState, FHPageHeader, FHPageShell } from "@/components/ui/FHLayout";
+import FHMetric from "@/components/ui/FHMetric";
 
 type Mode = "list" | "form";
 
@@ -70,18 +73,13 @@ export default function DiarioPage() {
   );
 
   return (
-    <div className="max-w-3xl animate-fade-in">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Diario</h1>
-          <p className="text-sm text-gray-400">
-            Registro post-sesión y monitoreo de cooldown anti-burnout.
-          </p>
-        </div>
+    <FHPageShell width="default" className="obe-page obe-diary animate-fade-in">
+      <div className="obe-diary__header">
+        <FHPageHeader eyebrow={<span className="obe-header-label"><span>REGISTRO PERSONAL · OBE</span><FHEvidenceBadge category="EXPLORATORY">EXPLORATORIO</FHEvidenceBadge></span>} title="Diario OBE" description="Registro de experiencias subjetivas y pausas conservadoras." />
         {mode === "list" && (
           <button
             onClick={() => setMode("form")}
-            className="px-4 py-2 bg-[#60a5fa] hover:bg-[#3b82f6] text-white text-sm font-semibold rounded-lg transition-colors flex-shrink-0"
+            className="fh-action fh-action--primary flex-shrink-0"
           >
             + Nuevo registro
           </button>
@@ -92,7 +90,7 @@ export default function DiarioPage() {
         <>
           {/* Cooldown banner */}
           <div
-            className="border rounded-xl p-4 mb-6 flex items-start gap-3"
+            className="obe-cooldown"
             style={{
               backgroundColor: cooldownStyle.bg,
               borderColor: cooldownStyle.border,
@@ -110,10 +108,10 @@ export default function DiarioPage() {
                 style={{ color: cooldownStyle.text }}
               >
                 {cooldown.level === "clear"
-                  ? "Cooldown libre"
+                  ? "Pausa no requerida"
                   : cooldown.level === "caution"
-                  ? "Atención: riesgo de acumulación"
-                  : "Descanso requerido"}
+                  ? "Considera una pausa"
+                  : "Pausa recomendada"}
               </p>
               <p className="text-xs text-gray-400 mt-1 leading-relaxed">
                 {cooldown.reason}
@@ -135,19 +133,19 @@ export default function DiarioPage() {
 
           {/* Stats summary */}
           {logs.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+            <div className="obe-metrics">
               <StatCard
                 label="Total sesiones"
                 value={logs.length.toString()}
                 color="#60a5fa"
               />
               <StatCard
-                label="Parálisis logradas"
+                label="Parálisis percibidas"
                 value={logs.filter((l) => l.paralysisAchieved).length.toString()}
                 color="#a78bfa"
               />
               <StatCard
-                label="Separaciones"
+                label="Separaciones percibidas"
                 value={logs.filter((l) => l.separation).length.toString()}
                 color="#fbbf24"
               />
@@ -163,22 +161,22 @@ export default function DiarioPage() {
 
           {/* Logs list */}
           {sortedLogs.length === 0 ? (
-            <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-8 text-center">
-              <p className="text-3xl mb-3">📓</p>
-              <p className="text-sm text-white font-medium mb-1">
+            <FHEmptyState>
+              <p className="fh-label mb-2">REGISTRO OBE</p>
+              <h2 className="text-lg text-white font-medium mb-1">
                 Aún no hay registros
-              </p>
+              </h2>
               <p className="text-xs text-gray-500 mb-4">
-                Captura tu primera sesión inmediatamente al regresar — la
-                memoria del estado fuera del cuerpo se evapora rápido.
+                Registra recuerdos, sensaciones e interpretaciones después de
+                la práctica, sin asumir que describen eventos externos.
               </p>
               <button
                 onClick={() => setMode("form")}
-                className="px-4 py-2 bg-[#60a5fa] hover:bg-[#3b82f6] text-white text-sm rounded-lg transition-colors"
+                className="fh-action fh-action--primary"
               >
                 + Crear primer registro
               </button>
-            </div>
+            </FHEmptyState>
           ) : (
             <div className="space-y-2">
               {sortedLogs.map((log) => (
@@ -199,7 +197,7 @@ export default function DiarioPage() {
           onCancel={() => setMode("list")}
         />
       )}
-    </div>
+    </FHPageShell>
   );
 }
 
@@ -213,16 +211,6 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-3 text-center">
-      <p
-        className="text-2xl font-bold font-mono"
-        style={{ color }}
-      >
-        {value}
-      </p>
-      <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">
-        {label}
-      </p>
-    </div>
+    <div className="obe-metric" style={{ borderColor: color }}><FHMetric label={label} value={value} /></div>
   );
 }

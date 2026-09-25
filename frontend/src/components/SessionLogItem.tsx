@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { OBESessionLog } from "@/lib/types";
+import FHDisclosure from "@/components/ui/FHDisclosure";
 
 interface Props {
   log: OBESessionLog;
@@ -35,16 +36,13 @@ export default function SessionLogItem({ log, onDelete }: Props) {
       : "#4ade80";
 
   return (
-    <div
-      className={`bg-[#111827] border rounded-xl transition-all overflow-hidden ${
-        expanded
-          ? "border-[#60a5fa] ring-1 ring-[#60a5fa30]"
-          : "border-[#1f2937] hover:border-[#374151]"
-      }`}
+    <article
+      className={`obe-log-card ${expanded ? "obe-log-card--expanded" : ""}`}
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-4 text-left flex items-start gap-3"
+        className="obe-log-card__header"
+        aria-expanded={expanded}
       >
         <div className="w-12 flex-shrink-0 text-center">
           <p className="text-[10px] text-gray-600 uppercase">
@@ -68,12 +66,12 @@ export default function SessionLogItem({ log, onDelete }: Props) {
           </div>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {log.paralysisAchieved && (
-              <Badge label="Parálisis" color="#a78bfa" />
+              <Badge label="Parálisis percibida" color="#a78bfa" />
             )}
-            {log.vibrations && <Badge label="Vibraciones" color="#67e8f9" />}
-            {log.separation && <Badge label="Separación" color="#fbbf24" />}
+            {log.vibrations && <Badge label="Sensaciones vibratorias" color="#67e8f9" />}
+            {log.separation && <Badge label="Separación percibida" color="#fbbf24" />}
             <Badge label={clarity.label} color={clarity.color} />
-            {log.lookedBack && <Badge label="Snap-back" color="#f87171" />}
+            {log.lookedBack && <Badge label="Retorno percibido" color="#f87171" />}
           </div>
         </div>
 
@@ -87,7 +85,7 @@ export default function SessionLogItem({ log, onDelete }: Props) {
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 border-t border-[#1f2937] pt-3 space-y-3">
+        <div className="obe-log-card__content">
           {log.intention && (
             <div>
               <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">
@@ -108,16 +106,17 @@ export default function SessionLogItem({ log, onDelete }: Props) {
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-3">
+          <FHDisclosure summary="Detalles de la sesión">
+          <div className="obe-log-card__metrics">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-gray-500">
-                Pre energía
+                Energía subjetiva previa
               </p>
               <p className="text-sm font-mono text-white">{log.preEnergy}/10</p>
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-widest text-gray-500">
-                Post energía
+                Energía subjetiva posterior
               </p>
               <p
                 className="text-sm font-mono"
@@ -159,6 +158,7 @@ export default function SessionLogItem({ log, onDelete }: Props) {
               ))}
             </div>
           )}
+          </FHDisclosure>
 
           <button
             onClick={() => {
@@ -172,7 +172,7 @@ export default function SessionLogItem({ log, onDelete }: Props) {
           </button>
         </div>
       )}
-    </div>
+    </article>
   );
 }
 

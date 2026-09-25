@@ -42,8 +42,8 @@ export default function SafetyDisclaimerModal({ onAccept, onCancel }: Props) {
             <span>Antes de iniciar la sesión</span>
           </h2>
           <p className="text-xs text-gray-400 mt-2">
-            Las sesiones binaurales multicapa inducen estados alterados de
-            consciencia. Lee y confirma cada punto antes de continuar.
+            Las sesiones binaurales multicapa pueden resultar absorbentes.
+            Lee y confirma cada punto antes de continuar.
           </p>
         </div>
 
@@ -52,7 +52,7 @@ export default function SafetyDisclaimerModal({ onAccept, onCancel }: Props) {
             checked={acknowledged.activity}
             onChange={(v) => setAcknowledged((s) => ({ ...s, activity: v }))}
             title="No operar maquinaria ni conducir"
-            body="Durante la sesión es probable que entres en atonía motora parcial y pérdida del campo visual espacial. No conduzcas, no operes maquinaria, no manipules objetos peligrosos. Permanece sentado o acostado en un entorno seguro."
+            body="Durante la sesión, tu atención puede concentrarse en el audio. No conduzcas, no operes maquinaria ni manipules objetos peligrosos. Permanece sentado o acostado en un entorno seguro."
           />
           <Checkbox
             checked={acknowledged.headphones}
@@ -65,8 +65,8 @@ export default function SafetyDisclaimerModal({ onAccept, onCancel }: Props) {
             onChange={(v) =>
               setAcknowledged((s) => ({ ...s, contraindications: v }))
             }
-            title="Sin contraindicaciones neurológicas"
-            body="No usar si tienes historial de epilepsia, susceptibilidad a convulsiones, marcapasos, o trastornos disociativos severos sin supervisión médica previa."
+            title="Precauciones personales"
+            body="Si tienes antecedentes de epilepsia, convulsiones o trastornos disociativos graves, consulta con un profesional de salud antes de usar sesiones binaurales."
           />
           <Checkbox
             checked={acknowledged.medical}

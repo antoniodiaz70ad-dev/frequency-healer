@@ -5,6 +5,10 @@ import { PROTOCOLS } from "@/lib/protocols";
 import { DOMAIN_INFO, WAVEFORM_INFO } from "@/lib/frequencies";
 import { getAudioEngine } from "@/lib/audioEngine";
 import { Protocol, ProtocolStep } from "@/lib/types";
+import { legacyProtocolDisposition } from "@/lib/protocolLibrary";
+import { FHEvidenceBadge, FHStateBadge } from "@/components/ui/FHBadges";
+import FHDisclosure from "@/components/ui/FHDisclosure";
+import { FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
 
 type ProtocolState = "idle" | "playing" | "paused";
 
@@ -139,14 +143,11 @@ export default function ProtocolosPage() {
   };
 
   return (
-    <div className="max-w-4xl animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Protocolos de Sanaci&oacute;n</h1>
-        <p className="text-sm text-gray-400">Secuencias automatizadas de frecuencias terap&eacute;uticas.</p>
-      </div>
+    <FHPageShell width="default" className="legacy-page protocols-page animate-fade-in">
+      <FHPageHeader eyebrow="ARCHIVO · LEGADO" title="Protocolos históricos" description="Archivo experimental y legado de versiones anteriores. Estas secuencias no son recomendaciones actuales de Core V1." />
 
       {/* Domain filter */}
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <FHSurface variant="subtle" className="legacy-filter-panel flex gap-2 flex-wrap" >
         <button
           onClick={() => setFilterDomain("all")}
           className={`text-xs px-4 py-2 rounded-full border transition-all ${filterDomain === "all" ? "border-[#60a5fa] bg-[#60a5fa15] text-[#60a5fa]" : "border-[#1f2937] text-gray-500 hover:text-white"}`}
@@ -163,11 +164,11 @@ export default function ProtocolosPage() {
             {DOMAIN_INFO[d].icon} {DOMAIN_INFO[d].label}
           </button>
         ))}
-      </div>
+      </FHSurface>
 
       {/* Active protocol player */}
       {selectedProtocol && protocolState !== "idle" && (
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-6 mb-6">
+        <FHSurface variant="strong" className="protocol-player">
           <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wider">Reproduciendo</p>
@@ -248,18 +249,19 @@ export default function ProtocolosPage() {
               </button>
             )}
           </div>
-        </div>
+        </FHSurface>
       )}
 
       {/* Protocol cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {filteredProtocols.map((protocol) => {
+          const disposition = legacyProtocolDisposition(protocol.id);
           const isSelected = selectedProtocol?.id === protocol.id;
           const isActive = isSelected && protocolState !== "idle";
           return (
-            <div
+            <article
               key={protocol.id}
-              className={`bg-[#111827] border rounded-xl p-5 transition-all cursor-pointer hover:border-[#374151] ${isActive ? "border-[#60a5fa] ring-1 ring-[#60a5fa30]" : "border-[#1f2937]"}`}
+              className={`protocol-card ${isActive ? "protocol-card--active" : ""}`}
               onClick={() => {
                 if (protocolState !== "idle" && selectedProtocol?.id !== protocol.id) {
                   handleStop();
@@ -273,6 +275,7 @@ export default function ProtocolosPage() {
                   <div>
                     <h3 className="text-sm font-bold text-white">{protocol.name}</h3>
                     <p className="text-xs text-gray-500">{protocol.totalDurationMinutes} min &middot; {protocol.steps.length} pasos</p>
+                    <div className="protocol-card__badges"><FHStateBadge state={disposition?.status ?? "historical"}>{disposition?.status === "deprecated" ? "DEPRECADO" : "HISTÓRICO"}</FHStateBadge><FHEvidenceBadge category={disposition?.status === "deprecated" ? "UNSUPPORTED_LEGACY_CLAIM" : "EXPLORATORY"}>{disposition?.status === "deprecated" ? "LEGADO NO RESPALDADO" : "EXPLORATORIO"}</FHEvidenceBadge></div>
                   </div>
                 </div>
                 {!isActive && (
@@ -321,10 +324,14 @@ export default function ProtocolosPage() {
                   </span>
                 ))}
               </div>
-            </div>
+              <FHDisclosure summary="Configuración y procedencia">
+                <p className="text-xs text-gray-400">ID histórico: <span className="font-mono">{protocol.id}</span>. Se conserva para reproducibilidad; no participa en recomendaciones nuevas.</p>
+                <ol className="protocol-steps">{protocol.steps.map((step, index) => <li key={index}><span>Paso {index + 1}</span><code>{getDisplayFrequencyLabel(step)} · {step.waveform} · {step.durationSeconds} s · {Math.round(step.volume * 100)}%</code></li>)}</ol>
+              </FHDisclosure>
+            </article>
           );
         })}
       </div>
-    </div>
+    </FHPageShell>
   );
 }

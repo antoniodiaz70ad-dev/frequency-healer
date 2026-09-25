@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Waveform, OutputMode, FocusLevelPreset } from "@/lib/types";
 import { getAudioEngine, AudioEngine } from "@/lib/audioEngine";
 import { FREQUENCY_DATABASE, WAVEFORM_INFO, DOMAIN_INFO } from "@/lib/frequencies";
@@ -13,16 +13,20 @@ import AudioVisualizer from "@/components/AudioVisualizer";
 import SafetyDisclaimerModal, {
   hasAcceptedDisclaimer,
 } from "@/components/SafetyDisclaimerModal";
+import Link from "next/link";
+import { FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
+import { FHDangerAction, FHPrimaryAction } from "@/components/ui/FHActions";
+import FHDisclosure from "@/components/ui/FHDisclosure";
 
 const PRESETS = [
-  { label: "528 Hz Milagro", hz: 528, waveform: "sine" as Waveform, color: "#fbbf24" },
+  { label: "528 Hz Solfeggio", hz: 528, waveform: "sine" as Waveform, color: "#fbbf24" },
   { label: "432 Hz Natural", hz: 432, waveform: "sine" as Waveform, color: "#4ade80" },
   { label: "40 Hz Gamma", hz: 40, waveform: "sine" as Waveform, color: "#60a5fa" },
   { label: "7.83 Hz Schumann", hz: 7.83, waveform: "sine" as Waveform, color: "#a78bfa" },
-  { label: "174 Hz Dolor", hz: 174, waveform: "sine" as Waveform, color: "#f87171" },
-  { label: "963 Hz Corona", hz: 963, waveform: "sine" as Waveform, color: "#67e8f9" },
-  { label: "727 Hz Rife", hz: 727, waveform: "square" as Waveform, color: "#f87171" },
-  { label: "880 Hz Inmune", hz: 880, waveform: "square" as Waveform, color: "#fb923c" },
+  { label: "174 Hz Solfeggio", hz: 174, waveform: "sine" as Waveform, color: "#f87171" },
+  { label: "963 Hz Solfeggio", hz: 963, waveform: "sine" as Waveform, color: "#67e8f9" },
+  { label: "727 Hz Rife (histórico)", hz: 727, waveform: "square" as Waveform, color: "#f87171" },
+  { label: "880 Hz Rife (histórico)", hz: 880, waveform: "square" as Waveform, color: "#fb923c" },
 ];
 
 type Tab = "tone" | "hemi-sync";
@@ -39,7 +43,11 @@ export default function GeneradorPage() {
   const [binaural, setBinaural] = useState(false);
   const [binauralDiff, setBinauralDiff] = useState(10);
   const [dwellTime, setDwellTime] = useState(0); // 0 = continuous
-  const [dwellTimer, setDwellTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const dwellTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (dwellTimer.current) clearTimeout(dwellTimer.current);
+    getAudioEngine().stopProtocol();
+  }, []);
 
   // Hemi-Sync state
   const [selectedChord, setSelectedChord] = useState<FocusLevelPreset>(FOCUS_LEVEL_PRESETS[0]);
@@ -51,6 +59,7 @@ export default function GeneradorPage() {
   const effectiveFreq = tuning432 ? AudioEngine.to432(frequency) : frequency;
 
   const handlePlay = useCallback(() => {
+    if (dwellTimer.current) clearTimeout(dwellTimer.current);
     const engine = getAudioEngine();
     engine.setOutputMode(outputMode);
     engine.play(effectiveFreq, waveform, volume / 100, {
@@ -64,7 +73,7 @@ export default function GeneradorPage() {
         engine.stop();
         setIsPlaying(false);
       }, dwellTime * 1000);
-      setDwellTimer(timer);
+      dwellTimer.current = timer;
     }
   }, [effectiveFreq, waveform, volume, outputMode, binaural, binauralDiff, dwellTime]);
 
@@ -72,13 +81,14 @@ export default function GeneradorPage() {
     const engine = getAudioEngine();
     engine.stop();
     setIsPlaying(false);
-    if (dwellTimer) {
-      clearTimeout(dwellTimer);
-      setDwellTimer(null);
+    if (dwellTimer.current) {
+      clearTimeout(dwellTimer.current);
+      dwellTimer.current = null;
     }
-  }, [dwellTimer]);
+  }, []);
 
   const playChord = useCallback(() => {
+    if (dwellTimer.current) clearTimeout(dwellTimer.current);
     const engine = getAudioEngine();
     engine.playChord(selectedChord.layers, {
       masterVolume: chordVolume / 100,
@@ -91,7 +101,7 @@ export default function GeneradorPage() {
       engine.stop();
       setIsPlaying(false);
     }, minutes * 60 * 1000);
-    setDwellTimer(timer);
+    dwellTimer.current = timer;
   }, [selectedChord, chordVolume, pinkNoiseEnabled, chordDuration]);
 
   const requestPlayChord = useCallback(() => {
@@ -113,16 +123,12 @@ export default function GeneradorPage() {
   const freqInfo = FREQUENCY_DATABASE.find((f) => Math.abs(f.hz - frequency) < 0.5);
 
   return (
-    <div className="max-w-4xl animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Generador de Tonos</h1>
-        <p className="text-sm text-gray-400">
-          Genera frecuencias precisas para bocinas o bobinas electromagnéticas.
-        </p>
-      </div>
+    <FHPageShell width="default" className="legacy-page generator-page animate-fade-in">
+      <FHPageHeader eyebrow="INSTRUMENTO · AVANZADO" title="Generador manual" description="Configura una señal directamente. Para una experiencia guiada, usa Sesión guiada." />
+      <FHSurface variant="subtle" className="generator-note"><p>Esta es una herramienta manual avanzada. Frequency Healer no interpreta una frecuencia aislada como tratamiento o resultado garantizado.</p><Link href="/voz">Ir a Sesión guiada</Link></FHSurface>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-1 w-fit">
+      <div className="legacy-tabs" aria-label="Tipo de generador">
         <button
           onClick={() => {
             if (isPlaying) handleStop();
@@ -203,7 +209,7 @@ export default function GeneradorPage() {
           onCancel={() => setShowDisclaimer(false)}
         />
       )}
-    </div>
+    </FHPageShell>
   );
 }
 
@@ -260,6 +266,7 @@ function ToneTab({
 }: ToneTabProps) {
   return (
     <>
+      <p className="fh-label generator-stage">Configure · Configurar</p>
       {/* Visualizer */}
       <div className="mb-6">
         <AudioVisualizer isPlaying={isPlaying} color={freqInfo ? DOMAIN_INFO[freqInfo.domain[0]]?.color : "#60a5fa"} />
@@ -390,7 +397,13 @@ function ToneTab({
         </div>
       </div>
 
+      <p className="fh-label generator-stage">Review · Revisar</p>
+      <FHSurface variant="subtle" className="generator-review">
+        <span>Configuración resultante</span><code>{effectiveFreq.toFixed(2)} Hz · {waveform} · volumen {volume}% · {binaural ? `binaural Δ ${binauralDiff} Hz` : "tono directo"} · {dwellTime ? `${dwellTime} s` : "continuo"}</code>
+      </FHSurface>
+
       {/* Play / Stop */}
+      <p className="fh-label generator-stage">Play · Reproducir</p>
       <div className="flex justify-center mb-8">
         {!isPlaying ? (
           <button
@@ -464,13 +477,14 @@ function HemiSyncTab({
 
   return (
     <>
+      <p className="fh-label generator-stage">Configure · Configurar</p>
       <div className="mb-6">
         <AudioVisualizer isPlaying={isPlaying} color={selectedChord.color} />
       </div>
 
       {/* Selected chord card */}
       <div
-        className="bg-[#111827] border rounded-xl p-6 mb-6"
+        className="obe-session-card"
         style={{ borderColor: selectedChord.color + "40" }}
       >
         <div className="flex items-start justify-between gap-4 mb-3">
@@ -494,32 +508,20 @@ function HemiSyncTab({
         </div>
 
         {/* Layer breakdown */}
-        <div className="mt-4 space-y-2">
-          <p className="text-[10px] uppercase tracking-widest text-gray-500">
-            Capas binaurales
-          </p>
-          {selectedChord.layers.map((layer, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between text-xs bg-[#0d1117] border border-[#1f2937] rounded-lg px-3 py-2"
-            >
-              <span className="font-mono text-gray-400">
-                Capa {i + 1}
-              </span>
-              <span className="font-mono text-white">
-                {layer.carrierHz} Hz / {layer.carrierHz + layer.beatHz} Hz
-              </span>
-              <span className="font-mono text-[#60a5fa]">
-                Δ {layer.beatHz.toFixed(1)} Hz
-              </span>
-            </div>
-          ))}
-        </div>
+        <FHDisclosure summary="Detalles acústicos">
+          <div className="obe-session-layers">
+            {selectedChord.layers.map((layer, i) => (
+              <div key={i} className="obe-session-layer">
+                <span>Capa {i + 1}</span><code>{layer.carrierHz} Hz / {layer.carrierHz + layer.beatHz} Hz</code><code>Δ {layer.beatHz.toFixed(1)} Hz</code>
+              </div>
+            ))}
+          </div>
+        </FHDisclosure>
       </div>
 
       {/* Controls */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
+        <div className="obe-surface">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
             Volumen: {chordVolume}%
           </p>
@@ -533,7 +535,7 @@ function HemiSyncTab({
           />
         </div>
 
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4">
+        <div className="obe-surface">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs text-gray-500 uppercase tracking-wider">
               Ruido rosa de fondo
@@ -553,7 +555,7 @@ function HemiSyncTab({
           </p>
         </div>
 
-        <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-4 md:col-span-2">
+        <div className="obe-surface md:col-span-2">
           <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
             Duración: {effectiveDuration} min
           </p>
@@ -579,28 +581,22 @@ function HemiSyncTab({
         </div>
       </div>
 
+      <p className="fh-label generator-stage">Review · Revisar</p>
+      <FHSurface variant="subtle" className="generator-review"><span>Configuración resultante</span><code>{selectedChord.label} · {selectedChord.layers.length} capas · volumen {chordVolume}% · {effectiveDuration} min</code></FHSurface>
+
       {/* Play / Stop */}
-      <div className="flex justify-center mb-8">
+      <p className="fh-label generator-stage">Play · Reproducir</p>
+      <div className="obe-session-actions" role="group" aria-label="Controles de reproducción de la sesión">
         {!isPlaying ? (
-          <button
-            onClick={onPlay}
-            className="w-20 h-20 rounded-full text-white flex items-center justify-center text-3xl transition-all hover:scale-105 glow-active"
-            style={{ backgroundColor: selectedChord.color }}
-          >
-            ▶
-          </button>
+          <FHPrimaryAction onClick={onPlay} aria-label="Iniciar sesión binaural">▶ Iniciar sesión</FHPrimaryAction>
         ) : (
-          <button
-            onClick={onStop}
-            className="w-20 h-20 rounded-full bg-[#f87171] hover:bg-[#ef4444] text-white flex items-center justify-center text-2xl transition-all hover:scale-105"
-          >
-            ■
-          </button>
+          <FHDangerAction onClick={onStop} aria-label="Detener sesión binaural">■ Detener sesión</FHDangerAction>
         )}
+        <span role="status" className="obe-session-status">{isPlaying ? "Sesión en curso" : "Sesión detenida"}</span>
       </div>
 
       {/* Focus Levels grid */}
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5 mb-4">
+      <div className="obe-surface mb-4">
         <h3 className="font-bold text-white text-sm mb-3">Niveles de Enfoque</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {FOCUS_LEVEL_PRESETS.map((p) => (
@@ -629,7 +625,7 @@ function HemiSyncTab({
         </div>
       </div>
 
-      <div className="bg-[#111827] border border-[#1f2937] rounded-xl p-5">
+      <div className="obe-surface">
         <h3 className="font-bold text-white text-sm mb-3">Acordes Solfeggio</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           {SOLFEGGIO_CHORDS.map((p) => (

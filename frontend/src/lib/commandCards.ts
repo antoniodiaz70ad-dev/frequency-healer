@@ -1,18 +1,20 @@
 import { CommandCard, CommandPhase } from './types';
+import type { EvidenceCategoryV1 } from './protocolLibrary';
 
 /**
- * Tarjetas de Comando para sesiones de proyección consciente.
+ * Tarjetas de apoyo para prácticas subjetivas de exploración OBE.
  *
  * Compendio práctico de instrucciones que el practicante debe memorizar
- * antes de iniciar una sesión binaural profunda. Una vez fuera del cuerpo
- * la consciencia analítica está atenuada y no es posible "consultar" la
- * app — por eso el material debe revisarse previamente.
+ * antes de iniciar una sesión. Se revisan previamente para evitar consultar
+ * la app durante la práctica.
  *
  * Las tarjetas se basan en testimonios y enseñanzas públicas de
  * practicantes contemporáneos del fenómeno (Robert Monroe, William
  * Buhlman, Darius J. Wright, etc.) sin reproducir audio ni texto
  * licenciado de ninguno de ellos.
  */
+
+export const OBE_CONTENT_CLASSIFICATION: EvidenceCategoryV1 = 'EXPLORATORY';
 
 export const PHASE_INFO: Record<CommandPhase, {
   label: string;
@@ -33,35 +35,35 @@ export const PHASE_INFO: Record<CommandPhase, {
     order: 2,
     color: '#a78bfa',
     icon: '〰️',
-    description: 'Durante la parálisis: vibraciones, calma, espera lúcida.',
+    description: 'Durante sensaciones de inmovilidad: calma y observación.',
   },
   salida: {
     label: 'Salida Activa',
     order: 3,
     color: '#fbbf24',
     icon: '↗',
-    description: 'El momento de desenganchar: rodar, sentarse, alejarse.',
+    description: 'Ensayo imaginativo: rodar, sentarse y cambiar el foco.',
   },
   estabilizacion: {
     label: 'Estabilización',
     order: 4,
     color: '#4ade80',
     icon: '✦',
-    description: 'Justo afuera: anclar visión, comandar claridad.',
+    description: 'Durante la experiencia percibida: atención y claridad.',
   },
   exploracion: {
     label: 'Exploración',
     order: 5,
     color: '#60a5fa',
     icon: '◎',
-    description: 'Estable y fuera: navegar, telepatía, destino.',
+    description: 'Exploración subjetiva: imágenes, intención y significado.',
   },
   post: {
     label: 'Post-sesión',
     order: 6,
     color: '#f87171',
     icon: '∽',
-    description: 'Al regresar: registro, descanso, prevención de burnout.',
+    description: 'Al terminar: registro subjetivo, descanso y autocuidado.',
   },
 };
 
@@ -73,9 +75,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'Romper el ciclo de sueño',
     whenToUse: 'Antes de programar la sesión binaural.',
     body:
-      'No intentes la sesión al acostarte por la noche: el cansancio te derrumba a sueño profundo y pierdes la lucidez. Duerme primero unas 4-6 horas, despierta entre las 2:00 y 3:00 a.m., y entonces inicia la pista binaural.',
+      'Si eliges la práctica WBTB, duerme primero unas 4-6 horas, despierta entre las 2:00 y 3:00 a.m. y entonces inicia la pista binaural. Interrumpe si te sientes demasiado cansado.',
     why:
-      'A esa hora el cerebro está saturado de REM y la mente analítica se reactiva con facilidad mientras el cuerpo permanece dispuesto a recaer en parálisis. Es la ventana fisiológica de máxima eficiencia.',
+      'Algunas tradiciones OBE usan este horario para intentar conservar la atención al volver a dormir. La respuesta es individual y no se presenta como una ventana fisiológica verificada.',
     tags: ['wbtb', 'horario', 'sleep-cycle'],
   },
   {
@@ -86,18 +88,18 @@ export const COMMAND_CARDS: CommandCard[] = [
     body:
       'Visualiza un cofre, una caja fuerte o un contenedor de cualquier forma. Deposita simbólicamente cada preocupación, deuda, conflicto o tarea pendiente del día. Cierra la caja. Imagina que queda fuera del campo de la sesión.',
     why:
-      'El sistema nervioso simpático se mantiene activo si el ego sigue procesando preocupaciones materiales. Externalizar las ataduras libera ancho de banda atencional para la inducción.',
+      'Esta visualización puede servir como ritual personal para apartar preocupaciones y dirigir la atención a la práctica.',
     tags: ['mental-prep', 'caja', 'energy-conversion-box'],
   },
   {
     id: 'respiracion-478',
     phase: 'preparacion',
     title: 'Respiración 4-7-8',
-    whenToUse: 'Mientras suena el primer tramo de la pista, antes de la parálisis.',
+    whenToUse: 'Mientras suena el primer tramo de la pista, antes de la fase de inmovilidad percibida.',
     body:
       'Inhala por la nariz contando 4. Retén el aire contando 7. Exhala por la boca, lentamente, contando 8. Repite 4-6 ciclos. Después deja que la respiración se vuelva natural y pasiva.',
     why:
-      'Activa el nervio vago y reduce frecuencia cardíaca. La exhalación prolongada baja el tono simpático y prepara el cuerpo para la atonía.',
+      'El conteo ofrece un foco sencillo y un ritmo deliberado. No se afirma un efecto fisiológico específico; respira con comodidad y detente si aparece malestar.',
     tags: ['respiracion', 'vagal', 'calm'],
   },
   {
@@ -106,9 +108,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'Declaración de intención',
     whenToUse: 'Después de la respiración, antes de soltar el cuerpo.',
     body:
-      'Repite mental o verbalmente, con autoridad serena: "Tengo la intención de estar fuera de mi cuerpo con completa conciencia". Personalízala con tu objetivo (sanación, encuentro, exploración). Repite sin tensión hasta que se vuelva fondo.',
+      'Repite mental o verbalmente, con serenidad: "Tengo la intención de estar fuera de mi cuerpo con completa conciencia". Puedes tratarla como lenguaje simbólico y personalizar el propósito de tu exploración. Repite sin tensión.',
     why:
-      'El subconsciente no actúa por petición sino por mandato. Una intención clara y declarada es la semilla que el sistema activador reticular utiliza como dirección al modular los estados.',
+      'Declarar una intención ayuda a mantener presente el propósito elegido. No demuestra un mecanismo neurológico ni garantiza un resultado.',
     command: 'Tengo la intención de estar fuera de mi cuerpo con completa conciencia.',
     tags: ['intencion', 'comando', 'mandato'],
   },
@@ -120,7 +122,7 @@ export const COMMAND_CARDS: CommandCard[] = [
     body:
       '✓ Auriculares estéreo conectados.\n✓ Antifaz o ropa que bloquee la luz por completo.\n✓ Posición boca arriba o ligeramente lateral, manos sin cruzar.\n✓ Ropa holgada, sin cinturón, ni reloj, ni cadenas.\n✓ Tracto digestivo en ayunas (>60 min sin comer).\n✓ Vejiga vacía.\n✓ Habitación fresca y silenciosa.',
     why:
-      'Cualquier estímulo somático persistente (presión, calor, hambre) reactiva la corteza sensorial e interrumpe el arrastre. La preparación física es tan importante como la mental.',
+      'Reducir distracciones físicas puede facilitar la comodidad y la atención durante la sesión.',
     tags: ['checklist', 'fisico', 'auriculares'],
   },
 
@@ -131,9 +133,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'Estoicismo emocional absoluto',
     whenToUse: 'Cuando comiences a sentir vibraciones, hormigueo, ruidos cíclicos, peso o "estallidos".',
     body:
-      'Permanece completamente neutro. Ni euforia por estar lográndolo, ni miedo por la intensidad. Las sensaciones intensas (vientos, zumbidos altos, electricidad) son señales correctas, no peligro. Déjalas pasar como nubes.',
+      'Observa con calma cualquier sensación percibida, como zumbidos, hormigueo o peso, sin asumir que indica un resultado concreto. Si aparece miedo o malestar, detén la práctica.',
     why:
-      'Cualquier oleada emocional fuerte excita el cuerpo físico. El campo magnético del cuerpo te succiona instantáneamente al despertar. El miedo y la euforia tienen el mismo efecto: snap-back inmediato.',
+      'La calma puede ayudar a sostener la atención. Un cambio brusco de emoción también puede coincidir con el fin de la experiencia subjetiva, sin implicar una fuerza física o magnética.',
     tags: ['calma', 'snap-back', 'no-fear'],
   },
   {
@@ -142,9 +144,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'No te quedes pasivo esperando',
     whenToUse: 'Cuando la parálisis está completa y sientes la "desconexión".',
     body:
-      'No esperes a que algo te saque mágicamente del cuerpo. La separación es un acto de voluntad. Cuando reconozcas la atonía y la disociación cerca, pasa al siguiente bloque (Salida Activa) sin dudar.',
+      'Cuando percibas inmovilidad o un cambio de estado, pasa al siguiente ejercicio imaginativo (Salida Activa) si te resulta cómodo.',
     why:
-      'Muchos principiantes alcanzan la parálisis y la dejan ir. La ventana de salida es corta — si no actúas, el cerebro se desliza a sueño NREM ordinario.',
+      'Esta tarjeta propone actuar en el momento elegido para mantener el hilo de la práctica. No afirma una ventana neurológica específica.',
     tags: ['pasividad', 'agency', 'voluntad'],
   },
   {
@@ -153,9 +155,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'No tragar saliva, no moverse',
     whenToUse: 'Durante toda la fase de inducción.',
     body:
-      'Cualquier microajuste físico (rascarse, tragar, abrir un ojo, moverte de lado) reinicia la cadena. Si pica algo, ignóralo. Si tragas, observa cómo el cuerpo se recompone solo. Eres testigo, no operador.',
+      'Mantén una postura cómoda y evita ajustes innecesarios si puedes hacerlo sin esfuerzo. Traga, muévete o termina la práctica cuando lo necesites; después vuelve a observar con calma.',
     why:
-      'La parálisis del sueño es un estado del tronco encefálico que se activa cuando el cuerpo deja de recibir señales motoras voluntarias. Cualquier comando muscular la aborta.',
+      'La quietud voluntaria funciona aquí como recurso de atención. Moverse puede cambiar la experiencia percibida, pero no se presenta como una regla fisiológica universal.',
     tags: ['inmovilidad', 'paralisis', 'cuerpo'],
   },
 
@@ -164,11 +166,11 @@ export const COMMAND_CARDS: CommandCard[] = [
     id: 'rodar',
     phase: 'salida',
     title: 'Rodar fuera del cuerpo',
-    whenToUse: 'Tras confirmar la atonía completa y la disociación.',
+    whenToUse: 'Tras percibir inmovilidad y un cambio de estado.',
     body:
-      'Imagina que ruedas hacia un lado de la cama (como un tronco). No muevas el cuerpo físico — mueve el cuerpo del alma. La sensación es la de despegarse de una superficie pegajosa. Persiste sin frustrarte.',
+      'Imagina que ruedas hacia un lado de la cama, como un tronco, sin ejecutar el movimiento físico. Observa las sensaciones e imágenes que surjan sin interpretarlas como separación corporal literal.',
     why:
-      'El movimiento rotacional pequeño desacopla el "campo perceptivo" del soma sin disparar comandos motores corticales. Es la técnica más reproducible de extrusión.',
+      'Es un ejercicio imaginativo descrito en tradiciones OBE para cambiar el foco de atención. Su resultado es subjetivo y no demuestra desacoplamiento corporal.',
     tags: ['rodar', 'roll-out', 'tecnica-salida'],
   },
   {
@@ -177,9 +179,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'Sentarse del cuerpo',
     whenToUse: 'Si el rodar no funciona, alternativa estándar.',
     body:
-      'Imagina sentarte como si te incorporaras de la cama, pero sin tensión muscular. La sensación: el torso del alma se eleva mientras el físico permanece acostado. No mires hacia abajo todavía.',
+      'Imagina que te incorporas de la cama sin ejecutar el movimiento físico. Trata cualquier sensación de elevación como parte de la experiencia subjetiva.',
     why:
-      'Activa la propiocepción del cuerpo del alma sin disparar el motor primario. Es la técnica clásica documentada por Monroe.',
+      'Es una técnica imaginativa asociada históricamente con prácticas de Robert Monroe; aquí no se afirma un mecanismo propioceptivo ni un cuerpo separado.',
     tags: ['sentarse', 'sit-up', 'tecnica-salida'],
   },
   {
@@ -188,9 +190,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'Alejarse rápido del cuerpo físico',
     whenToUse: 'Inmediatamente después de la separación inicial.',
     body:
-      'Camina, flota, lánzate hacia la puerta o cruza la pared. Aleja la consciencia del cuerpo físico tanto como puedas en los primeros 20 segundos. Cuanto más lejos, más estable.',
+      'Durante los primeros 20 segundos de la experiencia percibida, imagina caminar, flotar o dirigirte hacia otro punto. Observa si cambiar el foco modifica tu experiencia.',
     why:
-      'El campo magnético del cuerpo físico ejerce una fuerza de retorno proporcional a la inversa del cuadrado de la distancia. Cerca del cuerpo el snap-back es casi seguro.',
+      'Algunos relatos tradicionales recomiendan cambiar pronto el foco de atención. No existe aquí una afirmación de fuerza magnética ni una ley de distancia corporal.',
     tags: ['alejarse', 'distancia', 'magnetic-pull'],
   },
 
@@ -201,43 +203,43 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'No mirar atrás al cuerpo (regla de oro)',
     whenToUse: 'Durante las primeras salidas, sin excepción.',
     body:
-      'Aunque sientas la curiosidad de verte durmiendo, NO lo hagas en las primeras experiencias. Si necesitas confirmar que estás fuera, mira tus manos del alma, no tu cuerpo.',
+      'Si aparece una imagen de tu cuerpo o cama, puedes elegir no fijarte en ella y llevar la atención a la imagen de tus manos. Esto no confirma una salida corporal.',
     why:
-      'Verte a ti mismo durmiendo provoca una reacción emocional inevitable (asombro, shock, validación). Esa oleada de emoción acelera el cuerpo físico y te succiona de regreso al instante.',
+      'Cambiar el foco puede ayudar a reducir sobresalto o distracción. El llamado “snap-back” se presenta como descripción subjetiva de un retorno de atención.',
     tags: ['no-mirar', 'snap-back', 'regla-oro'],
   },
   {
     id: 'comando-claridad',
     phase: 'estabilizacion',
     title: 'Comando de claridad',
-    whenToUse: 'Si el entorno se ve borroso, oscuro o nublado al salir.',
+    whenToUse: 'Si la escena imaginada o percibida se ve borrosa, oscura o nublada.',
     body:
-      'Da la orden con voz firme y autoridad: "¡Claridad!" o "Dame plena conciencia" o "Comando mi espacio". No pidas, exige. Repite hasta que el espacio se ilumine.',
+      'Repite el comando elegido: "¡Claridad!", "Dame plena conciencia" o "Comando mi espacio". Observa si cambia la escena percibida, sin dar por hecho que ocurrirá.',
     why:
-      'La conciencia recién separada no está plenamente enfocada. El comando verbal en voz alta sintoniza la percepción al máximo enfoque y disipa la niebla. Es el equivalente a abrir el obturador de una cámara.',
+      'El comando funciona como una señal de atención dentro de la práctica. Cualquier cambio de claridad es una observación subjetiva.',
     command: '¡Claridad! / Dame plena conciencia / Comando mi espacio',
     tags: ['claridad', 'comando', 'voz', 'enfoque'],
   },
   {
     id: 'manos-del-alma',
     phase: 'estabilizacion',
-    title: 'Anclaje en las manos del alma',
+    title: 'Anclaje en la imagen de las manos',
     whenToUse: 'Mientras das el comando de claridad, o si la visión flaquea.',
     body:
-      'Levanta las manos espirituales frente a tu rostro. Mira fijamente sus formas (pueden verse transparentes o gelatinosas al inicio). No mires nada más hasta que estén nítidas. Combina con el comando de claridad.',
+      'Imagina tus manos frente al rostro y concentra la atención en sus formas percibidas. Combina este ejercicio con el comando de claridad si lo deseas.',
     why:
-      'Concentrar la atención en un punto fijo y propio (las manos) ancla la conciencia al cuerpo del alma y fuerza al sistema perceptivo a estabilizarse en ese vehículo. Es el único punto de referencia que viaja contigo.',
+      'La imagen de las manos ofrece un punto de referencia para sostener la atención. No implica la existencia de un cuerpo separado.',
     tags: ['manos', 'ancla', 'visual', 'soul-body'],
   },
   {
     id: 'voz-divina',
     phase: 'estabilizacion',
     title: 'Si la voz no sale al comandar',
-    whenToUse: 'Cuando intentas hablar fuera y no sale sonido.',
+    whenToUse: 'Cuando intentas hablar dentro de la experiencia y no percibes sonido.',
     body:
-      'No te frustres. Mantén la autoridad. Mira tus manos. Sigue intentando emitir la orden sin ceder. La voz "se romperá" de pronto y emergirá poderosa, profunda, casi con eco. Esa es tu voz real.',
+      'No te frustres. Mira la imagen de tus manos e intenta repetir la orden. Registra cualquier voz, eco o silencio como parte de tu experiencia subjetiva.',
     why:
-      'La cuerda vocal del alma requiere reactivar un canal que rara vez se usa. Si retrocedes mentalmente, el canal se cierra. La persistencia con autoridad es lo que lo abre.',
+      'La repetición puede ayudar a mantener el foco. No se afirma la existencia de una cuerda vocal o canal separado.',
     tags: ['voz', 'mudez', 'persistencia'],
   },
 
@@ -248,9 +250,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'Fija un destino antes de moverte',
     whenToUse: 'Una vez la visión es clara y estable.',
     body:
-      'No deambules. Decide a dónde vas y por qué (visitar a un ser querido, explorar un lugar específico, pedir guía). Declara el destino mentalmente o en voz alta: "Llévame a..." o "Quiero ver...".',
+      'Elige un tema o destino imaginado, como una persona, lugar o pregunta. Decláralo mentalmente o en voz alta: "Llévame a..." o "Quiero ver...".',
     why:
-      'El espacio fuera del cuerpo responde a la intención, no a la geometría. Sin destino, la conciencia divaga y la sesión se disipa rápido. Con destino claro, llegas casi instantáneamente.',
+      'Elegir un destino proporciona estructura narrativa y atencional. Las escenas que aparezcan no se presentan como desplazamiento físico ni como acceso verificado a otro lugar.',
     command: 'Llévame a... / Quiero ver...',
     tags: ['destino', 'navegacion', 'intencion'],
   },
@@ -260,20 +262,20 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'No dudes ni analices',
     whenToUse: 'Si te asalta el pensamiento "¿esto es real?" o "¿me levanté físicamente?".',
     body:
-      'La sensación de realidad es muy intensa fuera del cuerpo — es normal pensar que te despertaste físicamente. NO analices la lógica de lo que ves. Si dudas, regresas al cuerpo físico al instante.',
+      'Si la experiencia se siente vívida, observa primero y deja el análisis para el registro posterior. Puedes detenerla en cualquier momento si te incomoda.',
     why:
-      'La duda activa la corteza prefrontal en modo analítico, lo cual reactiva el cuerpo físico y aborta la experiencia. La aceptación pasiva mantiene el estado.',
+      'Posponer el análisis puede ayudar a mantener una experiencia imaginativa continua. No se atribuye este efecto a un mecanismo cortical específico.',
     tags: ['no-dudar', 'aceptacion', 'mental-state'],
   },
   {
     id: 'telepatia',
     phase: 'exploracion',
     title: 'Comunicación telepática',
-    whenToUse: 'Al encontrarte con guías, seres queridos fallecidos u otras presencias.',
+    whenToUse: 'Si percibes personajes, seres queridos u otras presencias durante la experiencia.',
     body:
-      'No esperes diálogo verbal. La comunicación es un intercambio directo de "bloques de significado" — entiendes la intención, emoción y mensaje sin palabras. Tú también puedes proyectar pensamientos como respuesta.',
+      'Observa si surgen palabras, emociones o “bloques de significado” sin diálogo verbal. Puedes responder mentalmente y registrar después tu interpretación.',
     why:
-      'El lenguaje verbal humano es una limitación evolutiva del cuerpo físico. Fuera, la comunicación opera en el formato nativo de la conciencia: transferencia directa.',
+      'Esta tarjeta recoge una interpretación frecuente en relatos OBE. No verifica telepatía, contacto externo ni transferencia directa de información.',
     tags: ['telepatia', 'comunicacion', 'no-verbal'],
   },
 
@@ -284,9 +286,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'Registro inmediato al regresar',
     whenToUse: 'Tan pronto como abras los ojos físicos.',
     body:
-      'Antes de levantarte, mover el cuerpo o revisar el teléfono, escribe (o dicta a una grabadora junto a la cama) lo que recuerdes. Detalles, sensaciones, presencias. La memoria del estado fuera se evapora en minutos.',
+      'Antes de revisar el teléfono, escribe lo que recuerdes: imágenes, sensaciones e interpretaciones. Si prefieres dictar, evita grabar información sensible.',
     why:
-      'La consolidación mnemotécnica del estado disociado es frágil. Pasados 5-10 minutos, el 80% del contenido se pierde. El registro inmediato es la única forma de preservarlo.',
+      'Registrar pronto puede conservar más detalles del recuerdo. No se afirma un porcentaje de pérdida ni un mecanismo de memoria específico.',
     tags: ['registro', 'diario', 'memoria'],
   },
   {
@@ -295,9 +297,9 @@ export const COMMAND_CARDS: CommandCard[] = [
     title: 'Prevención de burnout',
     whenToUse: 'Después de una sesión intensa o varias seguidas.',
     body:
-      'Si despiertas con cansancio profundo, dolor de cabeza o sensación de "sistema nervioso frito", descansa 3-7 días sin sesiones binaurales profundas. Hidrátate. Sal a caminar al sol. Come alimentos densos y calientes.',
+      'Si terminas con cansancio profundo, dolor de cabeza o malestar, descansa 3-7 días sin estas sesiones y prioriza tus hábitos habituales de descanso. Si el malestar persiste, busca orientación profesional.',
     why:
-      'Las sesiones binaurales profundas drenan el sistema nervioso autónomo. Forzar diariamente lleva a desregulación, ansiedad y sueño no reparador. El descanso no es opcional, es parte del protocolo.',
+      'La pausa es una medida conservadora de autocuidado basada en cómo te sientes. No se afirma que la sesión drene o desregule el sistema nervioso.',
     tags: ['burnout', 'descanso', 'recovery'],
   },
   {
@@ -308,7 +310,7 @@ export const COMMAND_CARDS: CommandCard[] = [
     body:
       'Camina descalzo sobre césped o tierra. Lava la cara con agua fría. Cuenta de 10 a 1 en voz alta. Come algo denso (pan, frutos secos). Toca objetos con las manos y nómbralos en voz alta.',
     why:
-      'La conciencia regresa pero el cuerpo aún tiene la corteza ligeramente desacoplada. Estímulos somáticos fuertes y estructurados resincronizan la percepción al estado de vigilia.',
+      'Estas acciones ofrecen referencias sensoriales familiares para orientar la atención al entorno. No se afirma desacoplamiento cortical ni resincronización fisiológica.',
     tags: ['grounding', 'tierra', 'reentrada'],
   },
 ];

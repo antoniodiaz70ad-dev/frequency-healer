@@ -166,6 +166,20 @@ class AudioEngine {
     this.isPlaying = false;
   }
 
+  /** Fade the current graph to silence before disconnecting it. */
+  stopWithFade(durationMs = 35) {
+    if (!this.ctx || !this.isPlaying) { this.stop(); return; }
+    const ctx = this.ctx, end = ctx.currentTime + Math.max(5, durationMs) / 1000;
+    const oscillators = [this.oscillator, this.oscillatorR, ...this.chordVoices.flatMap(voice => [voice.oscL, voice.oscR])].filter((node): node is OscillatorNode => node !== null);
+    const gains = [this.gainNode, this.gainNodeR, this.masterGain, this.pinkNoiseGain].filter((node): node is GainNode => node !== null);
+    const nodes = [this.oscillator, this.oscillatorR, this.gainNode, this.gainNodeR, this.pannerL, this.pannerR, this.masterGain, this.pinkNoiseSource, this.pinkNoiseGain, this.analyser, ...this.chordVoices.flatMap(voice => [voice.oscL, voice.oscR, voice.gainL, voice.gainR, voice.panL, voice.panR])].filter(node => node !== null);
+    for (const gain of gains) { gain.gain.cancelScheduledValues(ctx.currentTime); gain.gain.setValueAtTime(gain.gain.value, ctx.currentTime); gain.gain.linearRampToValueAtTime(0, end); }
+    for (const oscillator of oscillators) { try { oscillator.stop(end); } catch {} }
+    try { this.pinkNoiseSource?.stop(end); } catch {}
+    this.oscillator=null;this.oscillatorR=null;this.gainNode=null;this.gainNodeR=null;this.pannerL=null;this.pannerR=null;this.masterGain=null;this.pinkNoiseSource=null;this.pinkNoiseGain=null;this.analyser=null;this.chordVoices=[];this.isPlaying=false;
+    setTimeout(()=>{for(const node of nodes){try{node.disconnect();}catch{}}},Math.max(5,durationMs)+10);
+  }
+
   /** Change frequency while playing */
   setFrequency(frequency: number) {
     if (this.oscillator && this.ctx) {

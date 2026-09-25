@@ -2,17 +2,16 @@ import { OBESessionLog } from './types';
 
 /**
  * Persistencia local de los logs post-sesión y cálculo de estado de
- * cooldown / burnout. Sin backend — todo client-side en localStorage.
+ * pausas conservadoras. Sin backend — todo client-side en localStorage.
  *
  * El cooldown se basa en dos señales:
  *
  *  1. Energía post-sesión: si el usuario reporta ≤3 (1-10) tras la
  *     última sesión, se recomienda un descanso largo (7 días). El
- *     sistema nervioso autónomo necesita resincronizarse.
+ *     se recomienda una pausa de 7 días como medida conservadora.
  *
  *  2. Frecuencia: ≥3 sesiones en los últimos 7 días dispara aviso de
- *     riesgo de burnout aunque la energía esté alta. Esto previene
- *     desregulación acumulativa.
+ *     se recomienda una pausa aunque la energía subjetiva esté alta.
  */
 
 const STORAGE_KEY = 'fh:obe-session-logs-v1';
@@ -86,7 +85,7 @@ export function computeCooldown(logs: OBESessionLog[]): CooldownState {
     if (now < restUntil) {
       return {
         level: 'rest-required',
-        reason: `Tu última sesión te dejó energía ${last.postEnergy}/10. El sistema nervioso autónomo necesita 7 días de descanso completo antes de la próxima.`,
+        reason: `Registraste energía subjetiva ${last.postEnergy}/10 tras la última sesión. La pauta existente recomienda 7 días de pausa como medida conservadora.`,
         recommendedRestUntil: restUntil,
         sessionsLast7Days,
         lastSession: last,
@@ -100,7 +99,7 @@ export function computeCooldown(logs: OBESessionLog[]): CooldownState {
     if (now < restUntil) {
       return {
         level: 'rest-required',
-        reason: `Tu última sesión incluyó separación. Las sesiones intensas requieren al menos 3 días de descanso para evitar desregulación.`,
+        reason: `Tu último registro incluyó una sensación subjetiva de separación. La pauta existente recomienda al menos 3 días de pausa como medida conservadora.`,
         recommendedRestUntil: restUntil,
         sessionsLast7Days,
         lastSession: last,
@@ -112,7 +111,7 @@ export function computeCooldown(logs: OBESessionLog[]): CooldownState {
   if (sessionsLast7Days >= 3) {
     return {
       level: 'caution',
-      reason: `${sessionsLast7Days} sesiones en los últimos 7 días. Considera tomar al menos 2-3 días de pausa para evitar burnout acumulativo.`,
+      reason: `${sessionsLast7Days} sesiones en los últimos 7 días. Considera tomar al menos 2-3 días de pausa y observa cómo te sientes.`,
       sessionsLast7Days,
       lastSession: last,
     };

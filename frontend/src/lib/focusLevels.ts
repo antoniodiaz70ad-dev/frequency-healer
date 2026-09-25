@@ -1,25 +1,23 @@
 import { FocusLevelPreset } from './types';
 
 /**
- * Focus Level presets inspirados en el modelo de fases del Instituto Monroe.
+ * Presets históricos inspirados en etiquetas Focus.
  *
  * Cada preset es un "acorde" multicapa de batidos binaurales (no una sola
  * frecuencia) más un nivel sugerido de ruido rosa de fondo. Las portadoras se
- * mantienen siempre por debajo de 1500 Hz, umbral por encima del cual los
- * núcleos olivares dejan de inducir el diferencial de fase necesario para la
- * Respuesta de Seguimiento de Frecuencia (FFR).
+ * mantienen siempre por debajo de 1500 Hz. La aplicación no mide respuesta
+ * neurológica ni presupone un efecto por la diferencia binaural.
  *
- * Los nombres "Focus N" describen amplitudes de consciencia, no son marca
- * registrada del Instituto Monroe — esta plataforma reconstruye el método
- * de forma independiente sin redistribuir audio licenciado.
+ * Los nombres "Focus N" se conservan como referencias históricas; no describen
+ * estados garantizados ni implican afiliación con el Instituto Monroe.
  */
 
 export const FOCUS_LEVEL_PRESETS: FocusLevelPreset[] = [
   {
     id: 'f10',
-    label: 'Focus 10 — Mente despierta, cuerpo dormido',
+    label: 'Focus 10 — Referencia histórica',
     description:
-      'Atonía motora análoga al sueño NREM mientras la mente se mantiene lúcida. Acorde en frontera delta-theta.',
+      'Acorde binaural delta-theta para exploración subjetiva. No se afirma atonía, sueño NREM ni lucidez específica.',
     bands: ['delta', 'theta'],
     layers: [
       { carrierHz: 100, beatHz: 4.0, gain: 0.35, waveform: 'sine' },
@@ -31,9 +29,9 @@ export const FOCUS_LEVEL_PRESETS: FocusLevelPreset[] = [
   },
   {
     id: 'f12',
-    label: 'Focus 12 — Conciencia expandida',
+    label: 'Focus 12 — Referencia histórica',
     description:
-      'Sobre el acorde de F10 se añade una capa alfa rápida. Útil para resolución heurística, creatividad y visualización.',
+      'Añade una capa Alpha al acorde anterior. Creatividad y visualización son intenciones exploratorias, no resultados garantizados.',
     bands: ['delta', 'theta', 'alpha'],
     layers: [
       { carrierHz: 100, beatHz: 4.0, gain: 0.30, waveform: 'sine' },
@@ -46,9 +44,9 @@ export const FOCUS_LEVEL_PRESETS: FocusLevelPreset[] = [
   },
   {
     id: 'f15',
-    label: 'Focus 15 — El no-tiempo (vacío)',
+    label: 'Focus 15 — Referencia histórica',
     description:
-      'Aislamiento de ritmos circadianos. Theta alta superpuesta al acorde de F10. El tiempo lineal se desdibuja.',
+      'Superpone Theta alta al acorde inicial. No se afirma aislamiento circadiano ni alteración objetiva de la percepción temporal.',
     bands: ['delta', 'theta'],
     layers: [
       { carrierHz: 100, beatHz: 3.5, gain: 0.32, waveform: 'sine' },
@@ -61,9 +59,9 @@ export const FOCUS_LEVEL_PRESETS: FocusLevelPreset[] = [
   },
   {
     id: 'f21',
-    label: 'Focus 21 — El puente',
+    label: 'Focus 21 — Referencia histórica',
     description:
-      'Mezcla delta + theta + alfa baja. Estado liminal entre la percepción del continuo físico y otros marcos de referencia.',
+      'Mezcla Delta, Theta y Alpha baja para exploración subjetiva. La etiqueta de “puente” es una referencia histórica.',
     bands: ['delta', 'theta', 'alpha'],
     layers: [
       { carrierHz: 90, beatHz: 2.5, gain: 0.30, waveform: 'sine' },
@@ -81,7 +79,7 @@ export const SOLFEGGIO_CHORDS: FocusLevelPreset[] = [
     id: 'solf-369',
     label: '369 Hz — Tesla',
     description:
-      'Capa única estilo Tesla 3-6-9 con beat theta sutil. Alternativa relajada para usuarios sensibles a binaurales puros.',
+      'Capa de 369 Hz con diferencia Theta. La referencia “Tesla 3-6-9” es popular e histórica, sin atribución causal.',
     bands: ['theta'],
     layers: [
       { carrierHz: 369, beatHz: 6.0, gain: 0.40, waveform: 'sine' },
@@ -92,9 +90,9 @@ export const SOLFEGGIO_CHORDS: FocusLevelPreset[] = [
   },
   {
     id: 'solf-528',
-    label: '528 Hz — Reparación',
+    label: '528 Hz — Solfeggio histórico',
     description:
-      'Solfeggio de transformación con beat alfa. Foco en relajación atenta y reducción de ansiedad somática.',
+      'Tono Solfeggio con diferencia Alpha para exploración subjetiva. No se afirma reparación ni reducción de ansiedad.',
     bands: ['alpha'],
     layers: [
       { carrierHz: 528, beatHz: 10.0, gain: 0.35, waveform: 'sine' },
@@ -106,9 +104,9 @@ export const SOLFEGGIO_CHORDS: FocusLevelPreset[] = [
   },
   {
     id: 'solf-432',
-    label: '432 Hz — Natural',
+    label: '432 Hz — Afinación alternativa',
     description:
-      'Afinación natural con beat alfa-theta. Compromiso suave entre profundidad y mantenimiento de lucidez.',
+      'Afinación alternativa con diferencias Alpha y Theta. “Natural” y sus efectos asociados no se consideran establecidos.',
     bands: ['alpha', 'theta'],
     layers: [
       { carrierHz: 216, beatHz: 7.83, gain: 0.32, waveform: 'sine' },

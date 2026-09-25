@@ -1,0 +1,19 @@
+.explorer { margin: 1.2rem 0; padding: 1rem 1.25rem; border: 1px solid #334155; border-radius: 1rem; background: #111827; }
+.explorer summary { min-height: 44px; display: list-item; align-content: center; cursor: pointer; font-weight: 600; color: #a5f3fc; }
+.explorer summary:focus-visible { outline: 3px solid #67e8f9; outline-offset: 3px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 1.25rem; }
+.explorer table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.explorer caption { text-align: left; color: #cbd5e1; font-size: .8rem; padding: .4rem 0; }
+.explorer th, .explorer td { text-align: left; padding: .6rem .35rem; border-bottom: 1px solid #334155; overflow-wrap: anywhere; }
+.explorer th { font-weight: 500; }
+.explorer td { font-variant-numeric: tabular-nums; }
+.facts { display: flex; flex-wrap: wrap; gap: 1rem 3rem; margin: 1rem 0; }
+.facts dt { font-size: .8rem; color: #cbd5e1; }
+.facts dd { margin-top: .25rem; font-weight: 600; }
+.note { font-size: .8rem; color: #cbd5e1; }
+.signature { font-family: monospace; font-size: .8rem; }
+@media (max-width: 420px) { .explorer { padding: .85rem; } .explorer table { font-size: .8rem; } }
+.capability { display: block; font-size: .7rem; color: #cbd5e1; margin-top: .35rem; font-weight: 400; }
+.explorer .selectRatio { padding: .4rem .5rem; margin: 0; font-size: .75rem; }
+.preview { margin-top: 1.25rem; padding-top: .75rem; border-top: 1px solid #475569; }
+.preview table { table-layout: fixed; }

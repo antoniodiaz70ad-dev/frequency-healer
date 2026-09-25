@@ -1,0 +1,103 @@
+name: Frequency Healer Regression
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: mkdir -p artifacts
+      - name: Unit and integration tests
+        run: npm test 2>&1 | tee artifacts/tests.log
+      - name: TypeScript
+        run: npm run typecheck 2>&1 | tee artifacts/typecheck.log
+      - name: ESLint
+        run: npm run lint 2>&1 | tee artifacts/lint.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: quality-failure
+          path: frontend/artifacts/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  flags:
+    name: Flags ${{ matrix.state }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - state: 'ON'
+            enabled: 'true'
+            smoke: enabled
+          - state: 'OFF'
+            enabled: 'false'
+            smoke: disabled
+    env:
+      NEXT_PUBLIC_VOICE_JOURNEY_ENABLED: ${{ matrix.enabled }}
+      NEXT_PUBLIC_HARMONIC_LAB_ENABLED: ${{ matrix.enabled }}
+      VOICE_AI_ENABLED: 'false'
+      NEXT_TELEMETRY_DISABLED: '1'
+      FH_UI_BROWSER: chromium
+      FH_UI_ARTIFACTS_DIR: artifacts/ui
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: mkdir -p artifacts
+      - name: Install pinned Chromium and system dependencies
+        if: matrix.state == 'ON'
+        run: node node_modules/playwright-core/cli.js install --with-deps chromium
+      - name: Build
+        timeout-minutes: 8
+        run: npm run build 2>&1 | tee artifacts/build.log
+      - name: HTTP and landing smoke
+        timeout-minutes: 3
+        run: node scripts/ci-smoke.mjs ${{ matrix.smoke }} 2>&1 | tee artifacts/smoke.log
+      - name: UI regression
+        if: matrix.state == 'ON'
+        timeout-minutes: 4
+        run: npm run test:ui 2>&1 | tee artifacts/ui.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: flags-${{ matrix.state }}-failure
+          path: frontend/artifacts/
+          retention-days: 7
+          if-no-files-found: ignore

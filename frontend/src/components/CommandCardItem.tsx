@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CommandCard } from "@/lib/types";
 import { PHASE_INFO } from "@/lib/commandCards";
+import FHDisclosure from "@/components/ui/FHDisclosure";
 
 interface Props {
   card: CommandCard;
@@ -13,12 +14,8 @@ export default function CommandCardItem({ card }: Props) {
   const phase = PHASE_INFO[card.phase];
 
   return (
-    <div
-      className={`bg-[#111827] border rounded-xl transition-all overflow-hidden ${
-        expanded
-          ? "ring-1"
-          : "border-[#1f2937] hover:border-[#374151]"
-      }`}
+    <article
+      className={`obe-command-card ${expanded ? "obe-command-card--expanded" : ""}`}
       style={
         expanded
           ? {
@@ -30,13 +27,15 @@ export default function CommandCardItem({ card }: Props) {
     >
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full text-left p-4 flex items-start gap-3"
+        className="obe-command-card__header"
+        aria-expanded={expanded}
       >
         <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center text-base flex-shrink-0"
-          style={{ backgroundColor: phase.color + "20", color: phase.color }}
+          className="obe-command-card__number"
+          style={{ borderColor: phase.color, color: phase.color }}
+          aria-hidden="true"
         >
-          {phase.icon}
+          {String(phase.order).padStart(2, "0")}
         </div>
 
         <div className="flex-1 min-w-0">
@@ -52,7 +51,7 @@ export default function CommandCardItem({ card }: Props) {
               {phase.label}
             </span>
           </div>
-          <p className="text-xs text-gray-500 mt-1">{card.whenToUse}</p>
+          <p className="obe-command-card__timing">{card.whenToUse}</p>
         </div>
 
         <span
@@ -65,26 +64,9 @@ export default function CommandCardItem({ card }: Props) {
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 border-t border-[#1f2937] pt-3 space-y-3">
-          {card.command && (
-            <div
-              className="rounded-lg p-3 border"
-              style={{
-                backgroundColor: phase.color + "10",
-                borderColor: phase.color + "40",
-              }}
-            >
-              <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">
-                Comando
-              </p>
-              <p className="text-sm font-medium" style={{ color: phase.color }}>
-                {card.command}
-              </p>
-            </div>
-          )}
-
+        <div className="obe-command-card__content">
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">
+            <p className="fh-label mb-1">
               Cómo aplicarla
             </p>
             <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">
@@ -93,28 +75,24 @@ export default function CommandCardItem({ card }: Props) {
           </div>
 
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">
-              Por qué funciona
+            <p className="fh-label mb-1">
+              Propósito subjetivo
             </p>
             <p className="text-sm text-gray-400 leading-relaxed">{card.why}</p>
           </div>
 
-          <div className="flex flex-wrap gap-1 pt-1">
-            {card.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] px-2 py-0.5 rounded bg-[#0d1117] text-gray-500 border border-[#1f293750]"
-              >
-                #{tag}
-              </span>
-            ))}
-          </div>
+          {card.command && <div className="obe-command-card__command" style={{ borderColor: phase.color + "70" }}><p className="fh-label mb-1">Comando</p><p style={{ color: phase.color }}>{card.command}</p></div>}
 
-          {card.source && (
-            <p className="text-[10px] text-gray-600">Fuente: {card.source}</p>
-          )}
+          <FHDisclosure summary="Detalles de la tarjeta">
+            <div className="obe-command-card__metadata">
+              <p><strong>ID</strong><code>{card.id}</code></p>
+              <p><strong>Momento</strong><span>{card.whenToUse}</span></p>
+              {card.source && <p><strong>Fuente</strong><span>{card.source}</span></p>}
+              <div className="flex flex-wrap gap-1 pt-1">{card.tags.map(tag => <span key={tag} className="obe-tag">#{tag}</span>)}</div>
+            </div>
+          </FHDisclosure>
         </div>
       )}
-    </div>
+    </article>
   );
 }

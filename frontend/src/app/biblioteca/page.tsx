@@ -6,13 +6,16 @@ import { getAudioEngine } from "@/lib/audioEngine";
 import { CommandCard, CommandPhase, FrequencyEntry } from "@/lib/types";
 import { COMMAND_CARDS, COMMAND_PHASES_ORDERED, PHASE_INFO } from "@/lib/commandCards";
 import CommandCardItem from "@/components/CommandCardItem";
+import { CLAIM_CLASSIFICATION_LABELS, frequencyClaimClassification } from "@/lib/protocolLibrary";
+import { FHEvidenceBadge } from "@/components/ui/FHBadges";
+import { FHEmptyState, FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
 
 type Tab = "frecuencias" | "comandos";
 
 const EVIDENCE_INFO: Record<string, { label: string; color: string; icon: string }> = {
-  verificada: { label: "Verificada", color: "#4ade80", icon: "✓" },
-  anecdotica: { label: "Anecdótica", color: "#fbbf24", icon: "~" },
-  especulativa: { label: "Especulativa", color: "#f87171", icon: "?" },
+  verificada: { label: "Clasificación heredada: verificada", color: "#fbbf24", icon: "~" },
+  anecdotica: { label: "Referencia anecdótica", color: "#fbbf24", icon: "~" },
+  especulativa: { label: "Referencia especulativa", color: "#f87171", icon: "?" },
 };
 
 export default function BibliotecaPage() {
@@ -43,7 +46,7 @@ export default function BibliotecaPage() {
   const handlePlayFrequency = useCallback((freq: FrequencyEntry) => {
     const engine = getAudioEngine();
     if (playingId === freq.id) {
-      engine.stop();
+      engine.stopWithFade();
       setPlayingId(null);
     } else {
       engine.stop();
@@ -78,16 +81,11 @@ export default function BibliotecaPage() {
   }, [filteredCommands]);
 
   return (
-    <div className="max-w-4xl animate-fade-in">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white mb-1">Biblioteca</h1>
-        <p className="text-sm text-gray-400">
-          Frecuencias documentadas y tarjetas operativas para sesiones binaurales profundas.
-        </p>
-      </div>
+    <FHPageShell width="default" className="legacy-page atlas-page animate-fade-in">
+      <FHPageHeader eyebrow="ARCHIVO · INVESTIGACIÓN" title="Atlas de frecuencias" description="Biblioteca histórica y exploratoria de tonos. Las asociaciones heredadas se conservan como procedencia, no como tratamientos ni efectos garantizados." />
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-1 w-fit">
+      <div className="legacy-tabs" aria-label="Secciones del atlas">
         <button
           onClick={() => setTab("frecuencias")}
           className={`px-4 py-2 text-xs rounded-lg transition-colors ${
@@ -110,10 +108,12 @@ export default function BibliotecaPage() {
         <>
           {/* Phase intro */}
           <div className="mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2"><p className="fh-label">Marco OBE exploratorio</p><FHEvidenceBadge category="EXPLORATORY">EXPLORATORIO</FHEvidenceBadge></div>
             <p className="text-sm text-gray-300 mb-2">
-              Memoriza estas tarjetas <strong className="text-white">antes</strong> de una sesión binaural profunda.
-              Una vez fuera del cuerpo la mente analítica está atenuada y no podrás
-              consultar la app — el material debe estar interiorizado.
+              Revisa estas tarjetas <strong className="text-white">antes</strong> de la práctica para no consultar la app durante la sesión.
+              Son instrucciones exploratorias basadas en relatos y tradiciones OBE;
+              describen experiencias subjetivas y no verifican separación corporal,
+              mecanismos fisiológicos ni contacto externo.
             </p>
             <p className="text-xs text-gray-500">
               Las tarjetas siguen el orden natural de una sesión: preparación →
@@ -190,7 +190,7 @@ export default function BibliotecaPage() {
                 if (!items || items.length === 0) return null;
                 const info = PHASE_INFO[phase];
                 return (
-                  <div key={phase}>
+                  <section key={phase} className="obe-command-phase">
                     <div className="flex items-baseline gap-2 mb-3">
                       <h2
                         className="text-sm font-bold uppercase tracking-wider"
@@ -202,12 +202,12 @@ export default function BibliotecaPage() {
                         {info.description}
                       </span>
                     </div>
-                    <div className="space-y-2">
+                    <div className="obe-command-list">
                       {items.map((c) => (
                         <CommandCardItem key={c.id} card={c} />
                       ))}
                     </div>
-                  </div>
+                  </section>
                 );
               })}
             </div>
@@ -243,7 +243,7 @@ export default function BibliotecaPage() {
           domains={domains}
         />
       )}
-    </div>
+    </FHPageShell>
   );
 }
 
@@ -281,12 +281,13 @@ function FrequenciasTab({
   return (
     <>
       {/* Search */}
+      <FHSurface variant="subtle" className="legacy-filter-panel">
       <div className="mb-4">
         <div className="relative">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
           <input
             type="text"
-            placeholder="Buscar por nombre, frecuencia, dolencia..."
+            placeholder="Buscar por nombre, frecuencia o referencia histórica..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-[#111827] border border-[#1f2937] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:border-[#60a5fa] transition-colors"
@@ -351,7 +352,8 @@ function FrequenciasTab({
       </div>
 
       {/* Results count */}
-      <p className="text-xs text-gray-500 mb-4">{filteredFrequencies.length} resultados</p>
+      <p className="text-xs text-gray-500 mb-4" aria-live="polite">{filteredFrequencies.length} resultados</p>
+      </FHSurface>
 
       {/* Frequency list */}
       <div className="space-y-2">
@@ -360,11 +362,12 @@ function FrequenciasTab({
           const isCurrentlyPlaying = playingId === freq.id;
           const catInfo = CATEGORY_INFO[freq.category];
           const evidInfo = EVIDENCE_INFO[freq.evidence];
+          const classification = frequencyClaimClassification(freq.category);
 
           return (
-            <div
+            <article
               key={freq.id}
-              className={`bg-[#111827] border rounded-xl transition-all overflow-hidden ${isCurrentlyPlaying ? "border-[#60a5fa] ring-1 ring-[#60a5fa30]" : "border-[#1f2937] hover:border-[#374151]"}`}
+              className={`atlas-entry ${isCurrentlyPlaying ? "atlas-entry--playing" : ""}`}
             >
               {/* Main row */}
               <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : freq.id)}>
@@ -374,14 +377,15 @@ function FrequenciasTab({
                     e.stopPropagation();
                     handlePlayFrequency(freq);
                   }}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm transition-all flex-shrink-0 ${isCurrentlyPlaying ? "bg-[#f87171] hover:bg-[#ef4444] text-white" : "bg-[#1f2937] hover:bg-[#374151] text-gray-400 hover:text-white"}`}
+                  className={`atlas-play ${isCurrentlyPlaying ? "atlas-play--active" : ""}`}
+                  aria-label={isCurrentlyPlaying ? `Detener ${freq.hz} Hz` : `Escuchar ${freq.hz} Hz`}
                 >
                   {isCurrentlyPlaying ? "■" : "▶"}
                 </button>
 
                 {/* Frequency */}
                 <div className="w-20 flex-shrink-0">
-                  <p className="text-lg font-bold font-mono" style={{ color: catInfo.color }}>
+                  <p className="atlas-frequency">
                     {freq.hz >= 1000 ? `${(freq.hz / 1000).toFixed(freq.hz % 1000 === 0 ? 0 : 1)}k` : freq.hz}
                   </p>
                   <p className="text-[9px] text-gray-600">Hz</p>
@@ -394,7 +398,8 @@ function FrequenciasTab({
                 </div>
 
                 {/* Badges */}
-                <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+                <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
+                  <FHEvidenceBadge category={classification}>{CLAIM_CLASSIFICATION_LABELS[classification]}</FHEvidenceBadge>
                   {freq.domain.map((d) => (
                     <span
                       key={d}
@@ -419,8 +424,9 @@ function FrequenciasTab({
 
               {/* Expanded details */}
               {isExpanded && (
-                <div className="px-4 pb-4 border-t border-[#1f2937] pt-3 space-y-3">
+                <div className="atlas-entry__details">
                   <p className="text-sm text-gray-300">{freq.description}</p>
+                  <div className="flex flex-wrap gap-2"><FHEvidenceBadge category={classification}>{CLAIM_CLASSIFICATION_LABELS[classification]}</FHEvidenceBadge><FHEvidenceBadge category="EXPLORATORY">EXPLORATORIO</FHEvidenceBadge></div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
@@ -440,7 +446,7 @@ function FrequenciasTab({
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-600 uppercase">Evidencia</p>
+                      <p className="text-[10px] text-gray-600 uppercase">Procedencia heredada</p>
                       <p className="text-sm" style={{ color: evidInfo.color }}>
                         {evidInfo.icon} {evidInfo.label}
                       </p>
@@ -469,20 +475,16 @@ function FrequenciasTab({
                     ))}
                   </div>
 
-                  <p className="text-[10px] text-gray-600">Fuente: {freq.source}</p>
+                  <p className="text-[10px] text-gray-600">Fuente declarada en el catálogo heredado: {freq.source}. Esta etiqueta no valida sus afirmaciones.</p>
                 </div>
               )}
-            </div>
+            </article>
           );
         })}
       </div>
 
       {filteredFrequencies.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <p className="text-3xl mb-2">🔍</p>
-          <p className="text-sm">No se encontraron frecuencias.</p>
-          <p className="text-xs mt-1">Intenta con otros filtros o t&eacute;rminos de b&uacute;squeda.</p>
-        </div>
+        <FHEmptyState><h2>No se encontraron frecuencias</h2><p>Intenta con otros filtros o términos de búsqueda.</p></FHEmptyState>
       )}
     </>
   );
