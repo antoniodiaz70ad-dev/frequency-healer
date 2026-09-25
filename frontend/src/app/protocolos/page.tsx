@@ -9,6 +9,7 @@ import { legacyProtocolDisposition } from "@/lib/protocolLibrary";
 import { FHEvidenceBadge, FHStateBadge } from "@/components/ui/FHBadges";
 import FHDisclosure from "@/components/ui/FHDisclosure";
 import { FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
+import { playbackWakeLockMessage, usePlaybackWakeLock } from "@/lib/playbackLifecycle";
 
 type ProtocolState = "idle" | "playing" | "paused";
 
@@ -35,6 +36,7 @@ export default function ProtocolosPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [stepElapsed, setStepElapsed] = useState(0);
   const [filterDomain, setFilterDomain] = useState<string>("all");
+  const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(protocolState === "playing"));
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepStartRef = useRef<number>(0);
   const pausedElapsedRef = useRef<number>(0);
@@ -145,6 +147,8 @@ export default function ProtocolosPage() {
   return (
     <FHPageShell width="default" className="legacy-page protocols-page animate-fade-in">
       <FHPageHeader eyebrow="ARCHIVO · LEGADO" title="Protocolos históricos" description="Archivo experimental y legado de versiones anteriores. Estas secuencias no son recomendaciones actuales de Core V1." />
+
+      {wakeLockMessage && <p className="text-xs text-gray-500 mb-4">{wakeLockMessage}</p>}
 
       {/* Domain filter */}
       <FHSurface variant="subtle" className="legacy-filter-panel flex gap-2 flex-wrap" >
