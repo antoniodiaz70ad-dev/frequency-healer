@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": { "module": "commonjs", "moduleResolution": "node", "outDir": ".test-build", "noEmit": false, "incremental": false, "isolatedModules": false },
-  "include": ["tests/**/*.ts", "src/lib/harmonic/**/*.ts", "src/lib/voice/**/*.ts", "src/lib/dataExport.ts"],
+  "include": ["tests/**/*.ts", "src/lib/harmonic/**/*.ts", "src/lib/voice/**/*.ts", "src/lib/dataExport.ts", "src/lib/playbackLifecycle.ts"],
   "exclude": ["node_modules", ".next", "src/lib/voice/server.ts"]
 }

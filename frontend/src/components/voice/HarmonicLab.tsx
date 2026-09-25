@@ -20,6 +20,7 @@ import ProtocolDiscovery, { type DiscoveryPlaybackRequest } from '../lab/Protoco
 import styles from './voice.module.css';
 import { FHPageHeader, FHPageShell } from '../ui/FHLayout';
 import HarmonicStructure from '../lab/HarmonicStructure';
+import { playbackWakeLockMessage, usePlaybackWakeLock } from '@/lib/playbackLifecycle';
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
   const previewRun = useRef(0);
@@ -33,14 +34,14 @@ export default function HarmonicLab() {
   const [engine] = useState(() => new HarmonicEngine());
   const [config, setConfig] = useState(initial); const [confirmed, setConfirmed] = useState(false);
   const [playing, setPlaying] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(playing));
   let schedule; let invalid = '';
   try { schedule = buildSchedule(config); } catch (e) { invalid = (e as Error).message; }
   useEffect(() => {
     const invalidate = () => { ++previewRun.current; ++startRun.current; startPending.current = false; };
     const stop = () => { invalidate(); engine.stop(); discovery.current?.finished('interrupted'); discovery.current = null; activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setPlaying(false); setBusy(false); };
-    const hidden = () => { if (document.hidden) stop(); };
-    document.addEventListener('visibilitychange', hidden); window.addEventListener('pagehide', stop);
-    return () => { invalidate(); engine.dispose(); discovery.current?.finished('interrupted', false); discovery.current = null; activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted', false); activeExperiment.current = null; document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', stop); };
+    window.addEventListener('pagehide', stop);
+    return () => { invalidate(); engine.dispose(); discovery.current?.finished('interrupted', false); discovery.current = null; activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted', false); activeExperiment.current = null; window.removeEventListener('pagehide', stop); };
   }, [engine]);
   const edit = (change: Partial<HarmonicConfig>) => { const next = { ...currentConfig.current, ...change }; currentConfig.current = next; setConfig(next); setConfirmed(false); ++previewRun.current; setConstellationPlan(null); setPreviewError(''); };
   const startPlayback = async (plan?: ConstellationPlaybackPlan, guided?: GuidedRecommendationV1, consent = false) => {
@@ -151,7 +152,7 @@ export default function HarmonicLab() {
     <ProtocolDiscovery active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
     {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}
-    {schedule && <section><h2>Propuesta visible</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Al ocultar la pestaña, el audio se detiene.</p>
+    {schedule && <section><h2>Propuesta visible</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Mantén la pantalla abierta si tu navegador suspende audio al bloquear el equipo.</p>
       {config.ratioId === 'cascade-13-12' && <label className={styles.check}><input type="checkbox" disabled={playing || busy} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Acepto la exploración experimental 13/12, sin promesas de resultados.</label>}
       <button className={styles.primary} disabled={playing || busy || (config.ratioId === 'cascade-13-12' && !confirmed)} onClick={async () => {
         await startPlayback();
@@ -159,6 +160,6 @@ export default function HarmonicLab() {
 
     </section>}
       {(playing || busy) && <button className={styles.stop} onClick={stopPlayback}>Detener sesión</button>}
-      <p role="status">{playing ? 'Audio en curso' : busy ? 'Preparando audio…' : 'Audio detenido'}</p>
+      <p role="status">{playing ? 'Audio en curso' : busy ? 'Preparando audio…' : 'Audio detenido'}</p>{wakeLockMessage && <p className={styles.muted}>{wakeLockMessage}</p>}
   </div></FHPageShell>;
 }
