@@ -23,6 +23,7 @@ import { DiscoveryStore, DISCOVERY_KEY } from '@/lib/discovery/storage';
 import type { ProtocolDiscoveryPlanV1 } from '@/lib/discovery/model';
 import { discoverySeedEvidence, evidenceFingerprint, personalSeedEvidence } from '@/lib/voice/seedSelection';
 import { buildProposal } from '@/lib/voice/rules';
+import { playbackWakeLockMessage, usePlaybackWakeLock } from '@/lib/playbackLifecycle';
 
 export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled = false, buildCommit = 'local' }: { transcriptionEnabled?: boolean; aiEnabled?: boolean; buildCommit?: string }) {
   const [flow] = useState(() => new VoiceOrchestrator());
@@ -39,6 +40,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
   const heading = useRef<HTMLHeadingElement>(null);
   const history = useRef<HTMLDetailsElement>(null);
   const active = ['playing', 'marker_listening', 'starting'].includes(state);
+  const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(active));
   useEffect(() => {
     let alive = true;
     const refresh = () => { if (!alive) return; try { setRecords(new VoiceStore(localStorage).load()); setKeepOriginal(loadSettings(localStorage).keepOriginal); setStorageError(''); void new DiscoveryStore(localStorage).load().then(rows=>{if(alive)setDiscoveryPlans(rows);}).catch(()=>{if(alive)setDiscoveryPlans([]);}); } catch (e) { setStorageError((e as Error).message); } };
@@ -48,10 +50,9 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
     return () => { alive = false; window.removeEventListener('storage', changed); };
   }, []);
   useEffect(() => {
-    const hidden = () => { if (document.hidden && !['idle', 'reflection', 'saved', 'storage_error'].includes(flow.state)) flow.stop('hidden'); };
     const leave = () => flow.stop('pagehide');
-    document.addEventListener('visibilitychange', hidden); window.addEventListener('pagehide', leave);
-    return () => { document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', leave); flow.dispose(); };
+    window.addEventListener('pagehide', leave);
+    return () => { window.removeEventListener('pagehide', leave); flow.dispose(); };
   }, [flow]);
   useEffect(() => {
     if (!active) return;
@@ -113,7 +114,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
         <button onClick={() => setConfirmationFor(null)}>Volver</button>
       </>}
     </section>}
-    {active && proposal && <section><h2 ref={heading} tabIndex={-1}>{state === 'starting' ? 'Preparando audio…' : 'Sesión en curso'}</h2><progress className={styles.progress} aria-label="Progreso de la sesión" value={elapsed} max={proposal.schedule.durationSeconds * 1000} /><p>{Math.floor(elapsed / 60000)}:{String(Math.floor(elapsed / 1000) % 60).padStart(2, '0')} / {proposal.intent.durationMinutes} min</p><p>{state === 'marker_listening' ? 'Captura de marcador; el volumen baja temporalmente.' : 'Micrófono apagado salvo al mantener pulsado. Puedes detenerte en cualquier momento.'}</p>
+    {active && proposal && <section><h2 ref={heading} tabIndex={-1}>{state === 'starting' ? 'Preparando audio…' : 'Sesión en curso'}</h2><progress className={styles.progress} aria-label="Progreso de la sesión" value={elapsed} max={proposal.schedule.durationSeconds * 1000} /><p>{Math.floor(elapsed / 60000)}:{String(Math.floor(elapsed / 1000) % 60).padStart(2, '0')} / {proposal.intent.durationMinutes} min</p><p>{state === 'marker_listening' ? 'Captura de marcador; el volumen baja temporalmente.' : 'Micrófono apagado salvo al mantener pulsado. Puedes detenerte en cualquier momento.'}</p>{wakeLockMessage && <p className={styles.muted}>{wakeLockMessage}</p>}
       {state !== 'starting' && <div className={styles.volumeControls} aria-label="Controles de volumen"><button type="button" onClick={() => setLiveVolume(flow.adjustVolume(-5))} disabled={flow.engine.getVolume() <= 0}>Bajar volumen</button><span aria-live="polite">Volumen {liveVolume ?? flow.engine.getVolume()}/100</span><button type="button" onClick={() => setLiveVolume(flow.adjustVolume(5))} disabled={flow.engine.getVolume() >= 100}>Subir volumen</button></div>}
       {state !== 'starting' && <details><summary>Marcadores y volumen · opcional</summary><VoiceCapture kind="marker" remoteEnabled={transcriptionEnabled} beforeCapture={() => flow.beginMarkerCapture()} afterCapture={() => flow.endMarkerCapture()} onCancel={() => flow.cancelMarkerCapture()} onText={result => { if (result) setMarker(result); }} />
       <label>Marcador o comando (revisa antes de aplicar)<textarea maxLength={500} value={marker} onChange={e => setMarker(e.target.value)} /></label>

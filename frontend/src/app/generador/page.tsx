@@ -17,6 +17,7 @@ import Link from "next/link";
 import { FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
 import { FHDangerAction, FHPrimaryAction } from "@/components/ui/FHActions";
 import FHDisclosure from "@/components/ui/FHDisclosure";
+import { playbackWakeLockMessage, usePlaybackWakeLock } from "@/lib/playbackLifecycle";
 
 const PRESETS = [
   { label: "528 Hz Solfeggio", hz: 528, waveform: "sine" as Waveform, color: "#fbbf24" },
@@ -38,6 +39,7 @@ export default function GeneradorPage() {
   const [waveform, setWaveform] = useState<Waveform>("sine");
   const [volume, setVolume] = useState(50);
   const [isPlaying, setIsPlaying] = useState(false);
+  const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(isPlaying));
   const [outputMode, setOutputMode] = useState<OutputMode>("speakers");
   const [tuning432, setTuning432] = useState(false);
   const [binaural, setBinaural] = useState(false);
@@ -126,6 +128,7 @@ export default function GeneradorPage() {
     <FHPageShell width="default" className="legacy-page generator-page animate-fade-in">
       <FHPageHeader eyebrow="INSTRUMENTO · AVANZADO" title="Generador manual" description="Configura una señal directamente. Para una experiencia guiada, usa Sesión guiada." />
       <FHSurface variant="subtle" className="generator-note"><p>Esta es una herramienta manual avanzada. Frequency Healer no interpreta una frecuencia aislada como tratamiento o resultado garantizado.</p><Link href="/voz">Ir a Sesión guiada</Link></FHSurface>
+      {wakeLockMessage && <p className="text-xs text-gray-500 mb-4">{wakeLockMessage}</p>}
 
       {/* Tabs */}
       <div className="legacy-tabs" aria-label="Tipo de generador">
