@@ -5,65 +5,82 @@ import styles from "@/components/landing/landing.module.css";
 import { HARMONIC_ENABLED, VOICE_ENABLED } from "@/lib/voice/feature";
 
 export const metadata: Metadata = {
-  title: "Frequency Healer — Explore sound as a personal experiment",
+  title: "Frequency Healer — Plataforma personal de exploración armónica",
   description:
-    "A personal harmonic exploration platform. Explore acoustic relationships, structure intentional sessions and record your subjective response.",
+    "Explora frecuencias, relaciones, octavas y constelaciones como práctica personal observable, sin promesas médicas.",
 };
 
 const principles = [
   [
-    "Relationships, not isolated tones",
-    "Start with a seed frequency and explore harmonic ratios as reproducible structures. Octaves extend the same mathematical idea.",
+    "Frecuencia",
+    "Un punto de partida acústico claro, elegido por reglas locales y mostrado antes de escuchar.",
   ],
   [
-    "Intention before session",
-    "Define what you want to explore before pressing play, so each session has context.",
+    "Relación",
+    "La experiencia se construye con proporciones: quinta, cuarta, terceras, octavas y estructuras reproducibles.",
   ],
   [
-    "Measure your response",
-    "Record your expectation before listening. Track clarity, tension, focus, energy and mood before and after.",
+    "Experiencia",
+    "Registras intención, expectativa y estado subjetivo sin convertirlo en diagnóstico o promesa.",
   ],
   [
-    "Learn from your own pattern",
-    "Keep a record of repeated sessions. Compare your observations over time, without assuming that association proves cause.",
+    "Patrón personal",
+    "Con suficiente repetición, comparas tus propios registros para observar asociaciones descriptivas.",
   ],
 ];
+
 const steps = [
-  ["Set your intention", "Choose what you want to explore."],
-  ["Choose your session", "Start with a seed and an existing harmonic ratio."],
+  ["Describe tu intención", "Escribe lo que quieres explorar. La voz es opcional; el texto funciona normalmente."],
+  ["Revisa la propuesta", "Frequency Healer muestra una sesión explicable antes de reproducir sonido."],
+  ["Confirma y escucha", "La reproducción empieza solo cuando tú confirmas. Puedes detenerla en cualquier momento."],
+  ["Registra tu estado", "Guarda claridad, tensión, enfoque, energía, ánimo y reflexión cuando decidas."],
+  ["Compara con calma", "La evidencia personal describe repetición; no afirma causalidad automática."],
+];
+
+const productModes = [
   [
-    "Listen and observe",
-    "Use the session flow and playback tools at your own pace.",
+    "Sesión guiada",
+    "Para empezar simple",
+    "Describe lo que quieres explorar y recibe una propuesta revisable sin elegir Hz, ratios u octavas.",
+    VOICE_ENABLED ? "/voz" : "/",
+    VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a la app",
   ],
   [
-    "Record your response",
-    "Capture how you felt before and after. Save when you choose.",
-  ],
-  [
-    "Look for repetition",
-    "Compare your records over time. Automated harmonic patterns are a future step.",
+    "Laboratorio Armónico",
+    "Para exploración avanzada",
+    "Construye relaciones, octavas, constelaciones y experimentos con trazabilidad matemática.",
+    HARMONIC_ENABLED ? "/laboratorio-armonico" : "/",
+    HARMONIC_ENABLED ? "Abrir laboratorio" : "Entrar a la app",
   ],
 ];
+
+const trustSignals = [
+  ["Reglas locales", "Las propuestas se generan con lógica determinista y versión visible."],
+  ["Sin promesas médicas", "La plataforma separa acústica, experiencia subjetiva, observación e interpretación."],
+  ["Datos auditables", "Los registros guardan configuración, versión, estado y exportación verificable."],
+  ["Tú confirmas", "Aplicar, cargar o previsualizar nunca equivale a reproducir automáticamente."],
+];
+
 const modules = [
   [
-    "Intention Engine",
-    "Available in sessions",
-    "Define the purpose of a session before the sound begins.",
+    "Atlas de frecuencias",
+    "Referencia curada",
+    "Explora frecuencias con clasificación de evidencia y lenguaje histórico neutralizado.",
   ],
   [
-    "Belief Mirror",
-    "Planned exploration",
-    "Surface a possible interpretation and consider an alternative. A reflective tool, not a diagnosis.",
+    "Protocolos históricos",
+    "Contexto sin absolutismos",
+    "Consulta protocolos como material de exploración, no como instrucciones terapéuticas.",
   ],
   [
-    "Probability Lab",
-    "Planned exploration",
-    "Compare how possible decisions and scenarios feel. Personal reflection, not probability prediction.",
+    "Constelaciones",
+    "Relaciones firmadas",
+    "Guarda estructuras exactas con firma, semilla, miembros y modo de reproducción.",
   ],
   [
-    "Experience Journal",
-    "Available in sessions",
-    "Record insights, reflections and subjective observations as part of your personal learning process.",
+    "Exportación V1",
+    "Control del usuario",
+    "Descarga tus datos de Frequency Healer desde una lista explícita de espacios propios.",
   ],
 ];
 
@@ -76,9 +93,9 @@ function Label({ children }: { children: React.ReactNode }) {
 
 export default function LandingPage() {
   return (
-    <div className={styles.landing} lang="en">
+    <div className={styles.landing} lang="es">
       <a className={styles.skip} href="#method">
-        Skip to the method
+        Saltar al método
       </a>
       <section className={styles.hero} aria-labelledby="hero-title">
         <HeroVideo />
@@ -86,58 +103,63 @@ export default function LandingPage() {
           <a
             href="#"
             className={styles.brand}
-            aria-label="Frequency Healer, top of page"
+            aria-label="Frequency Healer, inicio de la página"
           >
             <span className={styles.brandMark} aria-hidden="true">
               ∿
             </span>{" "}
             FREQUENCY HEALER
           </a>
-          <nav aria-label="Landing navigation">
-            <a href="#method">The method</a>
+          <nav aria-label="Navegación de landing">
+            <a href="#method">El método</a>
             <Link href="/" prefetch={false}>
-              Enter the app <Arrow />
+              Entrar a la app <Arrow />
             </Link>
           </nav>
         </header>
         <div className={styles.heroCopy}>
           <Label>
-            <span className={styles.signal} /> A personal harmonic exploration
-            platform
+            <span className={styles.signal} /> Plataforma personal de exploración
+            armónica
           </Label>
           <h1 id="hero-title">
-            Explore sound
+            No busques la
             <br />
-            as a <em>personal</em>
+            frecuencia perfecta<span className={styles.coral}>.</span>
             <br />
-            experiment<span className={styles.coral}>.</span>
+            Descubre tu <em>patrón</em>.
           </h1>
           <p className={styles.heroDescription}>
-            Go beyond isolated frequencies. Explore harmonic relationships,
-            track your response, and discover what is consistently associated
-            with useful states for you.
+            Frequency Healer convierte el sonido en una práctica observable:
+            intención, relación acústica, escucha confirmada y evidencia personal
+            N=1 sin prometer efectos médicos.
           </p>
           <div className={styles.actions}>
             <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/"} prefetch={false}>
-              {VOICE_ENABLED ? "Start a guided session" : "Enter Frequency Healer"} <Arrow />
+              {VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a Frequency Healer"} <Arrow />
             </Link>
             <a className={styles.secondary} href="#method">
-              Explore the Method <span aria-hidden="true">↓</span>
+              Ver método <span aria-hidden="true">↓</span>
             </a>
           </div>
+          <ul className={styles.heroProof} aria-label="Principios de confianza">
+            <li>Sin diagnóstico</li>
+            <li>Reglas locales</li>
+            <li>Datos exportables</li>
+          </ul>
           {HARMONIC_ENABLED && (
             <Link
               className={styles.labLink}
               href="/laboratorio-armonico"
               prefetch={false}
             >
-              See Harmonic Lab <Arrow />
+              Explorar Laboratorio Armónico <Arrow />
             </Link>
           )}
         </div>
         <div className={styles.heroFooter}>
-          <span>Sound, with a method.</span>
-          <span>01 / BEGIN WITH CURIOSITY</span>
+          <span>Sonido con método.</span>
+          <span>FRECUENCIA → RELACIÓN → EXPERIENCIA</span>
         </div>
       </section>
 
@@ -147,16 +169,17 @@ export default function LandingPage() {
         aria-labelledby="method-title"
       >
         <div className={styles.sectionIntro}>
-          <Label>01 — THE METHOD</Label>
+          <Label>01 — EL MÉTODO</Label>
           <h2 id="method-title">
-            A frequency is not
+            Una frecuencia sola
             <br />
-            the whole experiment.
+            no es todo el experimento.
           </h2>
           <p>
-            Frequency Healer combines harmonic relationships, intentional
-            sessions and personal measurement so you can explore what actually
-            repeats in your own experience.
+            La plataforma mantiene separados cuatro dominios: matemáticas
+            acústicas, experiencia subjetiva, observación experimental e
+            interpretación personal. Esa separación hace que la exploración sea
+            más clara, honesta y repetible.
           </p>
         </div>
         <div className={styles.principles}>
@@ -179,28 +202,28 @@ export default function LandingPage() {
       >
         <div className={styles.splitIntro}>
           <div>
-            <Label>02 — THE MATHEMATICS OF RELATIONSHIP</Label>
+            <Label>02 — PROGRESIÓN ARMÓNICA</Label>
             <h2 id="relationships-title">
-              From tone
+              De un tono
               <br />
-              to constellation
+              a una constelación
             </h2>
           </div>
           <p>
-            A single frequency can become a harmonic family through exact
-            mathematical relationships. Explore relationships, not just isolated
-            numbers.
+            Lo único de Frequency Healer es la progresión: no se queda en listas
+            de frecuencias. Te lleva de una semilla a relaciones, octavas,
+            constelaciones, experiencia registrada y patrón personal.
           </p>
         </div>
         <div
           className={styles.ratioStrip}
-          aria-label="All ratios are relative to the 432 hertz seed"
+          aria-label="Relaciones relativas a una semilla de 432 hercios"
         >
           {[
-            ["432", "1:1", "SEED"],
-            ["540", "5:4", "MAJOR THIRD"],
-            ["648", "3:2", "PERFECT FIFTH"],
-            ["864", "2:1", "OCTAVE"],
+            ["432", "1:1", "SEMILLA"],
+            ["540", "5:4", "TERCERA MAYOR"],
+            ["648", "3:2", "QUINTA JUSTA"],
+            ["864", "2:1", "OCTAVA"],
           ].map(([hz, ratio, name], i) => (
             <div className={styles.ratioNode} key={hz}>
               <div
@@ -223,38 +246,54 @@ export default function LandingPage() {
         </div>
         <div className={styles.relationshipFooter}>
           <p>
-            One seed. Exact ratios. Every relationship above is relative to 432
-            Hz.
-            <br />
-            These structures form the foundation for reproducible
-            constellations.
+            Una semilla. Relaciones exactas. Una estructura que puedes volver a
+            escuchar y comparar sin convertirla en afirmación terapéutica.
           </p>
           <a
             className={styles.textLink}
             href={HARMONIC_ENABLED ? "/laboratorio-armonico" : "#process"}
           >
-            See the relationships <Arrow />
+            Ver relaciones <Arrow />
           </a>
         </div>
-        <p className={styles.note}>
-          Mathematical illustration. A dedicated constellation editor and
-          playback flow are planned.
-        </p>
         <ol
           className={styles.progression}
-          aria-label="The platform's progression"
+          aria-label="Progresión de la plataforma"
         >
           {[
-            "Frequency",
-            "Relationship",
-            "Octave",
-            "Constellation",
-            "Experience",
-            "Personal pattern",
+            "Frecuencia",
+            "Relación",
+            "Octava",
+            "Constelación",
+            "Experiencia",
+            "Patrón personal",
           ].map((word) => (
             <li key={word}>{word}</li>
           ))}
         </ol>
+      </section>
+
+      <section className={`${styles.section} ${styles.modes}`} aria-labelledby="modes-title">
+        <div className={styles.sectionIntro}>
+          <Label>03 — DOS ENTRADAS CLARAS</Label>
+          <h2 id="modes-title">
+            Simple cuando quieres empezar.
+            <br />
+            Profundo cuando quieres explorar.
+          </h2>
+        </div>
+        <div className={styles.modeGrid}>
+          {productModes.map(([title, eyebrow, text, href, cta]) => (
+            <article className={styles.modeCard} key={title}>
+              <p className={styles.modeEyebrow}>{eyebrow}</p>
+              <h3>{title}</h3>
+              <p>{text}</p>
+              <Link href={href} prefetch={false}>
+                {cta} <Arrow />
+              </Link>
+            </article>
+          ))}
+        </div>
       </section>
 
       <section
@@ -262,10 +301,11 @@ export default function LandingPage() {
         id="process"
         aria-labelledby="process-title"
       >
-        <Label>03 — A REPEATABLE PRACTICE</Label>
+        <Label>04 — PRÁCTICA REPETIBLE</Label>
         <h2 id="process-title">
-          Turn listening into
-          <br />a repeatable observation
+          Escuchar se vuelve
+          <br />
+          una observación estructurada
         </h2>
         <ol className={styles.process}>
           {steps.map(([title, text], i) => (
@@ -280,19 +320,79 @@ export default function LandingPage() {
 
       <section
         className={`${styles.section} ${styles.consciousness}`}
-        aria-labelledby="consciousness-title"
+        aria-labelledby="trust-title"
       >
         <div className={styles.sectionIntro}>
-          <Label>04 — CONSCIOUSNESS LAB</Label>
-          <h2 id="consciousness-title">
-            Explore the inner context
+          <Label>05 — CONFIANZA Y TRAZABILIDAD</Label>
+          <h2 id="trust-title">
+            Una experiencia elegante
             <br />
-            around the sound
+            con límites explícitos
           </h2>
           <p>
-            Optional reflective tools help structure intention, beliefs and
-            possibilities while keeping personal interpretation separate from
-            scientific claims.
+            La app puede sentirse contemplativa sin presentar mecanismos
+            médicos, energéticos o místicos como hechos. La propuesta siempre se
+            muestra antes de sonar.
+          </p>
+        </div>
+        <div className={styles.trustGrid}>
+          {trustSignals.map(([title, text]) => (
+            <article key={title}>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.mapSection}`}
+        aria-labelledby="map-title"
+      >
+        <div className={styles.sectionIntro}>
+          <Label>06 — ECOSISTEMA V1</Label>
+          <h2 id="map-title">
+            Todo apunta a una
+            <br />
+            bitácora personal
+          </h2>
+          <p>
+            Sesión guiada, atlas, laboratorio, constelaciones y exportación
+            existen para una misma idea: explorar de forma personal y auditable
+            qué relaciones acústicas se asocian con estados útiles para ti.
+          </p>
+          <ul className={styles.chips}>
+            <li>Evidencia personal</li>
+            <li>Sin causalidad automática</li>
+            <li>Exportación local</li>
+          </ul>
+        </div>
+        <div className={styles.experienceCard} aria-label="Flujo de experiencia">
+          <p className={styles.cardKicker}>FLUJO DE UNA SESIÓN</p>
+          <ol>
+            <li><span>01</span> Intención original del usuario</li>
+            <li><span>02</span> Interpretación revisable</li>
+            <li><span>03</span> Configuración acústica visible</li>
+            <li><span>04</span> Confirmación antes de reproducir</li>
+            <li><span>05</span> Registro y exportación</li>
+          </ol>
+        </div>
+      </section>
+
+      <section
+        className={`${styles.section} ${styles.consciousness}`}
+        aria-labelledby="modules-title"
+      >
+        <div className={styles.sectionIntro}>
+          <Label>07 — SUPERFICIES DE LA PLATAFORMA</Label>
+          <h2 id="modules-title">
+            Una app lista para beta cerrada,
+            <br />
+            diseñada para crecer con cuidado
+          </h2>
+          <p>
+            Cada módulo tiene un propósito separado para evitar confusión entre
+            descubrimiento, escucha, registro y lectura histórica.
           </p>
         </div>
         <div className={styles.modules}>
@@ -313,134 +413,39 @@ export default function LandingPage() {
       </section>
 
       <section
-        className={`${styles.section} ${styles.mapSection}`}
-        aria-labelledby="map-title"
-      >
-        <div className={styles.sectionIntro}>
-          <Label>05 — PERSONAL HARMONIC MAP / FUTURE DIRECTION</Label>
-          <h2 id="map-title">
-            Your history
-            <br />
-            becomes a map
-          </h2>
-          <p>
-            With enough comparable sessions, the aim is to reveal which seeds,
-            ratios, octaves and constellations are most consistently associated
-            with the states you record.
-          </p>
-          <p>
-            This map is an illustration of that direction. Automated mapping of
-            Harmonic Lab experiments is not available yet.
-          </p>
-          <ul className={styles.chips}>
-            <li>Observation</li>
-            <li>Association</li>
-            <li>Not automatic causation</li>
-          </ul>
-        </div>
-        <figure className={styles.map}>
-          <svg
-            viewBox="0 0 540 500"
-            role="img"
-            aria-labelledby="map-illustration-title"
-          >
-            <title id="map-illustration-title">
-              Illustrative connections between a seed frequency, harmonic ratios
-              and subjective observations. Not personal data.
-            </title>
-            <defs>
-              <radialGradient id="map-glow">
-                <stop stopColor="#A9C7D9" stopOpacity=".12" />
-                <stop offset="1" stopColor="#A9C7D9" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-            <circle cx="270" cy="250" r="230" fill="url(#map-glow)" />
-            <g fill="none" stroke="#59627A" strokeWidth=".7">
-              <circle cx="270" cy="250" r="72" />
-              <circle cx="270" cy="250" r="145" />
-              <circle cx="270" cy="250" r="210" strokeDasharray="2 7" />
-              <path d="M270 40V460M60 250H480" strokeOpacity=".4" />
-              <path d="M270 250L160 155L348 128L413 280L225 388L102 315L160 155M270 250L348 128M270 250L413 280M270 250L225 388M270 250L102 315M160 155L413 280L102 315L348 128L225 388Z" />
-            </g>
-            <g fill="#A9C7D9">
-              {[
-                [160, 155],
-                [348, 128],
-                [413, 280],
-                [225, 388],
-                [102, 315],
-              ].map(([cx, cy]) => (
-                <circle key={cx} cx={cx} cy={cy} r="5" />
-              ))}
-            </g>
-            <circle cx="270" cy="250" r="8" fill="#F05C5C" />
-            <circle
-              cx="270"
-              cy="250"
-              r="20"
-              fill="none"
-              stroke="#F05C5C"
-              strokeOpacity=".5"
-            />
-            <g fill="#F4F2EC" fontFamily="monospace" fontSize="12">
-              <text x="290" y="244">
-                SEED
-              </text>
-              <text x="113" y="137">
-                CLARITY
-              </text>
-              <text x="361" y="121">
-                3:2
-              </text>
-              <text x="426" y="285">
-                FOCUS
-              </text>
-              <text x="235" y="416">
-                2:1
-              </text>
-              <text x="57" y="342">
-                CONTEXT
-              </text>
-            </g>
-          </svg>
-          <figcaption>ILLUSTRATIVE MAP · NO PERSONAL DATA</figcaption>
-        </figure>
-      </section>
-
-      <section
         className={`${styles.section} ${styles.closing}`}
         aria-labelledby="closing-title"
       >
-        <Label>EXPLORE. MEASURE. LEARN.</Label>
+        <Label>EXPLORA. REGISTRA. APRENDE.</Label>
         <h2 id="closing-title">
-          Build a relationship with sound
+          La promesa no es curarte.
           <br />
-          that is personal, reproducible
+          La promesa es darte
           <br />
-          and <em>honest.</em>
+          un método <em>honesto</em>.
         </h2>
         <div className={styles.actions}>
           <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/"} prefetch={false}>
-            {VOICE_ENABLED ? "Start a guided session" : "Enter Frequency Healer"} <Arrow />
+            {VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a Frequency Healer"} <Arrow />
           </Link>
           <a className={styles.secondary} href="#method">
-            Explore the Method <span aria-hidden="true">↑</span>
+            Revisar método <span aria-hidden="true">↑</span>
           </a>
         </div>
         <p className={styles.disclaimer}>
-          For relaxation, reflection and personal exploration.
+          Para relajación, reflexión y exploración personal.
           <br />
-          Not a substitute for professional medical care.
+          No sustituye atención médica profesional.
         </p>
       </section>
       <footer className={styles.footer}>
         <span>∿ &nbsp; FREQUENCY HEALER</span>
         <p>
-          Mathematics. Experience. Observation. Interpretation.
+          Matemáticas. Experiencia. Observación. Interpretación.
           <br />
-          Connected by curiosity. Kept distinct by design.
+          Conectadas por curiosidad; separadas por diseño.
         </p>
-        <a href="#">Back to top ↑</a>
+        <a href="#">Volver arriba ↑</a>
       </footer>
     </div>
   );
