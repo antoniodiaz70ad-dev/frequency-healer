@@ -3,6 +3,8 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 import Link from 'next/link';
 import { parseCommand } from '@/lib/voice/commands';
 import { VoiceOrchestrator } from '@/lib/voice/orchestrator';
+import { HarmonicEngine } from '@/lib/harmonic/engine';
+import { isIOSLike, MediaHarmonicEngine } from '@/lib/voice/mediaHarmonicEngine';
 import { RATIOS, type RatioId } from '@/lib/harmonic/math';
 import type { ParsedIntentionV1, SelfRatingV1, VoiceSessionProposalV1, VoiceSessionRecordV1 } from '@/lib/voice/types';
 import type { ProposalEdits } from '@/lib/voice/rules';
@@ -26,7 +28,7 @@ import { buildProposal } from '@/lib/voice/rules';
 import { playbackWakeLockMessage, usePlaybackWakeLock } from '@/lib/playbackLifecycle';
 
 export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled = false, buildCommit = 'local' }: { transcriptionEnabled?: boolean; aiEnabled?: boolean; buildCommit?: string }) {
-  const [flow] = useState(() => new VoiceOrchestrator());
+  const [flow] = useState(() => new VoiceOrchestrator(isIOSLike() ? new MediaHarmonicEngine() : new HarmonicEngine()));
   const state = useSyncExternalStore(flow.subscribe, flow.getState, () => 'idle');
   const [records, setRecords] = useState<VoiceSessionRecordV1[]>([]); const [memory, setMemory] = useState<VoiceSessionRecordV1[]>([]); const [storageError, setStorageError] = useState(''); const [keepOriginal, setKeepOriginal] = useState(false);
   const [discoveryPlans,setDiscoveryPlans]=useState<ProtocolDiscoveryPlanV1[]>([]);
@@ -107,6 +109,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
       </> : <>
         <p>Volumen: {proposal.harmonicConfig.uiVolume}/100. Puedes detener la sesión en cualquier momento.</p>
         {proposal.warnings.map(w => <p key={w} className={styles.muted}>{w}</p>)}
+        {isIOSLike() && <p className={styles.muted}>Modo iPhone: esta sesión se reproduce como audio del navegador para mejorar la continuidad con pantalla bloqueada. Si iOS la suspende, mantén la pantalla activa.</p>}
         <details><summary>Detalles armónicos</summary><SessionPlan config={proposal.harmonicConfig} schedule={proposal.schedule} /></details>
         <details><summary>Cómo te sientes antes · opcional</summary><RatingFields title="Antes de empezar" value={before} onChange={setBefore} /></details>
         {proposal.requiresExplicitExperimentalConsent && <label className={styles.check}><input type="checkbox" checked={experimental} onChange={e => setExperimental(e.target.checked)} />Acepto explorar la cascada o intensidad experimental, sin promesas de resultados.</label>}
