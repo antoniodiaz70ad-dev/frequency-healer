@@ -1,4 +1,5 @@
 import { HarmonicEngine } from '../harmonic/engine';
+import type { GuidedPlaybackEngine } from './mediaHarmonicEngine';
 import { RunScope, transition, type JourneyState } from './stateMachine';
 import { buildProposal, validateProposal, type ProposalEdits } from './rules';
 import { parseCommand } from './commands';
@@ -17,7 +18,7 @@ export class VoiceOrchestrator {
   private listeners = new Set<() => void>();
   private started = 0;
   private markerDraft: SessionMarkerV1 | null = null;
-  constructor(readonly engine = new HarmonicEngine()) {}
+  constructor(readonly engine: GuidedPlaybackEngine = new HarmonicEngine()) {}
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
   getState = () => this.state;
   move(next: JourneyState) {

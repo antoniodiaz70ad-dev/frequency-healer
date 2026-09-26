@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { VoiceCaptureController, type VoiceBlob } from '@/lib/voice/capture';
+import { NativeSpeechController, supportsNativeSpeechRecognition } from '@/lib/voice/nativeSpeech';
 import { ServerTranscriptionProvider } from '@/lib/voice/transcription';
 import { countTechnical } from '@/lib/voice/privacy';
 import styles from './voice.module.css';
@@ -13,14 +14,17 @@ interface Props {
 }
 export default function VoiceCapture({ kind, remoteEnabled, onText, onPhase, beforeCapture, afterCapture, onCancel }: Props) {
   const [capture] = useState(() => new VoiceCaptureController());
+  const [nativeSpeech] = useState(() => new NativeSpeechController());
+  const [nativeAvailable, setNativeAvailable] = useState(false);
   const current = useRef<AbortController | null>(null); const held = useRef(false);
   const [phase, setPhase] = useState<Phase | null>(null); const [error, setError] = useState(''); const [elapsed, setElapsed] = useState(0);
+  useEffect(() => { setNativeAvailable(supportsNativeSpeechRecognition()); }, []);
   useEffect(() => {
-    const cancel = () => { current.current?.abort(); capture.cancel(); };
+    const cancel = () => { current.current?.abort(); capture.cancel(); nativeSpeech.cancel(); };
     const hidden = () => { if (document.hidden) cancel(); };
     document.addEventListener('visibilitychange', hidden); window.addEventListener('pagehide', cancel);
     return () => { cancel(); document.removeEventListener('visibilitychange', hidden); window.removeEventListener('pagehide', cancel); };
-  }, [capture]);
+  }, [capture, nativeSpeech]);
   useEffect(() => { if (phase !== 'listening') return; const start = performance.now(); const timer = setInterval(() => setElapsed((performance.now() - start) / 1000), 200); return () => clearInterval(timer); }, [phase]);
   const begin = async () => {
     if (current.current) return;
@@ -30,9 +34,15 @@ export default function VoiceCapture({ kind, remoteEnabled, onText, onPhase, bef
       update('requesting_permission');
       if (beforeCapture && !(await beforeCapture())) throw new DOMException('Cancelado', 'AbortError');
       if (!held.current || run.signal.aborted) return;
+      if (!remoteEnabled && nativeAvailable) {
+        const result = await nativeSpeech.listen(run.signal, () => update('listening'));
+        afterCapture?.(); run.signal.throwIfAborted();
+        onText(result.text);
+        return;
+      }
       const input = await capture.capture(kind, run.signal, () => update('listening'));
       afterCapture?.(); run.signal.throwIfAborted();
-      if (!remoteEnabled) { setError('Captura terminada y descartada. Sin proveedor de transcripción: escribe tus palabras abajo.'); onText(''); return; }
+      if (!remoteEnabled) { setError('Transcripción no configurada y dictado nativo no disponible. Escribe tus palabras abajo.'); onText(''); return; }
       update('transcribing');
       const result = await new ServerTranscriptionProvider().transcribe(input, run.signal);
       if (!run.signal.aborted) onText(result.text);
@@ -47,15 +57,17 @@ export default function VoiceCapture({ kind, remoteEnabled, onText, onPhase, bef
       if (current.current === run) { current.current = null; held.current = false; setPhase(null); }
     }
   };
-  const release = () => { held.current = false; if (phase === 'requesting_permission') { current.current?.abort(); onCancel?.(); } else capture.stop(); };
-  const cancel = () => { held.current = false; current.current?.abort(); capture.cancel(); afterCapture?.(); setPhase(null); onCancel?.(); };
+  const release = () => { held.current = false; if (phase === 'requesting_permission') return; nativeSpeech.stop(); capture.stop(); };
+  const cancel = () => { held.current = false; current.current?.abort(); capture.cancel(); nativeSpeech.cancel(); afterCapture?.(); setPhase(null); onCancel?.(); };
+  const voiceMode = remoteEnabled ? 'transcripción segura del servidor' : nativeAvailable ? 'dictado nativo del navegador' : 'texto manual';
   return <div>
+    <p className={styles.muted}>Modo de voz: {voiceMode}.</p>
     <button type="button" aria-pressed={phase === 'listening'} disabled={phase === 'transcribing'} style={{ touchAction: 'none', userSelect: 'none' }}
       onPointerDown={e => { if (e.button !== 0) return; e.preventDefault(); e.currentTarget.setPointerCapture(e.pointerId); void begin(); }}
-      onPointerUp={release} onPointerCancel={cancel} onLostPointerCapture={() => { if (held.current) release(); }}
+      onPointerUp={release} onPointerCancel={() => { if (phase === 'requesting_permission') return; cancel(); }} onLostPointerCapture={() => { if (held.current && phase !== 'requesting_permission') release(); }}
       onKeyDown={e => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); void begin(); } }}
       onKeyUp={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); release(); } }} onBlur={() => { if (held.current) cancel(); }}>
-      {phase === 'listening' ? 'Grabando — suelta para terminar' : phase === 'transcribing' ? 'Transcribiendo…' : 'Mantén presionado para hablar'}
+      {phase === 'listening' ? 'Grabando — suelta para terminar' : phase === 'transcribing' ? 'Transcribiendo…' : nativeAvailable && !remoteEnabled ? 'Mantén presionado para dictar' : 'Mantén presionado para hablar'}
     </button>
     <details><summary>Alternativa accesible: grabar con dos pulsaciones</summary>
       <p className={styles.muted}>Pulsa Iniciar y después Terminar. Se aplican los mismos límites de tiempo; Cancelar descarta la captura.</p>
@@ -64,6 +76,6 @@ export default function VoiceCapture({ kind, remoteEnabled, onText, onPhase, bef
     </details>
     {phase && <><p role="status" className={phase === 'listening' ? styles.recording : ''}>{phase === 'listening' ? `● Micrófono activo · ${elapsed.toFixed(0)} s / ${kind === 'intention' ? 60 : 30} s` : phase === 'requesting_permission' ? 'Solicitando micrófono…' : 'Micrófono apagado. Transcribiendo…'}</p><button type="button" onClick={cancel}>Cancelar captura</button></>}
     {error && <p role="alert" className={styles.error}>{error}</p>}
-    <p className={styles.muted}>{remoteEnabled ? 'Solo esta captura se envía al proveedor configurado. Revisa la transcripción antes de continuar.' : 'Sin transcripción remota configurada. Puedes grabar; el audio se descarta y puedes escribir el texto.'}</p>
+    <p className={styles.muted}>{remoteEnabled ? 'Solo esta captura se envía al proveedor configurado. Revisa la transcripción antes de continuar.' : nativeAvailable ? 'Sin transcripción remota configurada. Si tu navegador lo permite, se usa dictado nativo y revisas el texto antes de continuar.' : 'Sin transcripción remota configurada ni dictado nativo disponible. Usa texto para continuar.'}</p>
   </div>;
 }

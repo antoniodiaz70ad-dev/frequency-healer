@@ -9,6 +9,7 @@ import CommandCardItem from "@/components/CommandCardItem";
 import { CLAIM_CLASSIFICATION_LABELS, frequencyClaimClassification } from "@/lib/protocolLibrary";
 import { FHEvidenceBadge } from "@/components/ui/FHBadges";
 import { FHEmptyState, FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
+import { playbackWakeLockMessage, usePlaybackWakeLock } from "@/lib/playbackLifecycle";
 
 type Tab = "frecuencias" | "comandos";
 
@@ -27,6 +28,7 @@ export default function BibliotecaPage() {
   const [commandSearch, setCommandSearch] = useState("");
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(playingId !== null));
 
   const filteredFrequencies = useMemo(() => {
     let results: FrequencyEntry[] = searchQuery
@@ -83,6 +85,8 @@ export default function BibliotecaPage() {
   return (
     <FHPageShell width="default" className="legacy-page atlas-page animate-fade-in">
       <FHPageHeader eyebrow="ARCHIVO · INVESTIGACIÓN" title="Atlas de frecuencias" description="Biblioteca histórica y exploratoria de tonos. Las asociaciones heredadas se conservan como procedencia, no como tratamientos ni efectos garantizados." />
+
+      {wakeLockMessage && <p className="text-xs text-gray-500 mb-4">{wakeLockMessage}</p>}
 
       {/* Tabs */}
       <div className="legacy-tabs" aria-label="Secciones del atlas">

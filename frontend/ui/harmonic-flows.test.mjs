@@ -51,6 +51,13 @@ async function open(page) {
   await page.getByText('Explorador armónico · explorar y aplicar', { exact: true }).click();
   await page.getByRole('table', { name: 'Ratios exploratorios · disponibilidad V1', exact: true }).waitFor();
 }
+
+function isUnlockOscillator(osc) {
+  return osc.frequencies.length === 1 && osc.frequencies[0] === 440 && osc.starts.length > 0 && osc.stops.length > 0 && Math.abs(osc.stops[0] - osc.starts[0] - 0.03) < 1e-8;
+}
+function sessionOscillators(data) { return data.contexts.flatMap(c => c.oscillators.filter(o => !isUnlockOscillator(o))); }
+async function sessionFrequencies(page) { return sessionOscillators(await probe(page)).map(o => o.frequencies[0]); }
+
 async function noPlayback(page) {
   await eventually(async () => assert.equal(await page.getByRole('status').filter({ hasText: /^Audio detenido$/ }).count(),1));
   assert.equal((await probe(page)).contexts.length,0, 'No AudioContext before explicit confirm');
@@ -73,13 +80,13 @@ async function clean(page) {
     assert.ok(contexts.length > 0, 'Audio actually constructed');
     for (const ctx of contexts) {
       assert.equal(ctx.state,'closed');
-      for (const osc of ctx.oscillators) { assert.ok(osc.ended); assert.ok(osc.disconnected); assert.ok(osc.stops.length >= 2, 'Explicit stop replaced scheduled ending'); }
+      for (const osc of ctx.oscillators.filter(o => !isUnlockOscillator(o))) { assert.ok(osc.ended); assert.ok(osc.disconnected); assert.ok(osc.stops.length >= 2, 'Explicit stop replaced scheduled ending'); }
     }
   });
 }
 async function stop(page) { await button(page,'Detener sesión').click(); await clean(page); }
 async function graph(page, expected, simultaneous = false) {
-  const data = await probe(page); const oscillators = data.contexts.flatMap(c => c.oscillators);
+  const data = await probe(page); const oscillators = sessionOscillators(data);
   assert.deepEqual(oscillators.map(o => o.frequencies),expected.map(hz => [hz]));
   assert.ok(oscillators.every(o => o.waveform === 'sine'));
   const origin = oscillators[0].starts[0];
@@ -451,7 +458,7 @@ for(const [words,goal] of [['Quiero calma','relaxation'],['Necesito concentrarme
   await noPlayback(page);const exported=await downloadGuide(page);assert.equal(exported.rule.id,exported.proposal.ruleId);
   if(goal==='creative_exploration'){assert.ok(await button(page,'Confirmar y escuchar propuesta').isDisabled());await page.getByRole('checkbox',{name:'Acepto la cascada experimental de la guía, sin promesas de resultados.',exact:true}).check();}
   await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();
-  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),exported.proposal.schedule.steps.flatMap(step=>step.frequencies));
+  assert.deepEqual(await sessionFrequencies(page),exported.proposal.schedule.steps.flatMap(step=>step.frequencies));
   await button(page,'Detener audio del laboratorio').click();await clean(page);assert.deepEqual(await storage(page),{});
 });
 test('guided correction and medical boundary: no hidden recommendation or audio',async t=>{
@@ -475,14 +482,14 @@ test('guided corrupt history: evidence unavailable, never N=0 or repair',async t
 test('guided confirmation: exact existing rule, shared stop, explicit unchanged experiment snapshot',async t=>{
   const page=await fixture(t);await interpretGuide(page,'Quiero calma 5 minutos');await page.getByRole('spinbutton',{name:'Volumen de la guía (0–100)',exact:true}).fill('0');await recommendGuide(page);const rec=await downloadGuide(page);
   await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();
-  const audio=await probe(page);assert.deepEqual(audio.contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),rec.proposal.schedule.steps.flatMap(s=>s.frequencies));assert.ok(await button(page,'Confirmar e iniciar').isDisabled());
+  const audio=await probe(page);assert.deepEqual(sessionOscillators(audio).map(o=>o.frequencies[0]),rec.proposal.schedule.steps.flatMap(s=>s.frequencies));assert.ok(await button(page,'Confirmar e iniciar').isDisabled());
   await button(page,'Detener audio del laboratorio').click();await clean(page);assert.deepEqual(await storage(page),{});await button(page,'Guardar experimento').click();await button(page,'Experimento guardado').waitFor();
   const data=await storage(page);assert.deepEqual(Object.keys(data),[KEY]);const [record]=JSON.parse(data[KEY]);assert.deepEqual(record.configurationSnapshot,rec.proposal.harmonicConfig);assert.equal(record.status,'cancelled');
 });
 test('guided creativity: extra consent, unchanged cascade and navigation cleanup',async t=>{
   const page=await fixture(t);await interpretGuide(page,'Quiero creatividad 5 minutos');await page.getByRole('spinbutton',{name:'Volumen de la guía (0–100)',exact:true}).fill('0');await recommendGuide(page);const rec=await downloadGuide(page);
   assert.ok(await button(page,'Confirmar y escuchar propuesta').isDisabled());await page.getByRole('checkbox',{name:'Acepto la cascada experimental de la guía, sin promesas de resultados.',exact:true}).check();await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();
-  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),rec.proposal.schedule.steps.flatMap(s=>s.frequencies));
+  assert.deepEqual(await sessionFrequencies(page),rec.proposal.schedule.steps.flatMap(s=>s.frequencies));
   await page.getByRole('link',{name:'Inicio',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{});assert.ok(!(await probe(page)).statuses.some(s=>s.includes('Completado')));
 });
 
@@ -522,7 +529,7 @@ test('2B Voice Journey shares rationale and evidence without changing legacy pro
   await page.getByText('Evidencia personal',{exact:true}).click();assert.match(await page.getByRole('region',{name:'Evidencia personal de la sesión'}).innerText(),/Sesiones comparables: 0/);
   assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consentStorage);
   await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();
-  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[224,336,224,336]);
+  assert.deepEqual(await sessionFrequencies(page),[224,336,224,336]);
   await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consentStorage);
 });
 test('2B unknown intention requires human review; Voice medical text creates no proposal',async t=>{
@@ -564,7 +571,7 @@ test('Discovery saved constellation: UI plan creation, source deletion independe
   const original=JSON.parse((await storage(page))[DISCOVERY_KEY])[0];await page.evaluate(rows=>localStorage.setItem('fh:harmonic-constellations-v1',JSON.stringify(rows.map(c=>({...c,name:'Renamed source'})))),sources);const [unchanged]=await reloadDiscovery(page);assert.deepEqual(unchanged.candidates,original.candidates);await page.evaluate(()=>localStorage.removeItem('fh:harmonic-constellations-v1'));
   await prepareDiscovery(page);await page.getByRole('combobox',{name:'Antes Discovery Energía',exact:true}).selectOption('1');await button(page,'Confirmar y reproducir asignación').click();await page.getByRole('heading',{name:'Resultado: completed · sin guardar',exact:true}).waitFor();
   await eventually(async()=>assert.ok((await probe(page)).contexts.every(c=>c.state==='closed'&&c.oscillators.every(o=>o.ended&&o.disconnected))));
-  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[144,216]);
+  assert.deepEqual(await sessionFrequencies(page),[144,216]);
   assert.equal(JSON.parse((await storage(page))[DISCOVERY_KEY])[0].assignments[0].result,undefined);
   await page.getByRole('combobox',{name:'Después Discovery Energía',exact:true}).selectOption('2');await button(page,'Guardar resultado Discovery').click();await button(page,'Preparar siguiente asignación').waitFor();
   const [saved]=await reloadDiscovery(page);assert.equal(saved.assignments[0].status,'completed');assert.deepEqual(saved.assignments[0].result.experiment.constellation.snapshot,original.candidates[0].constellation);assert.match(await page.getByRole('region',{name:'Protocol Discovery',exact:true}).innerText(),/Siguiente asignación: 2/);
@@ -611,7 +618,7 @@ for(const [label,id] of [['B','candidate-1'],['A','candidate-0']])test(`Personal
   }else{
     await page.getByRole('heading',{name:'Sesión personal: started · sin guardar',exact:true}).waitFor();await button(page,'Detener sesión personal').click();await clean(page);
   }
-  assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[selected.config.baseHz,selected.config.baseHz*1.5]);
+  assert.deepEqual(await sessionFrequencies(page),[selected.config.baseHz,selected.config.baseHz*1.5]);
   assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});await page.getByRole('combobox',{name:'Después personal Energía',exact:true}).selectOption('1');
   await button(page,'Guardar experimento personal').click();await page.getByText('Experimentos personales guardados (1)',{exact:true}).waitFor();
   const data=await storage(page),[saved]=JSON.parse(data[PERSONAL_KEY]);assert.equal(data[DISCOVERY_KEY],raw);assert.deepEqual(Object.keys(data).sort(),[DISCOVERY_KEY,PERSONAL_KEY].sort());
@@ -662,7 +669,7 @@ test('HIP guided explanation displays exact versioned HCI without changing propo
   await guide(page).getByText('¿Por qué esta sesión?',{exact:true}).click();const profile=await openStructure(guide(page));
   assert.match(await profile.innerText(),/harmonic-complexity-v1/);assert.match(await profile.innerText(),/no mide efectividad terapéutica/);assert.match(await profile.innerText(),/Miembros: 3/);
   assert.deepEqual(await downloadGuide(page),original);await noPlayback(page);
-  await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),original.proposal.schedule.steps.flatMap(s=>s.frequencies));
+  await button(page,'Confirmar y escuchar propuesta').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();assert.deepEqual(await sessionFrequencies(page),original.proposal.schedule.steps.flatMap(s=>s.frequencies));
   await button(page,'Detener audio del laboratorio').click();await clean(page);assert.deepEqual(await storage(page),{});
 });
 test('HIP Lab advanced sequence/simultaneous view updates descriptors only and retains exact audio',async t=>{
@@ -694,7 +701,7 @@ test('HIP Voice Journey explanation is optional, shows disclaimer and keeps exis
   const page=await fixture(t);await page.goto(harness.origin+'/voz');await button(page,'Entendido, continuar').click();const before=await storage(page);
   await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero enfoque profundo 5 minutos');await button(page,'Interpretar intención').click();await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar recomendación').click();
   await page.getByText('¿Por qué esta sesión?',{exact:true}).click();await page.getByText('Detalles de la recomendación',{exact:true}).click();const profile=await openStructure(page);assert.match(await profile.innerText(),/Miembros: 4/);assert.match(await profile.innerText(),/no mide efectividad terapéutica/);assert.equal((await probe(page)).contexts.length,0);
-  await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[224,336,224,336]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),before);
+  await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();assert.deepEqual(await sessionFrequencies(page),[224,336,224,336]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),before);
 });
 test('HIP saved constellation preview retains exact multiplicity, immutable source and explicit playback',async t=>{
   const {page,raw}=await savedPlaybackFixture(t,'simultaneous');await previewConstellation(page);const scope=page.getByRole('region',{name:'Confirmación de constelación guardada',exact:true});const profile=await openStructure(scope);
@@ -723,7 +730,7 @@ for(const override of [false,true])test(`Adaptive ${override?'override':'accept'
   await chooseAdaptive(page,override);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});
   await button(page,'Confirmar y reproducir exploración').click();await page.getByRole('heading',{name:'Exploración: completed · sin guardar',exact:true}).waitFor();
   await eventually(async()=>assert.ok((await probe(page)).contexts.every(c=>c.state==='closed'&&c.oscillators.every(o=>o.ended&&o.disconnected))));
-  const candidate=rows[0].candidates[override?0:1];assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[candidate.config.baseHz,candidate.config.baseHz*1.5]);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});
+  const candidate=rows[0].candidates[override?0:1];assert.deepEqual(await sessionFrequencies(page),[candidate.config.baseHz,candidate.config.baseHz*1.5]);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});
   await page.getByRole('combobox',{name:'Después exploración Energía',exact:true}).selectOption('1');await button(page,'Guardar resultado exploratorio').click();await page.getByText('Resultados exploratorios guardados (1)',{exact:true}).waitFor();
   const data=await storage(page),[saved]=JSON.parse(data[ADAPTIVE_KEY]);assert.deepEqual(Object.keys(data).sort(),[DISCOVERY_KEY,ADAPTIVE_KEY].sort());assert.equal(data[DISCOVERY_KEY],raw);assert.equal(saved.suggestionFollowed,!override);assert.equal(saved.chosenCandidateId,candidate.id);assert.equal(saved.suggestion.suggestedNextCandidateId,'candidate-1');assert.deepEqual(saved.experiment.configurationSnapshot,candidate.config);assert.deepEqual(saved.experiment.constellation.snapshot,candidate.constellation);assert.equal(saved.experiment.expectationScore,0);assert.equal(saved.experiment.preState.energy,0);assert.equal(saved.experiment.preState.focus,undefined);
   await button(page,'Generar próxima sugerencia').click();await page.getByRole('region',{name:'Por qué esta próxima sesión',exact:true}).waitFor();await page.getByText('¿Qué hemos explorado?',{exact:true}).click();assert.match(await page.getByRole('region',{name:`Cobertura ${candidate.id}`,exact:true}).innerText(),/N=11: Discovery 10 \+ exploración 1/);assert.match(await region.innerText(),/Protocolo A · N=10 · Phase 2D/);
@@ -768,7 +775,7 @@ test('3B.1 text-only guided session works with microphone unavailable and keeps 
   const page=await fixture(t);await page.addInitScript(()=>{window.__micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.__micRequests++;throw new DOMException('Microphone unavailable','NotAllowedError');};});
   await page.goto(harness.origin+'/');await page.getByRole('link',{name:'Comenzar sesión guiada',exact:true}).click();await button(page,'Entendido, continuar').click();await page.getByRole('heading',{name:'Sesión guiada',exact:true}).waitFor();await page.getByText('Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.',{exact:true}).waitFor();
   const consent=await storage(page);assert.deepEqual(Object.keys(consent),['fh:voice-consent-v1']);await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero concentrarme durante cinco minutos');await button(page,'Interpretar intención').click();await page.getByText('Cambiar interpretación',{exact:true}).click();await page.getByRole('combobox',{name:'Intensidad',exact:true}).selectOption('deep');await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar recomendación').click();assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consent);
-  await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();assert.deepEqual((await probe(page)).contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])),[224,336,224,336]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consent);await button(page,'Guardar sesión').click();await page.getByRole('status').filter({hasText:'Sesión guardada en este dispositivo.'}).waitFor();
+  await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();assert.deepEqual(await sessionFrequencies(page),[224,336,224,336]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consent);await button(page,'Guardar sesión').click();await page.getByRole('status').filter({hasText:'Sesión guardada en este dispositivo.'}).waitFor();
   const saved=await storage(page);assert.deepEqual(Object.keys(saved).sort(),['fh:voice-consent-v1','fh:voice-sessions-v1'].sort());assert.equal(saved['fh:voice-consent-v1'],consent['fh:voice-consent-v1']);const [record]=JSON.parse(saved['fh:voice-sessions-v1']);assert.equal(record.schemaVersion,1);assert.equal(record.status,'stopped');assert.equal(record.proposal.ruleVersion,'voice-rules-v2');assert.equal(record.proposal.ruleId,'voice-focus-deep');assert.deepEqual(record.proposal.harmonicConfig,{baseHz:224,uiVolume:0,mode:'sequence',ratioId:'fifth',increments:3,direction:'return',waveform:'sine',durationSeconds:300,progression:['root','fifth','root','fifth']});assert.equal(record.proposal.seedSelection.seedRegistryVersion,'seed-registry-v1');assert.equal(record.proposal.proposalIdentity.seedSelectionVersion,'seed-selection-v1');assert.equal(await page.evaluate(()=>window.__micRequests),0);
 });
 
@@ -823,5 +830,5 @@ for (const width of [390,768,1440]) test(`3B.3D OBE visual surfaces at ${width}p
   await page.goto(harness.origin+'/biblioteca');await page.getByRole('button',{name:/Tarjetas de Comando/}).click();await page.getByText('Marco OBE exploratorio',{exact:true}).waitFor();assert.equal(await page.locator('.obe-command-card').count(),21);await page.locator('.obe-command-card').first().getByRole('button').click();await page.getByText('Propósito subjetivo',{exact:true}).first().waitFor();assert.equal(await page.getByText('Por qué funciona',{exact:true}).count(),0);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   const legacy={id:'visual-obe',createdAt:1,sessionDate:'2026-09-20',focusLabel:'Focus 10',durationMinutes:30,paralysisAchieved:false,vibrations:true,separation:false,visualClarity:'partial',lookedBack:false,preEnergy:7,postEnergy:7,intention:'Explorar',notes:'Registro existente',tags:['legacy']};
   await page.evaluate(value=>localStorage.setItem('fh:obe-session-logs-v1',JSON.stringify([value])),legacy);await page.goto(harness.origin+'/diario');await page.getByRole('heading',{name:'Diario OBE',exact:true}).waitFor();await page.getByText('Focus 10',{exact:true}).waitFor();assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  await page.evaluate(()=>localStorage.setItem('fh:hemi-sync-disclaimer-accepted-v1','1'));await page.goto(harness.origin+'/generador');await page.getByRole('button',{name:/Acordes Multicapa/}).click();assert.equal((await probe(page)).contexts.length,0);await page.getByRole('button',{name:'Iniciar sesión binaural',exact:true}).click();const stop=page.getByRole('button',{name:'Detener sesión binaural',exact:true});await stop.waitFor();const box=await stop.boundingBox();assert.ok(box&&box.y>=0&&box.y+box.height<=900);await stop.click();await eventually(async()=>{const contexts=(await probe(page)).contexts;assert.ok(contexts.length>0);assert.ok(contexts.flatMap(c=>c.oscillators).every(o=>o.stops.length>0&&o.disconnected));});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.evaluate(()=>localStorage.setItem('fh:hemi-sync-disclaimer-accepted-v1','1'));await page.goto(harness.origin+'/generador');await page.getByRole('button',{name:/Acordes Multicapa/}).click();assert.equal((await probe(page)).contexts.length,0);await page.getByRole('button',{name:'Iniciar sesión binaural',exact:true}).click();const stop=page.getByRole('button',{name:'Detener sesión binaural',exact:true});await stop.waitFor();const box=await stop.boundingBox();assert.ok(box&&box.y>=0&&box.y+box.height<=900);await stop.click();await eventually(async()=>{const contexts=(await probe(page)).contexts;assert.ok(contexts.length>0);assert.ok(sessionOscillators({contexts}).every(o=>o.stops.length>0&&o.disconnected));});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
 });
