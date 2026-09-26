@@ -132,8 +132,8 @@ export default function HarmonicLab() {
     </ol>
 
     <p className={styles.labRegionLabel} id="lab-listen">Listen · Escuchar</p>
-    <section><h2>Escucha rápida</h2><p className={styles.labSectionIntro}>Para empezar, solo necesitas un punto de partida, una relación armónica, duración y volumen. Aplicar cambios no inicia audio; la reproducción empieza únicamente al confirmar.</p><fieldset disabled={playing || busy}><div className={styles.grid}>
-      <label>Punto de partida (Hz)<input aria-label="Base (Hz)" type="number" min={40} max={2000} step="any" value={config.baseHz} onChange={e => edit({ baseHz: Number(e.target.value) })} /></label>
+    <section><h2>Escucha rápida</h2><p className={styles.labSectionIntro}>Para empezar, solo necesitas un punto de partida manual, una relación armónica, duración y volumen. 220 Hz es solo el valor inicial del laboratorio; puedes cambiarlo. Aplicar cambios no inicia audio; la reproducción empieza únicamente al confirmar.</p><fieldset disabled={playing || busy}><div className={styles.grid}>
+      <label>Punto de partida manual (Hz)<input aria-label="Base (Hz)" type="number" min={40} max={2000} step="any" value={config.baseHz} onChange={e => edit({ baseHz: Number(e.target.value) })} /></label>
       <label>Relación armónica<select aria-label="Relación" value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
       <label>Forma de escucha<select aria-label="Modo" value={config.mode} onChange={e => edit({ mode: e.target.value as HarmonicConfig['mode'] })}><option value="sequence">En secuencia</option><option value="simultaneous">Juntas</option></select></label>
       <label>Duración (minutos)<input type="number" min={1} max={60} value={config.durationSeconds / 60} onChange={e => edit({ durationSeconds: Number(e.target.value) * 60 })} /></label>
