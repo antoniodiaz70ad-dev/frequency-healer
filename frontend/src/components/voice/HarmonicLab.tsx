@@ -33,6 +33,7 @@ export default function HarmonicLab() {
   const activeExperiment = useRef<{ handle: ExperimentSessionHandle; id: string } | null>(null);
   const [engine] = useState(() => new HarmonicEngine());
   const [config, setConfig] = useState(initial); const [confirmed, setConfirmed] = useState(false);
+  const [labView, setLabView] = useState<'basic' | 'advanced'>('basic');
   const [playing, setPlaying] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(playing));
   let schedule; let invalid = '';
@@ -108,33 +109,69 @@ export default function HarmonicLab() {
       if (run === previewRun.current && expected === currentConfig.current && !startPending.current && !engine.isPlaying()) setConstellationPlan(plan);
     } catch (e) { if (run === previewRun.current) setPreviewError((e as Error).message); }
   };
-  return <FHPageShell width="wide"><div className={`${styles.workspace} ${styles.lab}`}><FHPageHeader eyebrow="Relaciones exactas · motor aislado" title="Laboratorio Armónico" description="Construye, escucha y comprende una estructura acústica. Las relaciones matemáticas no demuestran efectos médicos." /><p className={styles.labRegionLabel}>Build · Construir</p><GuidedRecommendation active={playing || busy} onConfirm={(value, consent) => startPlayback(undefined, value, consent)} onStop={stopPlayback}/><section><h2>Diseño manual</h2><fieldset disabled={playing || busy}><div className={styles.grid}>
-    <label>Base (Hz)<input type="number" min={40} max={2000} step="any" value={config.baseHz} onChange={e => edit({ baseHz: Number(e.target.value) })} /></label>
-    <label>Relación<select value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
-    <label>Modo<select value={config.mode} onChange={e => edit({ mode: e.target.value as HarmonicConfig['mode'] })}><option value="sequence">Secuencia</option><option value="simultaneous">Simultáneo</option></select></label>
-    <label>Duración (minutos)<input type="number" min={1} max={60} value={config.durationSeconds / 60} onChange={e => edit({ durationSeconds: Number(e.target.value) * 60 })} /></label>
-    <label>Volumen (0–100)<input type="number" min={0} max={100} value={config.uiVolume} onChange={e => edit({ uiVolume: Number(e.target.value) })} /></label>
-    {config.ratioId === 'cascade-13-12' && <><label>Incrementos<input type="number" min={1} max={8} value={config.increments} onChange={e => edit({ increments: Number(e.target.value) })} /></label><label>Trayectoria<select value={config.direction} onChange={e => edit({ direction: e.target.value as HarmonicConfig['direction'] })}><option value="ascending">Ascendente</option><option value="descending">Descendente</option><option value="return">Expansión y retorno</option></select></label></>}
-  </div></fieldset></section>
-    <HarmonicExplorer config={config} playbackActive={playing || busy} onApply={async (constellation, expectedConfig) => {
-      const run = startRun.current;
-      const changed = () => currentConfig.current !== expectedConfig || startPending.current || engine.isPlaying() || run !== startRun.current;
-      if (changed()) return 'La configuración o reproducción cambió. Selecciona de nuevo con el audio detenido.';
-      const result = await inverseHarmonicConfig(constellation, expectedConfig);
-      if (changed()) return 'La configuración o reproducción cambió durante la validación. No se aplicó la propuesta.';
-      if (result.status !== 'supported') return result.reason;
-      edit(result.config);
-      return null;
-    }} onApplyOctave={(offset, expectedConfig) => {
-      if (currentConfig.current !== expectedConfig || startPending.current || engine.isPlaying()) return 'La configuración o reproducción cambió. Selecciona de nuevo con el audio detenido.';
-      const result = proposeOctaveApply(offset, expectedConfig);
-      if (result.status !== 'supported') return result.reason;
-      edit({ baseHz: result.config.baseHz });
-      return null;
-    }} />
-    <ConstellationBuilder context={config} playbackActive={playing || busy} onPreviewPlayback={record => void previewPlayback(record)} />
-    <p className={styles.labRegionLabel}>Listen · Escuchar</p>
-    {schedule && <HarmonicStructure config={config} schedule={schedule} />}
+  return <FHPageShell width="wide"><div className={`${styles.workspace} ${styles.lab}`}><FHPageHeader eyebrow="Relaciones exactas · motor aislado" title="Laboratorio Armónico" description="Escucha relaciones, construye grupos de frecuencias y registra observaciones personales sin promesas médicas." />
+    <section className={styles.labOrientation} aria-labelledby="lab-start-title">
+      <div>
+        <p className={styles.labRegionLabel}>Elige tu camino</p>
+        <h2 id="lab-start-title">¿Qué quieres hacer en el laboratorio?</h2>
+        <p>Empieza con una escucha simple. Abre las herramientas avanzadas solo cuando quieras explorar relaciones, constelaciones o evidencia personal.</p>
+      </div>
+      <div className={styles.labModeCards}>
+        <a className="action" href="#lab-listen"><strong>Escuchar una relación</strong><span>Frecuencia base, relación, duración y volumen.</span></a>
+        <a className="action" href="#lab-build"><strong>Explorar o construir</strong><span>Relaciones, octavas y constelaciones guardables.</span></a>
+        <a className="action" href="#lab-record"><strong>Registrar experimento</strong><span>Antes/después, reflexión e historial.</span></a>
+      </div>
+      <div className={styles.labViewToggle} role="group" aria-label="Nivel de detalle del laboratorio">
+        <button type="button" className={labView === 'basic' ? styles.primary : undefined} aria-pressed={labView === 'basic'} onClick={() => setLabView('basic')}>Vista básica</button>
+        <button type="button" className={labView === 'advanced' ? styles.primary : undefined} aria-pressed={labView === 'advanced'} onClick={() => setLabView('advanced')}>Vista avanzada</button>
+      </div>
+    </section>
+
+    <ol className={styles.labFlow} aria-label="Flujo recomendado del laboratorio">
+      <li>Configura</li><li>Revisa</li><li>Confirma</li><li>Escucha</li><li>Guarda si quieres</li>
+    </ol>
+
+    <p className={styles.labRegionLabel} id="lab-listen">Listen · Escuchar</p>
+    <section><h2>Escucha rápida</h2><p className={styles.labSectionIntro}>Para empezar, solo necesitas un punto de partida manual, una relación armónica, duración y volumen. 220 Hz es solo el valor inicial del laboratorio; puedes cambiarlo. Aplicar cambios no inicia audio; la reproducción empieza únicamente al confirmar.</p><fieldset disabled={playing || busy}><div className={styles.grid}>
+      <label>Punto de partida manual (Hz)<input aria-label="Base (Hz)" type="number" min={40} max={2000} step="any" value={config.baseHz} onChange={e => edit({ baseHz: Number(e.target.value) })} /></label>
+      <label>Relación armónica<select aria-label="Relación" value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
+      <label>Forma de escucha<select aria-label="Modo" value={config.mode} onChange={e => edit({ mode: e.target.value as HarmonicConfig['mode'] })}><option value="sequence">En secuencia</option><option value="simultaneous">Juntas</option></select></label>
+      <label>Duración (minutos)<input type="number" min={1} max={60} value={config.durationSeconds / 60} onChange={e => edit({ durationSeconds: Number(e.target.value) * 60 })} /></label>
+      <label>Volumen (0–100)<input type="number" min={0} max={100} value={config.uiVolume} onChange={e => edit({ uiVolume: Number(e.target.value) })} /></label>
+      {(labView === 'advanced' || config.ratioId === 'cascade-13-12') && config.ratioId === 'cascade-13-12' && <><label>Incrementos<input type="number" min={1} max={8} value={config.increments} onChange={e => edit({ increments: Number(e.target.value) })} /></label><label>Trayectoria<select value={config.direction} onChange={e => edit({ direction: e.target.value as HarmonicConfig['direction'] })}><option value="ascending">Ascendente</option><option value="descending">Descendente</option><option value="return">Expansión y retorno</option></select></label></>}
+    </div></fieldset></section>
+
+    {schedule && <section><h2>Revisar antes de escuchar</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Mantén la pantalla abierta si tu navegador suspende audio al bloquear el equipo.</p>
+      {config.ratioId === 'cascade-13-12' && <label className={styles.check}><input type="checkbox" disabled={playing || busy} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Acepto la exploración experimental 13/12, sin promesas de resultados.</label>}
+      <button className={styles.primary} disabled={playing || busy || (config.ratioId === 'cascade-13-12' && !confirmed)} onClick={async () => { await startPlayback(); }}>Confirmar e iniciar</button>
+    </section>}
+    {(playing || busy) && <button className={styles.stop} onClick={stopPlayback}>Detener sesión</button>}
+    <p role="status">{playing ? 'Audio en curso' : busy ? 'Preparando audio…' : 'Audio detenido'}</p>{wakeLockMessage && <p className={styles.muted}>{wakeLockMessage}</p>}
+    {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}
+
+    <p className={styles.labRegionLabel} id="lab-build">Build · Explorar y construir</p>
+    {labView === 'basic' && <section><h2>Herramientas avanzadas plegadas</h2><p>La vista básica mantiene el camino principal arriba. Las herramientas avanzadas siguen disponibles abajo como paneles plegables.</p><button type="button" onClick={() => setLabView('advanced')}>Abrir vista avanzada</button></section>}
+    <div className={styles.labAdvancedStack}>
+      <GuidedRecommendation active={playing || busy} onConfirm={(value, consent) => startPlayback(undefined, value, consent)} onStop={stopPlayback}/>
+      <details open={labView === 'advanced'}><summary>Explorador armónico · explorar y aplicar</summary><p className={styles.labSectionIntro}>Usa esta zona para comparar relaciones y octavas. Seleccionar no cambia nada; aplicar solo actualiza los controles de escucha rápida.</p><HarmonicExplorer config={config} playbackActive={playing || busy} onApply={async (constellation, expectedConfig) => {
+        const run = startRun.current;
+        const changed = () => currentConfig.current !== expectedConfig || startPending.current || engine.isPlaying() || run !== startRun.current;
+        if (changed()) return 'La configuración o reproducción cambió. Selecciona de nuevo con el audio detenido.';
+        const result = await inverseHarmonicConfig(constellation, expectedConfig);
+        if (changed()) return 'La configuración o reproducción cambió durante la validación. No se aplicó la propuesta.';
+        if (result.status !== 'supported') return result.reason;
+        edit(result.config);
+        return null;
+      }} onApplyOctave={(offset, expectedConfig) => {
+        if (currentConfig.current !== expectedConfig || startPending.current || engine.isPlaying()) return 'La configuración o reproducción cambió. Selecciona de nuevo con el audio detenido.';
+        const result = proposeOctaveApply(offset, expectedConfig);
+        if (result.status !== 'supported') return result.reason;
+        edit({ baseHz: result.config.baseHz });
+        return null;
+      }} /></details>
+      <ConstellationBuilder context={config} playbackActive={playing || busy} onPreviewPlayback={record => void previewPlayback(record)} />
+    </div>
+
     {previewError && <p role="alert">{previewError}</p>}
     {constellationPlan && <section aria-label="Confirmación de constelación guardada"><h2>Reproducción de constelación guardada</h2>
       <pre>{constellationPlan.constellation.name || constellationPlan.constellation.id}{'\n'}{constellationPlan.constellation.signature}</pre>
@@ -146,20 +183,14 @@ export default function HarmonicLab() {
       <button className={styles.primary} disabled={playing || busy} onClick={() => void startPlayback(constellationPlan)}>Confirmar y reproducir constelación</button>
       <button disabled={playing || busy} onClick={() => { ++previewRun.current; setConstellationPlan(null); }}>Cerrar vista previa de reproducción</button>
     </section>}
-    <p className={styles.labRegionLabel}>Understand · Comprender</p>
-    <StructureProfile config={config} label="Complejidad estructural · avanzado"/>
-    <PersonalizedAdvisor active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
-    <ProtocolDiscovery active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
-    <ExperimentSession ref={experiment} playbackActive={playing || busy} />
-    {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}
-    {schedule && <section><h2>Propuesta visible</h2><SessionPlan config={config} schedule={schedule} /><p>Comienza con volumen cómodo. No conduzcas ni manejes maquinaria. Mantén la pantalla abierta si tu navegador suspende audio al bloquear el equipo.</p>
-      {config.ratioId === 'cascade-13-12' && <label className={styles.check}><input type="checkbox" disabled={playing || busy} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Acepto la exploración experimental 13/12, sin promesas de resultados.</label>}
-      <button className={styles.primary} disabled={playing || busy || (config.ratioId === 'cascade-13-12' && !confirmed)} onClick={async () => {
-        await startPlayback();
-      }}>Confirmar e iniciar</button>
 
-    </section>}
-      {(playing || busy) && <button className={styles.stop} onClick={stopPlayback}>Detener sesión</button>}
-      <p role="status">{playing ? 'Audio en curso' : busy ? 'Preparando audio…' : 'Audio detenido'}</p>{wakeLockMessage && <p className={styles.muted}>{wakeLockMessage}</p>}
+    <p className={styles.labRegionLabel} id="lab-record">Record · Registrar y analizar</p>
+    <ExperimentSession ref={experiment} playbackActive={playing || busy} />
+    <div className={styles.labAdvancedStack}>
+      {schedule && <details open={labView === 'advanced'}><summary>Estructura visible de la sesión</summary><HarmonicStructure config={config} schedule={schedule} /></details>}
+      <details open={labView === 'advanced'}><summary>Complejidad estructural · avanzado</summary><StructureProfile config={config} label="Complejidad estructural · avanzado"/></details>
+      <PersonalizedAdvisor active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
+      <ProtocolDiscovery active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
+    </div>
   </div></FHPageShell>;
 }
