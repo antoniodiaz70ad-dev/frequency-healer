@@ -74,3 +74,8 @@
 .labAdvancedStack > details { padding: 1rem 1.25rem; border: 1px solid var(--fh-border); border-radius: var(--fh-radius-surface); background: color-mix(in srgb, var(--fh-surface) 88%, transparent); }
 .labAdvancedStack summary { min-height: 44px; cursor: pointer; color: var(--fh-text); font-weight: 600; }
 @media (max-width: 48rem) { .labFlow { grid-template-columns: 1fr; } .labViewToggle button, .labModeCards a { width: 100%; } }
+
+.seedSuggestions { display: grid; gap: .65rem; margin: 1rem 0; padding: 1rem; border: 1px solid var(--fh-border); border-radius: var(--fh-radius-control); background: var(--fh-bg-raised); }
+.seedSuggestions p { margin: 0; }
+.seedSuggestions > div { display: flex; flex-wrap: wrap; gap: .5rem; }
+.seedSuggestions button { margin: 0 !important; }
