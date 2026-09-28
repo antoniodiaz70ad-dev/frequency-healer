@@ -407,7 +407,12 @@ async function savedPlaybackFixture(t, playbackMode='sequence', unsupported) {
   const raw=(await storage(page))[CONSTELLATION_KEY];await page.reload();await field(page,'Duración (minutos)').fill('1');await field(page,'Volumen (0–100)').fill('0');await openBuilder(page);
   return {page,raw};
 }
-async function previewConstellation(page){await button(page,'Preparar reproducción de Playback fixture').click();await page.getByRole('region',{name:'Confirmación de constelación guardada',exact:true}).waitFor();}
+async function previewConstellation(page){
+  await button(page,'Preparar reproducción de Playback fixture').click();
+  await page.getByRole('region',{name:'Confirmación de constelación guardada',exact:true}).waitFor();
+  assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('aria-label')),'Resultado de preparación de constelación');
+  await page.getByText('Preparación terminada. Revisa la confirmación mostrada a continuación.',{exact:true}).waitFor();
+}
 async function startConstellation(page){await button(page,'Confirmar y reproducir constelación').click();await page.getByRole('status').filter({hasText:/^Audio en curso$/}).waitFor();}
 for(const playbackMode of ['sequence','simultaneous'])test(`saved constellation ${playbackMode}: load and preview silent, confirmation exact voices, stop and snapshot`,async t=>{
   const {page,raw}=await savedPlaybackFixture(t,playbackMode);const before=await controls(page);

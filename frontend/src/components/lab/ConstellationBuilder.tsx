@@ -12,13 +12,14 @@ function exportJSON(value: string, name: string) {
   const url=URL.createObjectURL(new Blob([value],{type:'application/json'}));
   const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-interface BuilderProps { context: HarmonicConfig; playbackActive?: boolean; onPreviewPlayback?(record: HarmonicConstellationV1): void }
+interface BuilderProps { context: HarmonicConfig; playbackActive?: boolean; onPreviewPlayback?(record: HarmonicConstellationV1): void | Promise<void> }
 function Builder({ context, playbackActive, onPreviewPlayback }: BuilderProps) {
   const [draft,setDraft]=useState(newDraft);
   const [ratio,setRatio]=useState('3:2'),[offset,setOffset]=useState('1');
   const [settled,setSettled]=useState<{source:ConstellationInputV1;context:HarmonicConfig;value?:HarmonicConstellationV1;playability?:BuilderPlayability;error?:string}>();
   const [history,setHistory]=useState<HarmonicConstellationV1[]>([]),[storageError,setStorageError]=useState('');
   const [notice,setNotice]=useState(''),[saved,setSaved]=useState(false),[saving,setSaving]=useState(false);
+  const [previewing,setPreviewing]=useState<string|null>(null);
   const savingRef=useRef(false),historyRun=useRef(0),mounted=useRef(false);
   useEffect(()=>{
     mounted.current=true;let active=true;
@@ -77,9 +78,13 @@ function Builder({ context, playbackActive, onPreviewPlayback }: BuilderProps) {
     {notice&&<p role="status">{notice}</p>}
     {storageError&&<div role="alert"><p>{storageError}</p><button type="button" onClick={()=>{try{exportJSON(localStorage.getItem(CONSTELLATIONS_KEY)??'null','constelaciones-original.json');}catch(e){setStorageError((e as Error).message);}}}>Exportar almacenamiento original de constelaciones</button></div>}
     <h3>Constelaciones guardadas ({history.length})</h3>
-    <ul>{history.map(row=><li key={row.id}><button type="button" disabled={saving} aria-label={`Cargar constelación ${row.name||row.id}`} onClick={()=>{
+    <ul>{history.map(row=><li key={row.id}><button type="button" disabled={saving||previewing!==null} aria-label={`Cargar constelación ${row.name||row.id}`} onClick={()=>{
       setDraft({id:row.id,...(row.name===undefined?{}:{name:row.name}),seedFrequencyHz:row.seedFrequencyHz,playbackMode:row.playbackMode,members:row.members.map(member=>{const {frequencyHz,...definition}=member;void frequencyHz;return definition;})});setSaved(true);setNotice('Constelación cargada en modo de lectura.');
-    }}>{row.name||'Sin nombre'} · {row.seedFrequencyHz} Hz · Cargar</button>{onPreviewPlayback&&<button type="button" disabled={saving||playbackActive} aria-label={`Preparar reproducción de ${row.name||row.id}`} onClick={()=>onPreviewPlayback(row)}>Preparar reproducción</button>}</li>)}</ul>
+    }}>{row.name||'Sin nombre'} · {row.seedFrequencyHz} Hz · Cargar</button>{onPreviewPlayback&&<button type="button" disabled={saving||playbackActive||previewing!==null} aria-label={`Preparar reproducción de ${row.name||row.id}`} onClick={async()=>{
+      if(previewing!==null)return;setPreviewing(row.id);setNotice('Preparando vista previa de reproducción…');
+      try{await onPreviewPlayback(row);if(mounted.current)setNotice('Preparación terminada. Revisa la confirmación mostrada a continuación.');}
+      finally{if(mounted.current)setPreviewing(null);}
+    }}>{previewing===row.id?'Preparando reproducción…':'Preparar reproducción'}</button>}</li>)}</ul>
   </div>;
 }
 export default function ConstellationBuilder(props: BuilderProps) {
