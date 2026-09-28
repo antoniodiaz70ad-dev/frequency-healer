@@ -24,6 +24,7 @@ import { playbackWakeLockMessage, usePlaybackWakeLock } from '@/lib/playbackLife
 const initial: HarmonicConfig = { baseHz: 220, ratioId: 'fifth', increments: 3, direction: 'ascending', mode: 'sequence', durationSeconds: 300, uiVolume: 20, waveform: 'sine' };
 export default function HarmonicLab() {
   const previewRun = useRef(0);
+  const previewFeedback = useRef<HTMLDivElement>(null);
   const [constellationPlan, setConstellationPlan] = useState<ConstellationPlaybackPlan | null>(null);
   const [previewError, setPreviewError] = useState('');
   const startRun = useRef(0); const startPending = useRef(false);
@@ -36,6 +37,11 @@ export default function HarmonicLab() {
   const [labView, setLabView] = useState<'basic' | 'advanced'>('basic');
   const [playing, setPlaying] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(playing));
+  useEffect(()=>{
+    if(!constellationPlan&&!previewError)return;
+    const frame=requestAnimationFrame(()=>{previewFeedback.current?.focus();previewFeedback.current?.scrollIntoView({behavior:'smooth',block:'start'});});
+    return()=>cancelAnimationFrame(frame);
+  },[constellationPlan,previewError]);
   let schedule; let invalid = '';
   try { schedule = buildSchedule(config); } catch (e) { invalid = (e as Error).message; }
   useEffect(() => {
@@ -171,9 +177,10 @@ export default function HarmonicLab() {
         edit({ baseHz: result.config.baseHz });
         return null;
       }} /></details>
-      <ConstellationBuilder context={config} playbackActive={playing || busy} onPreviewPlayback={record => void previewPlayback(record)} />
+      <ConstellationBuilder context={config} playbackActive={playing || busy} onPreviewPlayback={previewPlayback} />
     </div>}
 
+    {(previewError||constellationPlan)&&<div ref={previewFeedback} tabIndex={-1} aria-label="Resultado de preparación de constelación">
     {previewError && <p role="alert">{previewError}</p>}
     {constellationPlan && <section aria-label="Confirmación de constelación guardada"><h2>Reproducción de constelación guardada</h2>
       <pre>{constellationPlan.constellation.name || constellationPlan.constellation.id}{'\n'}{constellationPlan.constellation.signature}</pre>
@@ -185,6 +192,7 @@ export default function HarmonicLab() {
       <button className={styles.primary} disabled={playing || busy} onClick={() => void startPlayback(constellationPlan)}>Confirmar y reproducir constelación</button>
       <button disabled={playing || busy} onClick={() => { ++previewRun.current; setConstellationPlan(null); }}>Cerrar vista previa de reproducción</button>
     </section>}
+    </div>}
 
     <p className={styles.labRegionLabel} id="lab-record">Record · Registrar y analizar</p>
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
