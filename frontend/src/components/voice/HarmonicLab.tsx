@@ -153,7 +153,7 @@ export default function HarmonicLab() {
 
     <p className={styles.labRegionLabel} id="lab-build">Build · Explorar y construir</p>
     {labView === 'basic' && <section><h2>Herramientas avanzadas plegadas</h2><p>La vista básica mantiene el camino principal arriba. Las herramientas avanzadas siguen disponibles abajo como paneles plegables.</p><button type="button" onClick={() => setLabView('advanced')}>Abrir vista avanzada</button></section>}
-    <div className={styles.labAdvancedStack}>
+    {labView === 'advanced' && <div className={styles.labAdvancedStack}>
       <GuidedRecommendation active={playing || busy} onConfirm={(value, consent) => startPlayback(undefined, value, consent)} onStop={stopPlayback}/>
       <details open={labView === 'advanced'}><summary>Explorador armónico · explorar y aplicar</summary><p className={styles.labSectionIntro}>Usa esta zona para comparar relaciones y octavas. Seleccionar no cambia nada; aplicar solo actualiza los controles de escucha rápida.</p><HarmonicExplorer config={config} playbackActive={playing || busy} onApply={async (constellation, expectedConfig) => {
         const run = startRun.current;
@@ -172,7 +172,7 @@ export default function HarmonicLab() {
         return null;
       }} /></details>
       <ConstellationBuilder context={config} playbackActive={playing || busy} onPreviewPlayback={record => void previewPlayback(record)} />
-    </div>
+    </div>}
 
     {previewError && <p role="alert">{previewError}</p>}
     {constellationPlan && <section aria-label="Confirmación de constelación guardada"><h2>Reproducción de constelación guardada</h2>
@@ -188,11 +188,11 @@ export default function HarmonicLab() {
 
     <p className={styles.labRegionLabel} id="lab-record">Record · Registrar y analizar</p>
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
-    <div className={styles.labAdvancedStack}>
+    {labView === 'advanced' && <div className={styles.labAdvancedStack}>
       {schedule && <details open={labView === 'advanced'}><summary>Estructura visible de la sesión</summary><HarmonicStructure config={config} schedule={schedule} /></details>}
       <details open={labView === 'advanced'}><summary>Complejidad estructural · avanzado</summary><StructureProfile config={config} label="Complejidad estructural · avanzado"/></details>
       <PersonalizedAdvisor active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
       <ProtocolDiscovery active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
-    </div>
+    </div>}
   </div></FHPageShell>;
 }

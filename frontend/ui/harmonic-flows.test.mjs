@@ -47,8 +47,13 @@ async function controls(page) {
     mode: await mode(page).inputValue(), durationSeconds: Number(await field(page,'Duración (minutos)').inputValue()) * 60,
     uiVolume: Number(await field(page,'Volumen (0–100)').inputValue()) };
 }
+async function advanced(page) {
+  const toggle = button(page, 'Vista avanzada');
+  if (await toggle.count() && await toggle.getAttribute('aria-pressed') === 'false') await toggle.click();
+}
 async function open(page) {
-  await page.getByText('Explorador armónico · explorar y aplicar', { exact: true }).click();
+  await advanced(page);
+  await page.getByText('Explorador armónico · explorar y aplicar', { exact: true }).last().click();
   await page.getByRole('table', { name: 'Ratios exploratorios · disponibilidad V1', exact: true }).waitFor();
 }
 
@@ -315,6 +320,7 @@ for (const payload of ['{broken json', JSON.stringify([{...readerRecord(),schema
 
 const CONSTELLATION_KEY='fh:harmonic-constellations-v1';
 async function openBuilder(page) {
+  await advanced(page);
   await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).click();
   await page.getByRole('spinbutton',{name:'Semilla del Builder (Hz)',exact:true}).waitFor();
 }
@@ -446,7 +452,7 @@ test('saved constellation natural end: completed only after native end, no autos
 });
 
 const guide=page=>page.getByRole('region',{name:'Guía por intención',exact:true});
-async function interpretGuide(page,words){await page.getByRole('textbox',{name:'Tu intención de exploración',exact:true}).fill(words);await button(page,'Interpretar intención').click();await page.getByRole('combobox',{name:'Objetivo interpretado',exact:true}).waitFor();}
+async function interpretGuide(page,words){await advanced(page);await page.getByRole('textbox',{name:'Tu intención de exploración',exact:true}).fill(words);await button(page,'Interpretar intención').click();await page.getByRole('combobox',{name:'Objetivo interpretado',exact:true}).waitFor();}
 async function recommendGuide(page){await button(page,'Revisé mi intención · generar recomendación').click();await button(page,'Confirmar y escuchar propuesta').waitFor();}
 for(const [words,goal] of [['Quiero calma','relaxation'],['Necesito concentrarme','focus'],['Quiero dormir mejor','sleep_preparation'],['Quiero recuperarme después de una reunión','relaxation'],['Quiero sentirme más centrado','relaxation'],['Quiero creatividad','creative_exploration'],['Quiero meditar','reflection'],['quiero evitar drenaje energético','relaxation']])test(`guided ${goal}: ${words}; interpretation, rule, provenance, no autoplay`,async t=>{
   const page=await fixture(t);await interpretGuide(page,words);assert.equal(await page.getByRole('combobox',{name:'Objetivo interpretado',exact:true}).inputValue(),goal);await noPlayback(page);
@@ -540,7 +546,7 @@ test('2B unknown intention requires human review; Voice medical text creates no 
 });
 
 const DISCOVERY_KEY='fh:protocol-discovery-plans-v1';
-async function openDiscovery(page){await page.getByText('Protocol Discovery · comparación personal',{exact:true}).click();}
+async function openDiscovery(page){await advanced(page);await page.getByText('Protocol Discovery · comparación personal',{exact:true}).click();}
 async function draftDiscovery(page){
   await openDiscovery(page);await page.getByRole('textbox',{name:'Intención Discovery',exact:true}).fill('Quiero recuperarme 5 minutos');await button(page,'Interpretar intención Discovery').click();
   await page.getByRole('textbox',{name:'Semillas elegidas (2–3 Hz separados por coma)',exact:true}).fill('144,220');await field(page,'Volumen Discovery').fill('0');await field(page,'Asignaciones por candidato').fill('3');
@@ -593,6 +599,7 @@ async function personalFixtureUI(t,adjust){
   const rows=JSON.parse(await readFile(new URL('./fixtures/personalization-discovery-v1.json',import.meta.url),'utf8'));
   if(adjust)adjust(rows[0]);const raw=JSON.stringify(rows),page=await fixture(t);
   await page.evaluate(({key,raw})=>localStorage.setItem(key,raw),{key:DISCOVERY_KEY,raw});await page.reload();
+  await advanced(page);
   await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();
   await page.getByRole('combobox',{name:'Intención registrada',exact:true}).selectOption(rows[0].id);
   await button(page,'Generar recomendaciones personales').click();await page.getByRole('region',{name:'Ranking personal',exact:true}).waitFor();
@@ -625,7 +632,7 @@ for(const [label,id] of [['B','candidate-1'],['A','candidate-0']])test(`Personal
   assert.equal(saved.selectedCandidateId,id);assert.deepEqual(saved.experiment.configurationSnapshot,selected.config);assert.deepEqual(saved.experiment.constellation.snapshot,selected.constellation);
   assert.equal(saved.experiment.expectationScore,0);assert.equal(saved.experiment.preState.energy,0);assert.equal(saved.experiment.preState.focus,undefined);assert.equal(saved.experiment.status,label==='B'?'completed':'cancelled');
   assert.deepEqual(saved.recommendation.sourcePlans,rows);assert.equal(saved.recommendation.recommendations[0].provenance.length,10);
-  await page.reload();await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();await page.getByText('Experimentos personales guardados (1)',{exact:true}).click();
+  await page.reload();await advanced(page);await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();await page.getByText('Experimentos personales guardados (1)',{exact:true}).click();
   const pending=page.waitForEvent('download');await button(page,`Exportar experimento personal ${saved.experiment.id}`).click();const stream=await(await pending).createReadStream();let text='';for await(const chunk of stream)text+=chunk;assert.deepEqual(JSON.parse(text),saved);
   assert.deepEqual((await probe(page)).writes,[]);assert.equal((await probe(page)).contexts.length,0);
 });
@@ -647,7 +654,7 @@ test('Personalization navigation interrupts native audio without completed state
   await page.getByRole('link',{name:'Inicio',exact:true}).click();await clean(page);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});assert.deepEqual((await probe(page)).writes,[]);
 });
 test('Personalization corrupt source cannot become no-evidence fallback or overwrite',async t=>{
-  const page=await fixture(t);await page.evaluate(key=>localStorage.setItem(key,'{bad'),DISCOVERY_KEY);await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();
+  const page=await fixture(t);await page.evaluate(key=>localStorage.setItem(key,'{bad'),DISCOVERY_KEY);await advanced(page);await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();
   const region=page.getByRole('region',{name:'Asesor personalizado',exact:true});await region.getByRole('alert').waitFor();assert.equal(await button(page,'Generar recomendaciones personales').count(),0);assert.equal((await storage(page))[DISCOVERY_KEY],'{bad');assert.equal((await probe(page)).contexts.length,0);
 });
 test('Personalization Web Crypto race rejects newly changed evidence before engine access',async t=>{
@@ -673,7 +680,7 @@ test('HIP guided explanation displays exact versioned HCI without changing propo
   await button(page,'Detener audio del laboratorio').click();await clean(page);assert.deepEqual(await storage(page),{});
 });
 test('HIP Lab advanced sequence/simultaneous view updates descriptors only and retains exact audio',async t=>{
-  const page=await fixture(t);const initial=await controls(page);await page.getByText('Complejidad estructural · avanzado',{exact:true}).click();
+  const page=await fixture(t);const initial=await controls(page);await advanced(page);await page.getByText('Complejidad estructural · avanzado',{exact:true}).click();
   const profile=page.getByRole('region',{name:'Complejidad estructural · avanzado',exact:true});await eventually(async()=>assert.match(await profile.innerText(),/HCI: [0-9]/));
   assert.match(await profile.innerText(),/Miembros: 2/);assert.match(await profile.innerText(),/Amplitud espectral: 216 Hz/);assert.deepEqual(await controls(page),initial);await noPlayback(page);
   await mode(page).selectOption('simultaneous');await eventually(async()=>assert.match(await profile.innerText(),/Orden significativo: no/));assert.match(await profile.innerText(),/orden 0/);await noPlayback(page);
@@ -709,7 +716,7 @@ test('HIP saved constellation preview retains exact multiplicity, immutable sour
   await startConstellation(page);await stop(page);assert.deepEqual(await storage(page),{[CONSTELLATION_KEY]:raw});
 });
 test('HIP invalid manual input hides the old profile, never corrects values or starts audio',async t=>{
-  const page=await fixture(t);await page.getByText('Complejidad estructural · avanzado',{exact:true}).click();const profile=page.getByRole('region',{name:'Complejidad estructural · avanzado',exact:true});await eventually(async()=>assert.match(await profile.innerText(),/HCI: [0-9]/));
+  const page=await fixture(t);await advanced(page);await page.getByText('Complejidad estructural · avanzado',{exact:true}).click();const profile=page.getByRole('region',{name:'Complejidad estructural · avanzado',exact:true});await eventually(async()=>assert.match(await profile.innerText(),/HCI: [0-9]/));
   await field(page,'Base (Hz)').fill('0');await eventually(async()=>assert.match(await profile.innerText(),/Perfil no disponible/));assert.doesNotMatch(await profile.innerText(),/HCI: [0-9]/);assert.equal(await field(page,'Base (Hz)').inputValue(),'0');assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),{});
 });
 
@@ -717,6 +724,7 @@ const ADAPTIVE_KEY='fh:adaptive-experiments-v1';
 async function adaptiveFixtureUI(t,adjust){
   const {readFile}=await import('node:fs/promises');const rows=JSON.parse(await readFile(new URL('./fixtures/adaptive-discovery-v1.json',import.meta.url),'utf8'));if(adjust)adjust(rows);
   const page=await fixture(t),raw=JSON.stringify(rows);await page.evaluate(({raw,key})=>localStorage.setItem(key,raw),{raw,key:DISCOVERY_KEY});await page.reload();
+  await advanced(page);
   await page.getByText('Personalización · evidencia personal',{exact:true}).click();await button(page,'Cargar evidencia personal').click();await page.getByRole('combobox',{name:'Intención registrada',exact:true}).selectOption(rows[0].id);await button(page,'Generar recomendaciones personales').click();
   await page.getByText('Próxima sesión informativa · exploración opcional',{exact:true}).click();await button(page,'Generar próxima sugerencia').click();await page.getByRole('region',{name:'Por qué esta próxima sesión',exact:true}).waitFor();return {page,rows,raw};
 }
@@ -769,7 +777,13 @@ for (const mobile of [false,true]) test(`3B.1 ${mobile?'mobile':'desktop'}: guid
   await nav.getByRole('link',{name:'Sesión guiada',exact:true}).click();await page.waitForURL(harness.origin+'/voz');await page.getByRole('heading',{name:'Sesión guiada · tu privacidad',exact:true}).waitFor();assert.match(await page.locator('main').innerText(),/Puedes completar toda la sesión escribiendo/);
   assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
   if(mobile){assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await button(page,'Menu').click();}
-  await nav.getByRole('link',{name:'Laboratorio Armónico',exact:true}).click();await page.waitForURL(harness.origin+'/laboratorio-armonico');await field(page,'Base (Hz)').waitFor();assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
+  await nav.getByRole('link',{name:'Laboratorio Armónico',exact:true}).click();await page.waitForURL(harness.origin+'/laboratorio-armonico');await field(page,'Base (Hz)').waitFor();
+  assert.equal(await page.getByRole('heading',{name:'¿Qué quieres explorar hoy?',exact:true}).count(),0);
+  assert.equal(await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).count(),0);
+  await button(page,'Vista avanzada').click();
+  await page.getByRole('heading',{name:'¿Qué quieres explorar hoy?',exact:true}).waitFor();
+  await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).waitFor();
+  assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
 });
 test('3B.1 text-only guided session works with microphone unavailable and keeps the existing proposal/storage contract',async t=>{
   const page=await fixture(t);await page.addInitScript(()=>{window.__micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.__micRequests++;throw new DOMException('Microphone unavailable','NotAllowedError');};});

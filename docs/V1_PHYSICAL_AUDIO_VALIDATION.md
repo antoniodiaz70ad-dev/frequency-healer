@@ -1,14 +1,14 @@
 # Frequency Healer V1 — physical audio validation
 
-## RC1 manual release gate update — 2026-09-21
+## V1 production closeout update — 2026-09-27
 
 Status: **PASS — manual release gate phase complete**
 
-Branch: `codex/voice-journey-grant`
+Production branch: `main`
 
-Final product candidate SHA: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`
+Audited production baseline SHA: `8ec1361a409908494185635951465d6df2580387`
 
-Preview URL: https://frequency-healer-git-codex-voice-journey-grant-leviathan1.vercel.app
+Canonical production URL: https://frequency-healer.vercel.app
 
 Manual validations recorded by owner as PASS:
 
@@ -34,7 +34,8 @@ Blockers:
 Notes preserved for beta monitoring:
 
 - Prior macOS/CoreAudio close behavior should continue to be watched during beta/manual physical testing.
-- Old preview URLs or cached browsers may still show earlier UI; testers should use the approved preview URL or production URL after promotion.
+- Old preview URLs may still show earlier UI; testers should use only the canonical production URL for final validation.
+- iOS may suspend browser audio when the screen is locked. Keep the session page visible; this remains a documented platform limitation rather than a certified background-audio capability.
 
 This update supersedes earlier NOT TESTED entries for mobile unified export, iPhone, Android and stereo headphones / binaural physical listening. Historical observations below are retained for traceability.
 

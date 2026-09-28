@@ -1,6 +1,20 @@
 # Frequency Healer — V1 Release Candidate Checklist
 
-RC status: **READY FOR OWNER APPROVAL**
+RC status: **V1 IN PRODUCTION — FINAL CLOSEOUT AUDITED**
+
+## Production closeout — 2026-09-27
+
+- Canonical URL: https://frequency-healer.vercel.app
+- Production branch: `main`
+- Audited production baseline: `8ec1361a409908494185635951465d6df2580387`
+- Automated regression: 222/222 unit and integration tests PASS; TypeScript and ESLint PASS.
+- CI run 36261015718: Quality, Flags ON and Flags OFF PASS.
+- Supported routes `/`, `/landing`, `/voz`, `/laboratorio-armonico`, `/biblioteca`, `/protocolos`, `/generador`, `/diario` and `/sesion-nueva`: HTTP 200.
+- P0: 0. P1: 0.
+- Known limitation: iOS may suspend browser audio when the screen is locked. The interface advises keeping the session page visible.
+- Old Vercel preview URLs are historical and are not valid final-test targets.
+
+The original RC1 records below remain as historical evidence of the approval path. Where they refer to an unmerged candidate or preview, this production closeout supersedes that operational status.
 Closeout date: 2026-09-21
 Branch: `codex/voice-journey-grant`
 Tested commit SHA: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`
