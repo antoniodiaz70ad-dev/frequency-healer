@@ -48,6 +48,7 @@ async function controls(page) {
     uiVolume: Number(await field(page,'Volumen (0–100)').inputValue()) };
 }
 async function open(page) {
+  if (await button(page, 'Vista avanzada').getAttribute('aria-pressed') === 'false') await button(page, 'Vista avanzada').click();
   await page.getByText('Explorador armónico · explorar y aplicar', { exact: true }).click();
   await page.getByRole('table', { name: 'Ratios exploratorios · disponibilidad V1', exact: true }).waitFor();
 }
@@ -315,6 +316,7 @@ for (const payload of ['{broken json', JSON.stringify([{...readerRecord(),schema
 
 const CONSTELLATION_KEY='fh:harmonic-constellations-v1';
 async function openBuilder(page) {
+  if (await button(page, 'Vista avanzada').getAttribute('aria-pressed') === 'false') await button(page, 'Vista avanzada').click();
   await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).click();
   await page.getByRole('spinbutton',{name:'Semilla del Builder (Hz)',exact:true}).waitFor();
 }
@@ -769,7 +771,13 @@ for (const mobile of [false,true]) test(`3B.1 ${mobile?'mobile':'desktop'}: guid
   await nav.getByRole('link',{name:'Sesión guiada',exact:true}).click();await page.waitForURL(harness.origin+'/voz');await page.getByRole('heading',{name:'Sesión guiada · tu privacidad',exact:true}).waitFor();assert.match(await page.locator('main').innerText(),/Puedes completar toda la sesión escribiendo/);
   assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
   if(mobile){assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await button(page,'Menu').click();}
-  await nav.getByRole('link',{name:'Laboratorio Armónico',exact:true}).click();await page.waitForURL(harness.origin+'/laboratorio-armonico');await field(page,'Base (Hz)').waitFor();assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
+  await nav.getByRole('link',{name:'Laboratorio Armónico',exact:true}).click();await page.waitForURL(harness.origin+'/laboratorio-armonico');await field(page,'Base (Hz)').waitFor();
+  assert.equal(await page.getByRole('heading',{name:'¿Qué quieres explorar hoy?',exact:true}).count(),0);
+  assert.equal(await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).count(),0);
+  await button(page,'Vista avanzada').click();
+  await page.getByRole('heading',{name:'¿Qué quieres explorar hoy?',exact:true}).waitFor();
+  await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).waitFor();
+  assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
 });
 test('3B.1 text-only guided session works with microphone unavailable and keeps the existing proposal/storage contract',async t=>{
   const page=await fixture(t);await page.addInitScript(()=>{window.__micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.__micRequests++;throw new DOMException('Microphone unavailable','NotAllowedError');};});

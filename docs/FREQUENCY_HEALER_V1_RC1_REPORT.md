@@ -1,27 +1,27 @@
 # Frequency Healer — V1 RC1 Final Report
 
-Final status: **READY FOR OWNER APPROVAL**
+Final status: **V1 IN PRODUCTION — FINAL CLOSEOUT AUDITED**
 
-Report date: 2026-09-21
+Report date: 2026-09-27
 
-Branch: `codex/voice-journey-grant`
+Production branch: `main`
 
-Final product candidate SHA: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`
+Audited production baseline SHA: `8ec1361a409908494185635951465d6df2580387`
 
-Preview URL: https://frequency-healer-git-codex-voice-journey-grant-leviathan1.vercel.app
+Production URL: https://frequency-healer.vercel.app
 
-Pull request: https://github.com/antoniodiaz70ad-dev/frequency-healer/pull/5
+Historical release pull request: https://github.com/antoniodiaz70ad-dev/frequency-healer/pull/5
 
 ## Gate summary
 
 | Gate | Result | Evidence |
 | --- | --- | --- |
 | Manual release validation | PASS | Owner reported all manual release gates passed on 2026-09-21. |
-| Unit/integration tests | PASS | `npm test` recorded 214/214 passing on the release-candidate product SHA. |
+| Unit/integration tests | PASS | `npm test` recorded 222/222 passing on the audited production baseline. |
 | TypeScript | PASS | `npm run typecheck` passed. |
 | ESLint | PASS | `npm run lint` passed. |
-| CI | PASS | GitHub Actions run 35634546043: PASS — Quality, Flags ON and Flags OFF completed successfully for product candidate 43ba25b. |
-| Vercel preview | PASS | Vercel preview check: PASS — deployment check completed successfully for product candidate 43ba25b. |
+| CI | PASS | GitHub Actions run 36261015718: PASS — Quality, Flags ON and Flags OFF completed successfully for `8ec1361`. |
+| Vercel production | PASS | Production and all nine supported application routes returned HTTP 200; current Harmonic Lab content was present. |
 | P0 blockers | PASS | 0 open. |
 | P1 blockers | PASS | 0 open. |
 
@@ -47,21 +47,20 @@ Pull request: https://github.com/antoniodiaz70ad-dev/frequency-healer/pull/5
 | --- | ---: | --- |
 | P0 | 0 | No release-blocking failure recorded. |
 | P1 | 0 | No closed-beta blocker recorded. |
-| P2 | 0 | No known major non-blocking defect recorded at RC1 closeout. |
-| P3 | 2 | Stale preview URLs/browser caches can confuse validation; prior macOS/CoreAudio close behavior should be watched during beta/manual physical testing. |
+| P2 | 1 | iOS may suspend browser audio after screen lock; the product advises keeping the screen open. |
+| P3 | 2 | Stale preview URLs can confuse validation; prior macOS/CoreAudio close behavior should be watched during beta/manual physical testing. |
 
 ## CI and Vercel result
 
-- CI workflow result: PASS for Quality, Flags ON and Flags OFF.
-- Vercel result: PASS for the preview deployment attached to the release-candidate product SHA.
-- No production deployment was performed as part of this closeout.
-- `main` remains untouched by this closeout.
+- CI workflow result: PASS for Quality, Flags ON and Flags OFF on `8ec1361`.
+- Vercel production result: PASS for the canonical production domain and supported routes.
+- The landing and Harmonic Lab simplification are present in production.
 
 ## PR status
 
-- PR: https://github.com/antoniodiaz70ad-dev/frequency-healer/pull/5
-- Branch: `codex/voice-journey-grant`
-- Status at documentation closeout: release branch prepared for owner review; not merged to `main`.
+- PR #5 was merged and the approved V1 was promoted to production.
+- PR #9 added the final landing and mobile guided-session fixes.
+- PR #10 added the Harmonic Lab entry simplification and seed starting suggestions.
 
 ## Closed-beta acceptance criteria
 
@@ -76,7 +75,7 @@ A closed-beta build may proceed only when all of the following remain true:
 
 ## Beta tester checklist
 
-Use the approved preview URL unless the owner has explicitly promoted production.
+Use the canonical production URL. Old Vercel preview URLs are historical and must not be used for final validation.
 
 1. Open the app on iPhone Safari and Android Chrome.
 2. Start a Guided Session by typing an intention; microphone use is optional.
@@ -113,12 +112,12 @@ Use the approved preview URL unless the owner has explicitly promoted production
 
 - Do not merge or promote if any P0/P1 appears before owner approval.
 - If a production issue appears after promotion, roll back Vercel to the previous known-good production deployment.
-- Product reference SHA for RC1: `43ba25b2690b3f35600ae34ea0a3acfe52f2171b`.
+- Audited production reference SHA: `8ec1361a409908494185635951465d6df2580387`.
 - Historical rollback/reference commit: `e8b323a0f37d80f2ee1bb6702e57a214812df864`.
 
 ## Production smoke checklist
 
-Run only after explicit owner approval and production promotion:
+Run after every future production promotion:
 
 - Confirm production URL loads the expected build/rules diagnostic.
 - Verify `/`, `/voz`, `/sesion-nueva`, `/laboratorio-armonico`, `/biblioteca`, `/protocolos`, `/generador` and `/diario`.
@@ -130,4 +129,4 @@ Run only after explicit owner approval and production promotion:
 - Save, reload and export data on mobile.
 - Confirm neutral safety/copy language remains intact.
 
-Owner approval is still required before merge to `main` or production deployment.
+V1 production was owner-approved. Future behavior changes still require their own reviewed promotion.
