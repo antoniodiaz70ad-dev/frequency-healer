@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { VoiceCaptureController, type VoiceBlob } from '@/lib/voice/capture';
 import { NativeSpeechController, supportsNativeSpeechRecognition } from '@/lib/voice/nativeSpeech';
 import { ServerTranscriptionProvider } from '@/lib/voice/transcription';
@@ -15,10 +15,13 @@ interface Props {
 export default function VoiceCapture({ kind, remoteEnabled, onText, onPhase, beforeCapture, afterCapture, onCancel }: Props) {
   const [capture] = useState(() => new VoiceCaptureController());
   const [nativeSpeech] = useState(() => new NativeSpeechController());
-  const [nativeAvailable, setNativeAvailable] = useState(false);
+  const nativeAvailable = useSyncExternalStore(
+    () => () => undefined,
+    supportsNativeSpeechRecognition,
+    () => false,
+  );
   const current = useRef<AbortController | null>(null); const held = useRef(false);
   const [phase, setPhase] = useState<Phase | null>(null); const [error, setError] = useState(''); const [elapsed, setElapsed] = useState(0);
-  useEffect(() => { setNativeAvailable(supportsNativeSpeechRecognition()); }, []);
   useEffect(() => {
     const cancel = () => { current.current?.abort(); capture.cancel(); nativeSpeech.cancel(); };
     const hidden = () => { if (document.hidden) cancel(); };
