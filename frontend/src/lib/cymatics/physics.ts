@@ -107,17 +107,17 @@ export function buildResonanceExamples():ResonanceExample[] {
 
 export function computeModalField(c:CymaticsConfigV1,frequencyHz:number,size=64):ModalField {
   if(!Number.isFinite(frequencyHz)||frequencyHz<AUDIO_MIN_HZ||frequencyHz>AUDIO_MAX_HZ)throw new Error('Frecuencia fuera del rango de audio admitido (0.1–2000 Hz).');
-  const modes=buildModes(c), values=new Float32Array(size*size),omega=2*Math.PI*frequencyHz,zeta=c.damping;
+  const modes=buildModes(c), values=new Float32Array(size*size),realValues=new Float32Array(size*size),imaginaryValues=new Float32Array(size*size),omega=2*Math.PI*frequencyHz,zeta=c.damping;
   let max=0,sumSq=0;const significant=modes.filter(mode=>Math.abs(frequencyHz-mode.frequencyHz)/mode.frequencyHz<Math.max(.02,zeta*3)).length;
   for(let iy=0;iy<size;iy++)for(let ix=0;ix<size;ix++){
     const x=(ix+.5)/size,y=(iy+.5)/size;let re=0,im=0;
     for(const mode of modes){const wj=2*Math.PI*mode.frequencyHz;const a=wj*wj-omega*omega,b=2*zeta*wj*omega,den=a*a+b*b;const force=c.excitationRelativeStrength*mode.coupling/mode.modalMass;const phi=mode.shape(x,y);re+=force*a/den*phi;im-=force*b/den*phi;}
-    const amplitude=Math.hypot(re,im);values[iy*size+ix]=amplitude;max=Math.max(max,amplitude);sumSq+=amplitude*amplitude;
+    const index=iy*size+ix,amplitude=Math.hypot(re,im);values[index]=amplitude;realValues[index]=re;imaginaryValues[index]=im;max=Math.max(max,amplitude);sumSq+=amplitude*amplitude;
   }
   const nearest=modes.reduce((best,m)=>Math.abs(m.frequencyHz-frequencyHz)<Math.abs(best-frequencyHz)?m.frequencyHz:best,modes[0]?.frequencyHz??0);
   const min=modes[0]?.frequencyHz??0,maxMode=modes.at(-1)?.frequencyHz??0,rms=Math.sqrt(sumSq/values.length);
   const outside=frequencyHz<min*.75||frequencyHz>maxMode*1.25;
-  return {size,values,maxAmplitude:max,rmsAmplitude:rms,nearestResonanceHz:nearest,modeledMinHz:min,modeledMaxHz:maxMode,status:outside?'outside-modeled-range':significant>2?'mixed':Math.abs(nearest-frequencyHz)/Math.max(nearest,1)<.02?'resonant':'weak'};
+  return {size,values,realValues,imaginaryValues,maxAmplitude:max,rmsAmplitude:rms,nearestResonanceHz:nearest,modeledMinHz:min,modeledMaxHz:maxMode,status:outside?'outside-modeled-range':significant>2?'mixed':Math.abs(nearest-frequencyHz)/Math.max(nearest,1)<.02?'resonant':'weak'};
 }
 
 export function surfaceLabel(surface:SurfaceType){return surface==='square-plate'?'Placa cuadrada, bordes simplemente apoyados':'Membrana circular, borde fijo';}

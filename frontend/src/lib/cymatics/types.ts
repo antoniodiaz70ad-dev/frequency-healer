@@ -1,7 +1,7 @@
 import type { Waveform } from '@/lib/types';
 
 export type SurfaceType = 'square-plate' | 'circular-membrane';
-export type CymaticsView = 'field' | 'nodal-lines' | 'particles';
+export type CymaticsView = 'field' | 'vibration' | 'nodal-lines' | 'particles';
 export type VisualScale = 'fixed' | 'auto';
 export type RenderQuality = 'low' | 'medium' | 'high';
 
@@ -35,6 +35,8 @@ export interface CymaticsConfigV1 {
 export interface ModalField {
   size: number;
   values: Float32Array;
+  realValues: Float32Array;
+  imaginaryValues: Float32Array;
   maxAmplitude: number;
   rmsAmplitude: number;
   nearestResonanceHz: number;

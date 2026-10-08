@@ -11,7 +11,7 @@ export function validateCymaticsConfig(v:unknown):CymaticsConfigV1 {
   if((c.surfaceType==='square-plate')!==(c.boundaryCondition==='simply-supported'))throw new Error('Condición de borde incompatible.');
   if(!Array.isArray(c.channelFrequenciesHz)||c.channelFrequenciesHz.length<1||c.channelFrequenciesHz.length>2||!c.channelFrequenciesHz.every(f=>finite(f,AUDIO_MIN_HZ,AUDIO_MAX_HZ)))throw new Error('Frecuencias inválidas.');
   if(!['sine','square','triangle','sawtooth'].includes(c.waveform)||!finite(c.damping,.001,.3)||!finite(c.excitationPosition?.x,0,1)||!finite(c.excitationPosition?.y,0,1)||!finite(c.modeCutoff,1,8))throw new Error('Parámetros físicos inválidos.');
-  if(!['field','nodal-lines','particles'].includes(c.view)||!['mono','binaural'].includes(c.audioMode)||!['low','medium','high'].includes(c.renderQuality))throw new Error('Configuración visual o de audio inválida.');
+  if(!['field','vibration','nodal-lines','particles'].includes(c.view)||!['mono','binaural'].includes(c.audioMode)||!['low','medium','high'].includes(c.renderQuality))throw new Error('Configuración visual o de audio inválida.');
   const nums=[c.dimensionsSI?.widthM,c.dimensionsSI?.heightM,c.dimensionsSI?.thicknessM,c.dimensionsSI?.radiusM,c.materialSI?.youngModulusPa,c.materialSI?.densityKgM3,c.materialSI?.tensionNm,c.materialSI?.surfaceDensityKgM2];if(!nums.every(n=>finite(n,1e-6,1e13)))throw new Error('Dimensiones o material inválidos.');
   return structuredClone(c);
 }
