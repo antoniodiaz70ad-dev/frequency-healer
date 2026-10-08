@@ -2,6 +2,7 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { createParticles, sampleField, stepParticles } from '@/lib/cymatics/particles';
 import type { CymaticsConfigV1, ModalField } from '@/lib/cymatics/types';
+import styles from './cymatics.module.css';
 
 interface Props { config:CymaticsConfigV1; field:ModalField; label:string; hidden?:boolean; captureRef?:React.RefObject<HTMLCanvasElement|null>; scaleMax?:number; showContours?:boolean; resetToken?:number; }
 const palette=(t:number)=>`hsl(${218+72*t} ${70+20*t}% ${9+58*t}%)`;
@@ -20,7 +21,7 @@ function contourSegments(field:ModalField,threshold=.085){
 
 export default function CymaticsCanvas({config,field,label,hidden,captureRef,scaleMax,showContours=false,resetToken=0}:Props){
   const own=useRef<HTMLCanvasElement>(null),canvasRef=captureRef??own,count=config.renderQuality==='high'?1150:config.renderQuality==='medium'?720:380;
-  const particles=useMemo(()=>{void resetToken;return createParticles(config.particleSeed,count,config.surfaceType);},[config.particleSeed,config.surfaceType,count,resetToken]);
+  const particles=useMemo(()=>{void resetToken;void field;return createParticles(config.particleSeed,count,config.surfaceType);},[config.particleSeed,config.surfaceType,count,field,resetToken]);
   const contours=useMemo(()=>contourSegments(field),[field]);
   useLayoutEffect(()=>{
     const canvas=canvasRef.current;if(!canvas||hidden)return;const ctx=canvas.getContext('2d');if(!ctx)return;let raf=0,visible=document.visibilityState==='visible',last=performance.now(),accumulator=0;
@@ -35,8 +36,9 @@ export default function CymaticsCanvas({config,field,label,hidden,captureRef,sca
       const w=canvas.width,h=canvas.height,side=Math.min(w,h)*.9,ox=(w-side)/2,oy=(h-side)/2;ctx.fillStyle='#020611';ctx.fillRect(0,0,w,h);
       if(config.view==='field')drawField(w,h,side,ox,oy,1);else if(config.view==='vibration'){drawVibration(side,ox,oy,now);if(showContours)drawContours(side,ox,oy);}else if(config.view==='nodal-lines'){drawField(w,h,side,ox,oy,.3);drawContours(side,ox,oy);}else{drawField(w,h,side,ox,oy,.24);if(showContours)drawContours(side,ox,oy);for(const particle of particles){const amplitude=sampleField(field,particle.x,particle.y),radius=Math.max(1.5,w/430)*(1.12-.35*Math.min(1,amplitude));ctx.fillStyle=amplitude<.14?'#fff7c8':'#d9f8ff';ctx.globalAlpha=.58+.4*(1-Math.min(1,amplitude));ctx.beginPath();ctx.arc(ox+particle.x*side,oy+particle.y*side,radius,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;}
       drawBoundary(w,h,side,ox,oy);ctx.fillStyle='rgba(2,6,17,.82)';ctx.fillRect(12,h-48,Math.min(w-24,430),34);ctx.fillStyle='#e7f2ff';ctx.font=`${Math.max(12,w/55)}px ui-monospace`;ctx.fillText(`${label} · ${config.channelFrequenciesHz.map(f=>f.toFixed(1)).join(' / ')} Hz`,22,h-26);if(!reduced)raf=requestAnimationFrame(render);};
-    const visibility=()=>{visible=document.visibilityState==='visible';if(visible){last=performance.now();cancelAnimationFrame(raf);render();}else cancelAnimationFrame(raf);};document.addEventListener('visibilitychange',visibility);window.addEventListener('resize',resize);render();return()=>{cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('resize',resize);};
+    const observer=new ResizeObserver(()=>{resize();render();});observer.observe(canvas);
+    const visibility=()=>{visible=document.visibilityState==='visible';if(visible){last=performance.now();cancelAnimationFrame(raf);resize();render();}else cancelAnimationFrame(raf);};document.addEventListener('visibilitychange',visibility);window.addEventListener('resize',resize);render();return()=>{cancelAnimationFrame(raf);observer.disconnect();document.removeEventListener('visibilitychange',visibility);window.removeEventListener('resize',resize);};
   },[canvasRef,config,contours,field,hidden,label,particles,scaleMax,showContours]);
-  if(hidden)return <div className="cymatics-hidden" role="status">Visual pausado y oculto. El audio puede continuar.</div>;
-  return <canvas ref={canvasRef} className="cymatics-canvas" role="img" aria-label={label}/>;
+  if(hidden)return <div className={styles.hidden} role="status">Visual pausado y oculto. El audio puede continuar.</div>;
+  return <canvas ref={canvasRef} className={styles.canvas} role="img" aria-label={label}/>;
 }
