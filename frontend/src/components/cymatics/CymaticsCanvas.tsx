@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import { createParticles, sampleField, stepParticles } from '@/lib/cymatics/particles';
 import type { CymaticsConfigV1, ModalField } from '@/lib/cymatics/types';
 
@@ -22,7 +22,7 @@ export default function CymaticsCanvas({config,field,label,hidden,captureRef,sca
   const own=useRef<HTMLCanvasElement>(null),canvasRef=captureRef??own,count=config.renderQuality==='high'?1150:config.renderQuality==='medium'?720:380;
   const particles=useMemo(()=>{void resetToken;return createParticles(config.particleSeed,count,config.surfaceType);},[config.particleSeed,config.surfaceType,count,resetToken]);
   const contours=useMemo(()=>contourSegments(field),[field]);
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     const canvas=canvasRef.current;if(!canvas||hidden)return;const ctx=canvas.getContext('2d');if(!ctx)return;let raf=0,visible=document.visibilityState==='visible',last=performance.now(),accumulator=0;
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,fixedStep=1/120;
     const resize=()=>{const rect=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.max(320,Math.round(rect.width*dpr));canvas.height=Math.max(240,Math.round(rect.height*dpr));};resize();
