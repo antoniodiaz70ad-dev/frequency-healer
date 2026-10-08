@@ -120,6 +120,12 @@ export function computeModalField(c:CymaticsConfigV1,frequencyHz:number,size=64)
   return {size,values,realValues,imaginaryValues,maxAmplitude:max,rmsAmplitude:rms,nearestResonanceHz:nearest,modeledMinHz:min,modeledMaxHz:maxMode,status:outside?'outside-modeled-range':significant>2?'mixed':Math.abs(nearest-frequencyHz)/Math.max(nearest,1)<.02?'resonant':'weak'};
 }
 
+export interface ResponsePoint { frequencyHz:number; rmsAmplitude:number; }
+export function computeResponseCurve(c:CymaticsConfigV1,startHz:number,endHz:number,count=81):ResponsePoint[]{
+  if(!Number.isFinite(startHz)||!Number.isFinite(endHz)||startHz<AUDIO_MIN_HZ||endHz>AUDIO_MAX_HZ||endHz<=startHz||!Number.isInteger(count)||count<3||count>241)throw new Error('Rango de respuesta inválido.');
+  return Array.from({length:count},(_,index)=>{const frequencyHz=startHz+(endHz-startHz)*index/(count-1);return {frequencyHz,rmsAmplitude:computeModalField(c,frequencyHz,24).rmsAmplitude};});
+}
+
 export function surfaceLabel(surface:SurfaceType){return surface==='square-plate'?'Placa cuadrada, bordes simplemente apoyados':'Membrana circular, borde fijo';}
 
 export function defaultCymaticsConfig():CymaticsConfigV1 {return {
