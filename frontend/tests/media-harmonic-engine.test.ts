@@ -37,5 +37,5 @@ test('rejects iPhone media rendering above the V1 background duration limit', ()
 });
 
 test('renders iPhone cymatics audio as stereo WAV with distinct binaural channels',async()=>{
-  const config=defaultCymaticsConfig();config.audioMode='binaural';config.channelFrequenciesHz=[220,228];const blob=renderCymaticsWav(config),view=new DataView(await blob.arrayBuffer());assert.equal(blob.type,'audio/wav');assert.equal(view.getUint16(22,true),2);assert.equal(view.getUint32(24,true),22050);let differs=false;for(let offset=44;offset<Math.min(view.byteLength,4000);offset+=4)if(view.getInt16(offset,true)!==view.getInt16(offset+2,true)){differs=true;break;}assert.equal(differs,true);
+  const config=defaultCymaticsConfig();config.audioMode='binaural';config.channelFrequenciesHz=[220,228];const blob=renderCymaticsWav(config),view=new DataView(await blob.arrayBuffer());assert.equal(blob.type,'audio/wav');assert.equal(view.getUint16(22,true),2);assert.equal(view.getUint32(24,true),11025);assert.ok(blob.size>2_600_000);let differs=false;for(let offset=44;offset<Math.min(view.byteLength,4000);offset+=4)if(view.getInt16(offset,true)!==view.getInt16(offset+2,true)){differs=true;break;}assert.equal(differs,true);
 });
