@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { buildSchedule, type HarmonicConfig } from '../src/lib/harmonic/math';
 import { IOS_BACKGROUND_MAX_SECONDS, isIOSLike, renderHarmonicConfigToWavBlob } from '../src/lib/voice/mediaHarmonicEngine';
+import { renderCymaticsWav } from '../src/lib/cymatics/mediaAudio';
+import { defaultCymaticsConfig } from '../src/lib/cymatics/physics';
 
 const config: HarmonicConfig = {
   baseHz: 256,
@@ -32,4 +34,8 @@ test('renders guided harmonic config to a WAV blob from the existing schedule', 
 
 test('rejects iPhone media rendering above the V1 background duration limit', () => {
   assert.throws(() => renderHarmonicConfigToWavBlob({ ...config, durationSeconds: IOS_BACKGROUND_MAX_SECONDS + 1 }), /hasta 30 minutos/);
+});
+
+test('renders iPhone cymatics audio as stereo WAV with distinct binaural channels',async()=>{
+  const config=defaultCymaticsConfig();config.audioMode='binaural';config.channelFrequenciesHz=[220,228];const blob=renderCymaticsWav(config),view=new DataView(await blob.arrayBuffer());assert.equal(blob.type,'audio/wav');assert.equal(view.getUint16(22,true),2);assert.equal(view.getUint32(24,true),22050);let differs=false;for(let offset=44;offset<Math.min(view.byteLength,4000);offset+=4)if(view.getInt16(offset,true)!==view.getInt16(offset+2,true)){differs=true;break;}assert.equal(differs,true);
 });
