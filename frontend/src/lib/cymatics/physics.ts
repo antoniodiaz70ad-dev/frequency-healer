@@ -126,6 +126,14 @@ export function computeResponseCurve(c:CymaticsConfigV1,startHz:number,endHz:num
   return Array.from({length:count},(_,index)=>{const frequencyHz=startHz+(endHz-startHz)*index/(count-1);return {frequencyHz,rmsAmplitude:computeModalField(c,frequencyHz,24).rmsAmplitude};});
 }
 
+export function computeCircularIdealMode(c:CymaticsConfigV1,m:number,n:number,rotationRadians=0,size=96):ModalField{
+  if(c.surfaceType!=='circular-membrane'||c.boundaryCondition!=='fixed-edge')throw new Error('El modo ideal requiere una membrana circular con borde fijo.');
+  if(!Number.isInteger(m)||m<0||m>4||!Number.isInteger(n)||n<1||n>5||!Number.isFinite(rotationRadians))throw new Error('Índices de modo circular inválidos.');
+  const root=BESSEL_ROOTS[m][n-1],frequencyHz=membraneFrequencyHz(m,n,c),values=new Float32Array(size*size),realValues=new Float32Array(size*size),imaginaryValues=new Float32Array(size*size);let max=0,sumSq=0;
+  for(let iy=0;iy<size;iy++)for(let ix=0;ix<size;ix++){const x=(ix+.5)/size,y=(iy+.5)/size,dx=2*x-1,dy=2*y-1,r=Math.hypot(dx,dy),index=iy*size+ix;if(r>1)continue;const theta=Math.atan2(dy,dx)-rotationRadians,displacement=besselJ(m,root*r)*(m===0?1:Math.cos(m*theta)),amplitude=Math.abs(displacement);realValues[index]=displacement;values[index]=amplitude;max=Math.max(max,amplitude);sumSq+=amplitude*amplitude;}
+  return {size,values,realValues,imaginaryValues,maxAmplitude:max,rmsAmplitude:Math.sqrt(sumSq/values.length),nearestResonanceHz:frequencyHz,modeledMinHz:frequencyHz,modeledMaxHz:frequencyHz,status:'resonant'};
+}
+
 export function surfaceLabel(surface:SurfaceType){return surface==='square-plate'?'Placa cuadrada, bordes simplemente apoyados':'Membrana circular, borde fijo';}
 
 export function defaultCymaticsConfig():CymaticsConfigV1 {return {
