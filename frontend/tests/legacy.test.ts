@@ -29,3 +29,8 @@ test('atlas-style stop ramps gain to zero before oscillator shutdown',async()=>{
   const engine=new AudioEngine();engine.play(100,'sine',.4);const oscillator=contexts[0].oscs[0];engine.stopWithFade(5);
   assert.equal(engine.getIsPlaying(),false);assert.equal(contexts[0].gains[0].gain.events.at(-1),0);assert.equal(oscillator.stopped,true);await new Promise(resolve=>setTimeout(resolve,20));assert.equal(oscillator.disconnected,true);
 });
+test('legacy engine unlocks suspended WebKit audio before playback',async()=>{
+  const scope=globalThis as typeof globalThis&{webkitAudioContext?:unknown},audio=Object.getOwnPropertyDescriptor(scope,'AudioContext'),webkit=Object.getOwnPropertyDescriptor(scope,'webkitAudioContext');
+  class SuspendedContext extends Context{state='suspended';resume=async()=>{this.state='running';};}
+  try{Object.defineProperty(scope,'AudioContext',{configurable:true,value:undefined});Object.defineProperty(scope,'webkitAudioContext',{configurable:true,value:SuspendedContext});const engine=new AudioEngine();await engine.prepareForPlayback();engine.play(220,'sine',.2);assert.equal(engine.getIsPlaying(),true);engine.stop();}finally{if(audio)Object.defineProperty(scope,'AudioContext',audio);else Reflect.deleteProperty(scope,'AudioContext');if(webkit)Object.defineProperty(scope,'webkitAudioContext',webkit);else Reflect.deleteProperty(scope,'webkitAudioContext');}
+});
