@@ -13,7 +13,17 @@ export const BESSEL_ROOTS: Readonly<Record<number, readonly number[]>> = {
   4: [7.588342435, 11.064709489, 14.372536672, 17.615966050, 20.826932957],
 };
 
-export interface Mode { frequencyHz: number; shape(x: number, y: number): number; coupling: number; modalMass: number; }
+export interface Mode { frequencyHz: number; shape(x: number, y: number): number; coupling: number; modalMass: number; modeId: string; modeLabel: string; }
+
+export interface ResonanceExample {
+  id: string;
+  title: string;
+  description: string;
+  config: CymaticsConfigV1;
+  frequencyHz: number;
+  modeId: string;
+  modeLabel: string;
+}
 
 export function squarePlateFrequencyHz(m:number,n:number,c:CymaticsConfigV1):number {
   const {youngModulusPa:E,poissonRatio:nu,densityKgM3:rho}=c.materialSI;
@@ -44,18 +54,55 @@ export function buildModes(c:CymaticsConfigV1):Mode[] {
   if(c.surfaceType==='square-plate') {
     for(let m=1;m<=c.modeCutoff;m++)for(let n=1;n<=c.modeCutoff;n++){
       const shape=(x:number,y:number)=>Math.sin(m*Math.PI*x)*Math.sin(n*Math.PI*y);
-      modes.push({frequencyHz:squarePlateFrequencyHz(m,n,c),shape,coupling:shape(ex.x,ex.y),modalMass:c.materialSI.densityKgM3*c.dimensionsSI.thicknessM*c.dimensionsSI.widthM*c.dimensionsSI.heightM/4});
+      modes.push({frequencyHz:squarePlateFrequencyHz(m,n,c),shape,coupling:shape(ex.x,ex.y),modalMass:c.materialSI.densityKgM3*c.dimensionsSI.thicknessM*c.dimensionsSI.widthM*c.dimensionsSI.heightM/4,modeId:`plate-${m}-${n}`,modeLabel:`Placa (${m}, ${n})`});
     }
   } else {
     for(let m=0;m<=Math.min(4,c.modeCutoff-1);m++)for(let n=1;n<=Math.min(5,c.modeCutoff);n++){
       const root=BESSEL_ROOTS[m][n-1];
       for(const orientation of (m===0?[0]:[0,Math.PI/2])){
         const shape=(x:number,y:number)=>{const dx=2*x-1,dy=2*y-1,r=Math.hypot(dx,dy);if(r>1)return 0;const theta=Math.atan2(dy,dx);return besselJ(m,root*r)*Math.cos(m*theta-orientation);};
-        modes.push({frequencyHz:membraneFrequencyHz(m,n,c),shape,coupling:shape(ex.x,ex.y),modalMass:c.materialSI.surfaceDensityKgM2*Math.PI*c.dimensionsSI.radiusM**2/2});
+        const orientationLabel=orientation===0?'cos':'sen';
+        modes.push({frequencyHz:membraneFrequencyHz(m,n,c),shape,coupling:shape(ex.x,ex.y),modalMass:c.materialSI.surfaceDensityKgM2*Math.PI*c.dimensionsSI.radiusM**2/2,modeId:`membrane-${m}-${n}-${orientationLabel}`,modeLabel:`Membrana (${m}, ${n}) · ${orientationLabel}`});
       }
     }
   }
   return modes.sort((a,b)=>a.frequencyHz-b.frequencyHz);
+}
+
+export function nearestMode(c:CymaticsConfigV1,frequencyHz:number):Mode {
+  const modes=buildModes(c);
+  if(!modes.length)throw new Error('No hay modos calculados para esta superficie.');
+  return modes.reduce((best,mode)=>Math.abs(mode.frequencyHz-frequencyHz)<Math.abs(best.frequencyHz-frequencyHz)?mode:best);
+}
+
+function exampleConfig(surfaceType:CymaticsConfigV1['surfaceType'],modeId:string,excitation:{x:number;y:number},seed:number):ResonanceExample {
+  const config=defaultCymaticsConfig();
+  config.surfaceType=surfaceType;
+  config.boundaryCondition=surfaceType==='square-plate'?'simply-supported':'fixed-edge';
+  config.excitationPosition=excitation;
+  config.damping=.012;
+  config.particleSeed=seed;
+  config.view='particles';
+  const mode=buildModes(config).find(candidate=>candidate.modeId===modeId);
+  if(!mode||Math.abs(mode.coupling)<.08)throw new Error(`El ejemplo ${modeId} no tiene acoplamiento suficiente.`);
+  config.channelFrequenciesHz=[mode.frequencyHz];
+  config.modeledComponents=[mode.frequencyHz];
+  const definitions:Record<string,[string,string]>={
+    'plate-2-2':['Cuatro regiones interiores','Placa cuadrada con dos divisiones en cada eje.'],
+    'membrane-0-2-cos':['Anillo concéntrico','Membrana circular con una región nodal interior.'],
+    'membrane-3-1-cos':['Seis sectores','Membrana circular con estructura angular interior.'],
+  };
+  const [title,description]=definitions[modeId]??[mode.modeLabel,'Modo propio calculado.'];
+  config.title=title;
+  return {id:modeId,title,description,config,frequencyHz:mode.frequencyHz,modeId,modeLabel:mode.modeLabel};
+}
+
+export function buildResonanceExamples():ResonanceExample[] {
+  return [
+    exampleConfig('square-plate','plate-2-2',{x:.31,y:.37},22022),
+    exampleConfig('circular-membrane','membrane-0-2-cos',{x:.67,y:.50},22023),
+    exampleConfig('circular-membrane','membrane-3-1-cos',{x:.75,y:.55},22024),
+  ];
 }
 
 export function computeModalField(c:CymaticsConfigV1,frequencyHz:number,size=64):ModalField {

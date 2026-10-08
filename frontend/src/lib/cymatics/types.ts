@@ -1,7 +1,7 @@
 import type { Waveform } from '@/lib/types';
 
 export type SurfaceType = 'square-plate' | 'circular-membrane';
-export type CymaticsView = 'field' | 'particles';
+export type CymaticsView = 'field' | 'nodal-lines' | 'particles';
 export type VisualScale = 'fixed' | 'auto';
 export type RenderQuality = 'low' | 'medium' | 'high';
 

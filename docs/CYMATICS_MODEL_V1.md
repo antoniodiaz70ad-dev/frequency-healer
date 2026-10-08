@@ -10,7 +10,7 @@
 - Membrana circular ideal con borde fijo y tensión uniforme. Usa raíces positivas `j_mn` de `J_m`, incluidas las orientaciones degeneradas para `m > 0`. Las raíces tabuladas proceden de NIST DLMF §10.21 y quedan cubiertas por pruebas de ceros nodales.
 - Respuesta forzada compleja: cada modo usa masa modal, acoplamiento en el punto de excitación desplazado y amortiguamiento `ζ > 0`. La vista muestra la envolvente de amplitud estacionaria; no intenta animar cientos de ciclos por segundo.
 
-El truncamiento predeterminado es 5. Si el tono queda fuera del intervalo modal calculado se informa y no se fabrica una figura. La placa y membrana no representan bordes libres, placas sujetas por el centro, materiales no lineales ni transitorios de un experimento real.
+El truncamiento predeterminado es 5. Si el tono queda fuera del intervalo modal calculado se informa y no se fabrica una figura. Una respuesta débil usa como referencia visual la amplitud de la resonancia modal más cercana, para que la normalización no la presente como una resonancia fuerte. La autoexposición sigue siendo una elección visible del usuario. La placa y membrana no representan bordes libres, placas sujetas por el centro, materiales no lineales ni transitorios de un experimento real.
 
 ## Audio
 
@@ -18,7 +18,9 @@ El módulo llama al singleton `AudioEngine`; no crea otro `AudioContext`. Los ca
 
 ## Partículas y reproducción
 
-La semilla controla posiciones deterministas. La aproximación favorece regiones de baja amplitud y omite impactos, fricción, aire y retroacción de partículas. PNG incluye frecuencia, canal y versión del modelo. JSON guarda parámetros efectivos y la galería usa `fh:cymatics-gallery-v1`; lecturas corruptas fallan sin sobrescribir el contenido.
+La semilla controla posiciones deterministas. La aproximación integra a 120 pasos por segundo, desciende el gradiente de amplitud al cuadrado, aplica amortiguamiento, límite de velocidad y repulsión de borde. La animación busca revelar la estructura en 3–5 segundos de interfaz; ese intervalo es ilustrativo, no tiempo físico. Omite impactos, fricción granular, aire y retroacción de partículas.
+
+Las vistas separan el mapa de amplitud, los contornos de amplitud mínima y las partículas. En una respuesta multimodal esos contornos no se afirman como nodos exactos. Las tres demostraciones seleccionan modos propios calculados y puntos de excitación con acoplamiento no nulo: placa `(2,2)`, membrana `(0,2)` y membrana `(3,1)`. La selección no inicia audio ni aumenta volumen. PNG incluye frecuencia y canal. JSON guarda parámetros efectivos y la galería usa `fh:cymatics-gallery-v1`; lecturas corruptas fallan sin sobrescribir el contenido.
 
 ## Rendimiento y accesibilidad
 
