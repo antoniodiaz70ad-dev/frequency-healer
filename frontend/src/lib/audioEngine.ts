@@ -181,9 +181,10 @@ class AudioEngine {
   }
 
   /** Change frequency while playing */
-  setFrequency(frequency: number) {
+  setFrequency(frequency: number, binauralDifferenceHz?: number) {
     if (this.oscillator && this.ctx) {
-      this.oscillator.frequency.setValueAtTime(frequency, this.ctx.currentTime);
+      const now=this.ctx.currentTime;this.oscillator.frequency.cancelScheduledValues(now);this.oscillator.frequency.setTargetAtTime(frequency,now,.015);
+      if(this.oscillatorR){const difference=binauralDifferenceHz??Math.max(0,this.oscillatorR.frequency.value-this.oscillator.frequency.value);this.oscillatorR.frequency.cancelScheduledValues(now);this.oscillatorR.frequency.setTargetAtTime(frequency+difference,now,.015);}
     }
   }
 

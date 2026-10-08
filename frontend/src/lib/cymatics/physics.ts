@@ -1,0 +1,81 @@
+import type { CymaticsConfigV1, ModalField, SurfaceType } from './types';
+
+export const CYMATICS_MODEL_VERSION = 'cymatics-modal-v1' as const;
+export const AUDIO_MIN_HZ = 0.1;
+export const AUDIO_MAX_HZ = 2000;
+
+// Positive zeros j_mn from NIST DLMF §10.21, rounded to 9 decimals.
+export const BESSEL_ROOTS: Readonly<Record<number, readonly number[]>> = {
+  0: [2.404825558, 5.520078110, 8.653727913, 11.791534439, 14.930917708],
+  1: [3.831705970, 7.015586670, 10.173468136, 13.323691936, 16.470630051],
+  2: [5.135622302, 8.417244140, 11.619841173, 14.795951782, 17.959819495],
+  3: [6.380161896, 9.761023130, 13.015200722, 16.223466160, 19.409415226],
+  4: [7.588342435, 11.064709489, 14.372536672, 17.615966050, 20.826932957],
+};
+
+export interface Mode { frequencyHz: number; shape(x: number, y: number): number; coupling: number; modalMass: number; }
+
+export function squarePlateFrequencyHz(m:number,n:number,c:CymaticsConfigV1):number {
+  const {youngModulusPa:E,poissonRatio:nu,densityKgM3:rho}=c.materialSI;
+  const {widthM:a,heightM:b,thicknessM:h}=c.dimensionsSI;
+  const D=E*h**3/(12*(1-nu**2));
+  return Math.PI/2*Math.sqrt(D/(rho*h))*((m/a)**2+(n/b)**2);
+}
+
+export function membraneFrequencyHz(m:number,n:number,c:CymaticsConfigV1):number {
+  const root=BESSEL_ROOTS[m]?.[n-1]; if(!root) throw new Error('Modo de membrana fuera de la tabla verificada.');
+  return root/(2*Math.PI*c.dimensionsSI.radiusM)*Math.sqrt(c.materialSI.tensionNm/c.materialSI.surfaceDensityKgM2);
+}
+
+// Stable series for the small integer orders and arguments used by the model.
+export function besselJ(order:number,x:number):number {
+  let sum=0, factorialM=1, factorialMO=1;
+  for(let k=0;k<36;k++) {
+    if(k>0){factorialM*=k;factorialMO*=k+order;}
+    else for(let i=2;i<=order;i++)factorialMO*=i;
+    const term=(k%2?-1:1)*(x/2)**(2*k+order)/(factorialM*factorialMO);
+    sum+=term;if(Math.abs(term)<1e-13)break;
+  }
+  return sum;
+}
+
+export function buildModes(c:CymaticsConfigV1):Mode[] {
+  const modes:Mode[]=[]; const ex=c.excitationPosition;
+  if(c.surfaceType==='square-plate') {
+    for(let m=1;m<=c.modeCutoff;m++)for(let n=1;n<=c.modeCutoff;n++){
+      const shape=(x:number,y:number)=>Math.sin(m*Math.PI*x)*Math.sin(n*Math.PI*y);
+      modes.push({frequencyHz:squarePlateFrequencyHz(m,n,c),shape,coupling:shape(ex.x,ex.y),modalMass:c.materialSI.densityKgM3*c.dimensionsSI.thicknessM*c.dimensionsSI.widthM*c.dimensionsSI.heightM/4});
+    }
+  } else {
+    for(let m=0;m<=Math.min(4,c.modeCutoff-1);m++)for(let n=1;n<=Math.min(5,c.modeCutoff);n++){
+      const root=BESSEL_ROOTS[m][n-1];
+      for(const orientation of (m===0?[0]:[0,Math.PI/2])){
+        const shape=(x:number,y:number)=>{const dx=2*x-1,dy=2*y-1,r=Math.hypot(dx,dy);if(r>1)return 0;const theta=Math.atan2(dy,dx);return besselJ(m,root*r)*Math.cos(m*theta-orientation);};
+        modes.push({frequencyHz:membraneFrequencyHz(m,n,c),shape,coupling:shape(ex.x,ex.y),modalMass:c.materialSI.surfaceDensityKgM2*Math.PI*c.dimensionsSI.radiusM**2/2});
+      }
+    }
+  }
+  return modes.sort((a,b)=>a.frequencyHz-b.frequencyHz);
+}
+
+export function computeModalField(c:CymaticsConfigV1,frequencyHz:number,size=64):ModalField {
+  if(!Number.isFinite(frequencyHz)||frequencyHz<AUDIO_MIN_HZ||frequencyHz>AUDIO_MAX_HZ)throw new Error('Frecuencia fuera del rango de audio admitido (0.1–2000 Hz).');
+  const modes=buildModes(c), values=new Float32Array(size*size),omega=2*Math.PI*frequencyHz,zeta=c.damping;
+  let max=0,sumSq=0;const significant=modes.filter(mode=>Math.abs(frequencyHz-mode.frequencyHz)/mode.frequencyHz<Math.max(.02,zeta*3)).length;
+  for(let iy=0;iy<size;iy++)for(let ix=0;ix<size;ix++){
+    const x=(ix+.5)/size,y=(iy+.5)/size;let re=0,im=0;
+    for(const mode of modes){const wj=2*Math.PI*mode.frequencyHz;const a=wj*wj-omega*omega,b=2*zeta*wj*omega,den=a*a+b*b;const force=c.excitationRelativeStrength*mode.coupling/mode.modalMass;const phi=mode.shape(x,y);re+=force*a/den*phi;im-=force*b/den*phi;}
+    const amplitude=Math.hypot(re,im);values[iy*size+ix]=amplitude;max=Math.max(max,amplitude);sumSq+=amplitude*amplitude;
+  }
+  const nearest=modes.reduce((best,m)=>Math.abs(m.frequencyHz-frequencyHz)<Math.abs(best-frequencyHz)?m.frequencyHz:best,modes[0]?.frequencyHz??0);
+  const min=modes[0]?.frequencyHz??0,maxMode=modes.at(-1)?.frequencyHz??0,rms=Math.sqrt(sumSq/values.length);
+  const outside=frequencyHz<min*.75||frequencyHz>maxMode*1.25;
+  return {size,values,maxAmplitude:max,rmsAmplitude:rms,nearestResonanceHz:nearest,modeledMinHz:min,modeledMaxHz:maxMode,status:outside?'outside-modeled-range':significant>2?'mixed':Math.abs(nearest-frequencyHz)/Math.max(nearest,1)<.02?'resonant':'weak'};
+}
+
+export function surfaceLabel(surface:SurfaceType){return surface==='square-plate'?'Placa cuadrada, bordes simplemente apoyados':'Membrana circular, borde fijo';}
+
+export function defaultCymaticsConfig():CymaticsConfigV1 {return {
+  schemaVersion:1,modelVersion:CYMATICS_MODEL_VERSION,id:crypto.randomUUID(),createdAt:new Date().toISOString(),title:'Figura sin nombre',surfaceType:'square-plate',boundaryCondition:'simply-supported',
+  dimensionsSI:{widthM:.32,heightM:.32,thicknessM:.001,radiusM:.16},materialSI:{youngModulusPa:69e9,poissonRatio:.33,densityKgM3:2700,tensionNm:900,surfaceDensityKgM2:.45},
+  excitationPosition:{x:.37,y:.43},excitationRelativeStrength:1,damping:.025,audioMode:'mono',channelFrequenciesHz:[432],waveform:'sine',modeledComponents:[432],responseMethod:'steady-state-modal-rms',modeCutoff:5,visualScale:'fixed',autoExposure:false,particleSeed:43201,simulationTimeSeconds:0,renderQuality:'medium',view:'particles'};}
