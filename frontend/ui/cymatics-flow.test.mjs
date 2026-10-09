@@ -5,7 +5,7 @@ import { startHarness, observeBrowser, eventually } from './browser-harness.mjs'
 let harness;
 before(async()=>{harness=await startHarness();},{timeout:60000});
 after(async()=>{await harness?.close();},{timeout:15000});
-async function fixture(t,options={}){const context=await harness.browser.newContext(options.viewport?{viewport:options.viewport}:undefined);t.after(()=>context.close());await context.addInitScript(observeBrowser);const page=await context.newPage();if(options.reducedMotion)await page.emulateMedia({reducedMotion:options.reducedMotion});page.setDefaultTimeout(8000);await page.goto(harness.origin+'/laboratorio-cimatico?frequency=432&waveform=sine&binaural=8');return page;}
+async function fixture(t,options={}){const context=await harness.browser.newContext(options.viewport?{viewport:options.viewport}:undefined);t.after(()=>context.close());await context.addInitScript(observeBrowser);const page=await context.newPage();if(options.reducedMotion)await page.emulateMedia({reducedMotion:options.reducedMotion});page.setDefaultTimeout(8000);await page.goto(harness.origin+'/laboratorio-cimatico?frequency=432&waveform=sine&binaural=8');if(!options.simpleEntry)await page.getByText('Explorar a fondo',{exact:true}).click();return page;}
 
 test('cymatics route: generator parameters, independent binaural views and shared existing audio graph', {timeout:45000}, async t=>{
   const page=await fixture(t);assert.equal(await page.getByRole('spinbutton',{name:'Frecuencia cimática'}).inputValue(),'432');assert.equal(await page.getByRole('img',{name:'Canal izquierdo'}).count(),1);assert.equal(await page.getByRole('img',{name:'Canal derecho'}).count(),1);assert.match(await page.getByText(/Diferencia:/).first().innerText(),/8.0 Hz; no es un tono emitido/);
@@ -14,7 +14,7 @@ test('cymatics route: generator parameters, independent binaural views and share
 
 test('cymatics route: surface switch, A/B, explicit gallery save and reload', {timeout:45000}, async t=>{
   const page=await fixture(t);await page.getByRole('combobox',{name:'Superficie'}).selectOption('circular-membrane');await page.getByRole('button',{name:'Capturar A'}).click();await page.getByRole('spinbutton',{name:'Frecuencia cimática'}).fill('528');await page.getByRole('button',{name:'Capturar B'}).click();await page.getByRole('button',{name:'Comparar',exact:true}).click();assert.equal(await page.getByRole('img',{name:'Comparación A'}).count(),1);assert.equal(await page.getByRole('img',{name:'Comparación B'}).count(),1);assert.match(await page.getByText(/escala visual comunes/).innerText(),/Solo cambia la frecuencia/);
-  await page.getByRole('button',{name:'Guardar figura'}).click();await page.getByRole('heading',{name:'Galería local (1)'}).waitFor();const storage=await page.evaluate(()=>({...localStorage}));assert.equal(Object.keys(storage).length,1);assert.ok(storage['fh:cymatics-gallery-v1']);await page.reload();await page.getByRole('heading',{name:'Galería local (1)'}).waitFor();assert.equal((await page.evaluate(()=>window.__fhUI.snapshot())).contexts.length,0);
+  await page.getByRole('button',{name:'Guardar figura'}).click();await page.getByRole('heading',{name:'Galería local (1)'}).waitFor();const storage=await page.evaluate(()=>({...localStorage}));assert.equal(Object.keys(storage).length,2);assert.ok(storage['fh:cymatics-gallery-v1']);assert.ok(storage['fh:cymatics-ui-v1']);await page.reload();await page.getByRole('heading',{name:'Galería local (1)'}).waitFor();assert.equal((await page.evaluate(()=>window.__fhUI.snapshot())).contexts.length,0);
 });
 
 test('cymatics resonance demo exposes three computed patterns, does not autoplay and preserves binaural separation', {timeout:45000}, async t=>{
@@ -66,4 +66,9 @@ test('preparing the plate experiment returns the upper membrane explorer to idea
 
 test('guided cymatics session requires start, supports skipping every step and opens the journal', {timeout:45000}, async t=>{
   const page=await fixture(t);assert.equal((await page.evaluate(()=>window.__fhUI.snapshot())).contexts.length,0);await page.getByRole('button',{name:'Iniciar sesión guiada (10 min)'}).click();await page.getByText('Preparación',{exact:true}).waitFor();assert.equal((await page.evaluate(()=>window.__fhUI.snapshot())).contexts.length,0);const skip=page.getByRole('button',{name:'Saltar paso'});for(const name of ['Anclaje','Barrido','Quietud','Registro','Cierre']){await skip.click({noWaitAfter:true});await page.getByText(name,{exact:true}).waitFor();}await page.getByRole('region',{name:'Registro de práctica'}).waitFor();await page.getByRole('button',{name:'Terminar'}).click();await page.getByRole('button',{name:'Escuchar tono'}).waitFor();
+});
+
+
+test('simplified mobile entry shows title, guided action and first resonance card without scrolling', {timeout:45000}, async t=>{
+  const page=await fixture(t,{viewport:{width:390,height:844},simpleEntry:true});await page.getByRole('heading',{name:'Laboratorio de Resonancia'}).waitFor();const start=page.getByRole('button',{name:'Iniciar sesión guiada (10 min)'}),first=page.getByRole('heading',{name:'Cuatro regiones interiores'});assert.equal(await start.isVisible(),true);assert.equal(await first.isVisible(),true);const box=await first.boundingBox();assert.ok(box&&box.y<844);assert.equal(await page.getByText('Explorar a fondo',{exact:true}).isVisible(),true);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 });
