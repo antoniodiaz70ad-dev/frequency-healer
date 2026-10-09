@@ -14,9 +14,10 @@ export function renderCymaticsWav(config:CymaticsConfigV1):Blob{
 }
 
 export class CymaticsMediaAudio{
-  private audio:HTMLAudioElement|null=null;private url:string|null=null;private config:CymaticsConfigV1|null=null;private volume=.25;
-  async play(config:CymaticsConfigV1,volume:number){this.stop();this.config=structuredClone(config);this.volume=volume;const audio=new Audio(),url=URL.createObjectURL(renderCymaticsWav(config));this.audio=audio;this.url=url;audio.src=url;audio.preload='auto';audio.loop=true;audio.volume=volume;try{await audio.play();}catch{this.stop();throw new Error('No se pudo iniciar el audio del iPhone. Revisa el volumen multimedia y vuelve a tocar Escuchar tono.');}}
+  private audio:HTMLAudioElement|null=null;private url:string|null=null;private config:CymaticsConfigV1|null=null;private volume=.25;private generation=0;
+  async play(config:CymaticsConfigV1,volume:number):Promise<boolean>{this.stop();const generation=this.generation;this.config=structuredClone(config);this.volume=volume;const audio=new Audio(),url=URL.createObjectURL(renderCymaticsWav(config));this.audio=audio;this.url=url;audio.src=url;audio.preload='auto';audio.loop=true;audio.volume=volume;try{await audio.play();if(generation!==this.generation||this.audio!==audio){this.release(audio,url);return false;}return true;}catch{if(generation===this.generation&&this.audio===audio)this.stop();else this.release(audio,url);throw new Error('No se pudo iniciar el audio del iPhone. Revisa el volumen multimedia y vuelve a tocar Escuchar tono.');}}
   async setFrequency(left:number,right?:number){if(!this.audio||!this.config)return;const next=structuredClone(this.config);next.channelFrequenciesHz=right===undefined?[left]:[left,right];next.audioMode=right===undefined?'mono':'binaural';await this.play(next,this.volume);}
   setVolume(volume:number){this.volume=volume;if(this.audio)this.audio.volume=volume;}
-  stop(){const audio=this.audio;if(audio){audio.pause();audio.removeAttribute('src');audio.load();}if(this.url)URL.revokeObjectURL(this.url);this.audio=null;this.url=null;this.config=null;}
+  stop(){this.generation++;const audio=this.audio,url=this.url;if(audio)this.release(audio,url);this.audio=null;this.url=null;this.config=null;}
+  private release(audio:HTMLAudioElement,url:string|null){audio.pause();audio.removeAttribute('src');audio.load();if(url)URL.revokeObjectURL(url);}
 }
