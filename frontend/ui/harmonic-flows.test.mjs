@@ -774,7 +774,7 @@ test('Adaptive zero evidence keeps deterministic original order without inventin
 for (const mobile of [false,true]) test(`3B.1 ${mobile?'mobile':'desktop'}: guided primary entry, separate Lab, unchanged URLs and no storage/audio side effects`,async t=>{
   const page=await fixture(t);if(mobile)await page.setViewportSize({width:390,height:844});await page.goto(harness.origin+'/');
   const entry=page.getByRole('navigation',{name:'Formas de explorar',exact:true});assert.equal(await entry.getByRole('link',{name:'Comenzar sesión guiada',exact:true}).getAttribute('href'),'/voz');
-  assert.match(await entry.innerText(),/Describe lo que quieres explorar y Frequency Healer te propondrá una sesión\./);assert.match(await entry.innerText(),/El micrófono es opcional/);
+  assert.match(await entry.innerText(),/Describe lo que quieres explorar y Resonance Lab te propondrá una sesión\./);assert.match(await entry.innerText(),/El micrófono es opcional/);
   if(mobile)await button(page,'Menu').click();
   const nav=page.getByRole('navigation',{name:'Navegación principal',exact:true});
   const expected=[['Inicio','/'],['Sesión guiada','/voz'],['Laboratorio Armónico','/laboratorio-armonico'],['Atlas de frecuencias','/biblioteca'],['Protocolos históricos','/protocolos'],['Generador manual','/generador'],['Diario OBE','/diario'],['Exploración OBE','/sesion-nueva']];

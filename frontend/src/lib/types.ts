@@ -1,6 +1,6 @@
 // ============================================
-// Frequency Healer - Types
-// Sistema de frecuencias para sanación
+// Resonance Lab - Types
+// Sistema de frecuencias para exploración acústica
 // ============================================
 
 export type FrequencyCategory = 'brainwave' | 'solfeggio' | 'rife' | 'musical' | 'nogier';

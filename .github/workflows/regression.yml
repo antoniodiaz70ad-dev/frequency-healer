@@ -1,4 +1,4 @@
-name: Frequency Healer Regression
+name: Resonance Lab Regression
 
 on:
   pull_request:

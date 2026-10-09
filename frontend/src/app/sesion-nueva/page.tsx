@@ -111,7 +111,7 @@ export default function SesionNuevaPage() {
     const [hh, mm] = wbtbHour.split(":").map(Number);
     const startsAt = nextSessionDate(hh, mm);
     downloadICS("frequency-healer-wbtb-alarm", {
-      title: `Frequency Healer · Sesión ${focus.label}`,
+      title: `Resonance Lab · Sesión ${focus.label}`,
       description: `Alarma WBTB. Despierta tranquilo, ve al baño si lo necesitas, ponte los auriculares estéreo y abre la app en /sesion-nueva.\\n\\nIntención: ${intention}`,
       startsAt,
       durationMinutes: duration,

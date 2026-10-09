@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Frequency Healer",
-  description: "Plataforma personal de exploración armónica y observación subjetiva",
+  title: "Resonance Lab",
+  description: "Laboratorio personal para explorar y observar la resonancia del sonido.",
 };
 
 export default function RootLayout({

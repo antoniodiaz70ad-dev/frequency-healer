@@ -53,7 +53,7 @@ export default function Sidebar() {
 
         <div className="border-b border-[var(--fh-border)] p-6">
           <p className="fh-label">Personal acoustic system</p>
-          <h1 className="mt-2 text-lg font-medium tracking-tight text-[var(--fh-text)]"><span className="mr-2 text-[var(--fh-accent)]">∿</span>Frequency Healer</h1>
+          <h1 className="mt-2 text-lg font-medium tracking-tight text-[var(--fh-text)]"><span className="mr-2 text-[var(--fh-accent)]">∿</span>Resonance Lab</h1>
         </div>
 
         <nav aria-label="Navegación principal" className="flex-1 overflow-y-auto p-4 space-y-4">
