@@ -81,6 +81,25 @@ export function excitedModes(modes:Mode[]):Mode[] {
 
 const closest=(modes:Mode[],frequencyHz:number)=>modes.reduce((best,mode)=>Math.abs(mode.frequencyHz-frequencyHz)<Math.abs(best.frequencyHz-frequencyHz)?mode:best);
 
+export interface ModeMapEntry { frequencyHz:number; modeIds:string[]; labels:string[]; }
+
+/**
+ * Resonances the current excitation point actually drives, in ascending frequency.
+ * Degenerate modes (same frequency, e.g. plate (1,4) and (4,1)) are grouped into one entry,
+ * because at that frequency the plate shows their combined figure.
+ */
+export function buildModeMap(c:CymaticsConfigV1,limit=16):ModeMapEntry[] {
+  const entries:ModeMapEntry[]=[];
+  for(const mode of excitedModes(buildModes(c))){
+    if(mode.frequencyHz<AUDIO_MIN_HZ||mode.frequencyHz>AUDIO_MAX_HZ)continue;
+    const last=entries.at(-1);
+    if(last&&Math.abs(mode.frequencyHz/last.frequencyHz-1)<1e-6){last.modeIds.push(mode.modeId);last.labels.push(mode.modeLabel);continue;}
+    if(entries.length>=limit)break;
+    entries.push({frequencyHz:mode.frequencyHz,modeIds:[mode.modeId],labels:[mode.modeLabel]});
+  }
+  return entries;
+}
+
 export function nearestMode(c:CymaticsConfigV1,frequencyHz:number):Mode {
   const modes=buildModes(c);
   if(!modes.length)throw new Error('No hay modos calculados para esta superficie.');
