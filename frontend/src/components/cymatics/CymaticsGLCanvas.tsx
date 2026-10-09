@@ -1,8 +1,13 @@
 'use client';
-import {useEffect,useRef} from 'react';
+import {useEffect,useLayoutEffect,useRef} from 'react';
+import type React from 'react';
 import type {CymaticsParticle} from '@/lib/cymatics/particles';
 import type {SurfaceType} from '@/lib/cymatics/types';
-import {CymaticsGLRenderer} from './CymaticsGLRenderer';
+import {CymaticsGLRenderer,type SandFrames} from './CymaticsGLRenderer';
 import styles from './cymatics.module.css';
 
-export default function CymaticsGLCanvas({particles,surface,onReady}:{particles:CymaticsParticle[];surface:SurfaceType;onReady:(ready:boolean)=>void}){const ref=useRef<HTMLCanvasElement>(null);useEffect(()=>{const canvas=ref.current;if(!canvas)return;let renderer:CymaticsGLRenderer;try{renderer=new CymaticsGLRenderer(canvas);onReady(true);}catch{onReady(false);return;}let raf=0,last=0;const draw=(now=0)=>{if(now-last>=1000/30){renderer.render(particles,surface);last=now;}raf=requestAnimationFrame(draw);};draw();return()=>{cancelAnimationFrame(raf);renderer.destroy();onReady(false);};},[onReady,particles,surface]);return <canvas ref={ref} className={styles.glCanvas} aria-hidden="true"/>;}
+/** Renders grains every display frame (no 30 fps cap); motion between physics steps is interpolated on the GPU. */
+export default function CymaticsGLCanvas({particles,surface,frames,onReady}:{particles:CymaticsParticle[];surface:SurfaceType;frames?:React.RefObject<SandFrames|null>;onReady:(ready:boolean)=>void}){const ref=useRef<HTMLCanvasElement>(null),latest=useRef({particles,surface});
+  useLayoutEffect(()=>{latest.current={particles,surface};},[particles,surface]);
+  // The renderer lives as long as the canvas: changing grains or surface must not toggle WebGL readiness (that used to restart the sand worker).
+  useEffect(()=>{const canvas=ref.current;if(!canvas)return;let renderer:CymaticsGLRenderer;try{renderer=new CymaticsGLRenderer(canvas);onReady(true);}catch{onReady(false);return;}let raf=0;const draw=(now:number)=>{renderer.render(latest.current.particles,latest.current.surface,frames?.current,now);raf=requestAnimationFrame(draw);};raf=requestAnimationFrame(draw);return()=>{cancelAnimationFrame(raf);renderer.destroy();onReady(false);};},[frames,onReady]);return <canvas ref={ref} className={styles.glCanvas} aria-hidden="true"/>;}
