@@ -4,6 +4,7 @@ export type SurfaceType = 'square-plate' | 'circular-membrane';
 export type CymaticsView = 'field' | 'vibration' | 'nodal-lines' | 'particles';
 export type VisualScale = 'fixed' | 'auto';
 export type RenderQuality = 'low' | 'medium' | 'high';
+export interface CymaticsJournalV1 { createdAt:string;calm:number;note:string;sessionId?:string; }
 
 export interface CymaticsConfigV1 {
   schemaVersion: 1;
@@ -30,6 +31,7 @@ export interface CymaticsConfigV1 {
   simulationTimeSeconds: number;
   renderQuality: RenderQuality;
   view: CymaticsView;
+  journal?: CymaticsJournalV1;
 }
 
 export interface ModalField {

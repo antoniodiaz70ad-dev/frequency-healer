@@ -69,10 +69,22 @@ export function buildModes(c:CymaticsConfigV1):Mode[] {
   return modes.sort((a,b)=>a.frequencyHz-b.frequencyHz);
 }
 
+/** Share of the strongest coupling below which a mode is treated as not excited from the current excitation point. */
+export const MIN_RELATIVE_COUPLING=.15;
+
+/** Modes the current excitation point actually drives. A mode whose shape is near zero at the excitation point barely appears in the forced response. */
+export function excitedModes(modes:Mode[]):Mode[] {
+  const strongest=modes.reduce((max,mode)=>Math.max(max,Math.abs(mode.coupling)),0);
+  const excited=modes.filter(mode=>Math.abs(mode.coupling)>=strongest*MIN_RELATIVE_COUPLING);
+  return excited.length?excited:modes;
+}
+
+const closest=(modes:Mode[],frequencyHz:number)=>modes.reduce((best,mode)=>Math.abs(mode.frequencyHz-frequencyHz)<Math.abs(best.frequencyHz-frequencyHz)?mode:best);
+
 export function nearestMode(c:CymaticsConfigV1,frequencyHz:number):Mode {
   const modes=buildModes(c);
   if(!modes.length)throw new Error('No hay modos calculados para esta superficie.');
-  return modes.reduce((best,mode)=>Math.abs(mode.frequencyHz-frequencyHz)<Math.abs(best.frequencyHz-frequencyHz)?mode:best);
+  return closest(excitedModes(modes),frequencyHz);
 }
 
 function exampleConfig(surfaceType:CymaticsConfigV1['surfaceType'],modeId:string,excitation:{x:number;y:number},seed:number):ResonanceExample {
@@ -114,7 +126,7 @@ export function computeModalField(c:CymaticsConfigV1,frequencyHz:number,size=64)
     for(const mode of modes){const wj=2*Math.PI*mode.frequencyHz;const a=wj*wj-omega*omega,b=2*zeta*wj*omega,den=a*a+b*b;const force=c.excitationRelativeStrength*mode.coupling/mode.modalMass;const phi=mode.shape(x,y);re+=force*a/den*phi;im-=force*b/den*phi;}
     const index=iy*size+ix,amplitude=Math.hypot(re,im);values[index]=amplitude;realValues[index]=re;imaginaryValues[index]=im;max=Math.max(max,amplitude);sumSq+=amplitude*amplitude;
   }
-  const nearest=modes.reduce((best,m)=>Math.abs(m.frequencyHz-frequencyHz)<Math.abs(best-frequencyHz)?m.frequencyHz:best,modes[0]?.frequencyHz??0);
+  const nearest=modes.length?closest(excitedModes(modes),frequencyHz).frequencyHz:0;
   const min=modes[0]?.frequencyHz??0,maxMode=modes.at(-1)?.frequencyHz??0,rms=Math.sqrt(sumSq/values.length);
   const outside=frequencyHz<min*.75||frequencyHz>maxMode*1.25;
   return {size,values,realValues,imaginaryValues,maxAmplitude:max,rmsAmplitude:rms,nearestResonanceHz:nearest,modeledMinHz:min,modeledMaxHz:maxMode,status:outside?'outside-modeled-range':significant>2?'mixed':Math.abs(nearest-frequencyHz)/Math.max(nearest,1)<.02?'resonant':'weak'};
@@ -149,7 +161,10 @@ export function computeIdealZeroContours(field:ModalField,surface:SurfaceType):C
 
 export function surfaceLabel(surface:SurfaceType){return surface==='square-plate'?'Placa cuadrada, bordes simplemente apoyados':'Membrana circular, borde fijo';}
 
-export function defaultCymaticsConfig():CymaticsConfigV1 {return {
+export function defaultCymaticsConfig():CymaticsConfigV1 {const config:CymaticsConfigV1={
   schemaVersion:1,modelVersion:CYMATICS_MODEL_VERSION,id:crypto.randomUUID(),createdAt:new Date().toISOString(),title:'Figura sin nombre',surfaceType:'square-plate',boundaryCondition:'simply-supported',
   dimensionsSI:{widthM:.32,heightM:.32,thicknessM:.001,radiusM:.16},materialSI:{youngModulusPa:69e9,poissonRatio:.33,densityKgM3:2700,tensionNm:900,surfaceDensityKgM2:.45},
-  excitationPosition:{x:.37,y:.43},excitationRelativeStrength:1,damping:.025,audioMode:'mono',channelFrequenciesHz:[432],waveform:'sine',modeledComponents:[432],responseMethod:'steady-state-modal-rms',modeCutoff:5,visualScale:'fixed',autoExposure:false,particleSeed:43201,simulationTimeSeconds:0,renderQuality:'medium',view:'particles'};}
+  excitationPosition:{x:.31,y:.37},excitationRelativeStrength:1,damping:.012,audioMode:'mono',channelFrequenciesHz:[AUDIO_MIN_HZ],waveform:'sine',modeledComponents:[AUDIO_MIN_HZ],responseMethod:'steady-state-modal-rms',modeCutoff:5,visualScale:'fixed',autoExposure:false,particleSeed:22022,simulationTimeSeconds:0,renderQuality:'medium',view:'particles'};
+  const frequency=squarePlateFrequencyHz(2,2,config);
+  config.title='Cuatro regiones interiores';config.channelFrequenciesHz=[frequency];config.modeledComponents=[frequency];
+  return config;}

@@ -1,5 +1,5 @@
 """
-Frequency Healer - FastAPI Backend
+Resonance Lab - FastAPI Backend
 Genera archivos WAV, sirve la base de datos de frecuencias.
 """
 from fastapi import FastAPI, Query, HTTPException
@@ -11,7 +11,7 @@ from frequencies import FREQUENCIES, search_frequencies, get_frequencies_by_cate
 from generator import generate_waveform, generate_binaural, generate_protocol_wav, to_wav_bytes
 
 app = FastAPI(
-    title="Frequency Healer API",
+    title="Resonance Lab API",
     description="API para generar frecuencias de sanacion y archivos WAV",
     version="1.0.0",
 )
@@ -173,7 +173,7 @@ def generate_protocol_wav_endpoint(req: ProtocolRequest):
 def health():
     return {
         "status": "ok",
-        "service": "Frequency Healer API",
+        "service": "Resonance Lab API",
         "total_frequencies": len(FREQUENCIES),
     }
 

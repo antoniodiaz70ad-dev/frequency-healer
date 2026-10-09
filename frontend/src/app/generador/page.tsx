@@ -127,7 +127,7 @@ export default function GeneradorPage() {
   return (
     <FHPageShell width="default" className="legacy-page generator-page animate-fade-in">
       <FHPageHeader eyebrow="INSTRUMENTO · AVANZADO" title="Generador manual" description="Configura una señal directamente. Para una experiencia guiada, usa Sesión guiada." />
-      <FHSurface variant="subtle" className="generator-note"><p>Esta es una herramienta manual avanzada. Frequency Healer no interpreta una frecuencia aislada como tratamiento o resultado garantizado.</p><Link href="/voz">Ir a Sesión guiada</Link></FHSurface>
+      <FHSurface variant="subtle" className="generator-note"><p>Esta es una herramienta manual avanzada. Resonance Lab no interpreta una frecuencia aislada como tratamiento o resultado garantizado.</p><Link href="/voz">Ir a Sesión guiada</Link></FHSurface>
       <FHSurface variant="subtle" className="generator-note"><p>Observa cómo esta frecuencia excita una placa o membrana virtual, sin cambiar tu configuración actual.</p><Link href={`/laboratorio-cimatico?frequency=${effectiveFreq}&waveform=${waveform}&binaural=${binaural?binauralDiff:0}`}>Ver vibración</Link></FHSurface>
       {wakeLockMessage && <p className="text-xs text-gray-500 mb-4">{wakeLockMessage}</p>}
 

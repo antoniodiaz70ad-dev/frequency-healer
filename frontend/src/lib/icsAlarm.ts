@@ -48,7 +48,7 @@ export function buildICS(cfg: ICSAlarmConfig): string {
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Frequency Healer//Session Scheduler//ES',
+    'PRODID:-//Resonance Lab//Session Scheduler//ES',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',

@@ -29,4 +29,8 @@ The manifest always names `voice-rules-v2`, `seed-registry-v1` and `seed-selecti
 
 The verifier checks the top-level contract, exact allowlist and order, each namespace against its current validator, Seed Selection provenance counts and a SHA-256 digest over the complete manifest and raw namespace values. A changed byte, status, count, timestamp, namespace or provenance field invalidates the export. Verification performs no storage access and no writes.
 
+## Resonance Lab · diario cimático
+
+La clave existente `fh:cymatics-gallery-v1` puede incluir un diario opcional por figura con fecha ISO, calma de 1 a 10, nota de hasta 280 caracteres e identificador de sesión guiada opcional. Las figuras históricas sin diario continúan siendo válidas y no se migran ni reescriben al leerlas. La exportación unificada conserva los bytes completos de esta misma clave; no se añadió un namespace nuevo.
+
 This is an integrity-checked export, not an import or cloud backup facility.
