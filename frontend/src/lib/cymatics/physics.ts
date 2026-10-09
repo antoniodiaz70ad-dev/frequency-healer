@@ -134,6 +134,19 @@ export function computeCircularIdealMode(c:CymaticsConfigV1,m:number,n:number,ro
   return {size,values,realValues,imaginaryValues,maxAmplitude:max,rmsAmplitude:Math.sqrt(sumSq/values.length),nearestResonanceHz:frequencyHz,modeledMinHz:frequencyHz,modeledMaxHz:frequencyHz,status:'resonant'};
 }
 
+export type ContourSegment=readonly [number,number,number,number];
+export function computeIdealZeroContours(field:ModalField,surface:SurfaceType):ContourSegment[]{
+  const segments:ContourSegment[]=[],s=field.size,at=(x:number,y:number)=>field.realValues[y*s+x],point=(x:number,y:number):readonly[number,number]=>[(x+.5)/s,(y+.5)/s];
+  for(let y=0;y<s-1;y++)for(let x=0;x<s-1;x++){
+    const corners=[point(x,y),point(x+1,y),point(x+1,y+1),point(x,y+1)] as const;
+    if(surface==='circular-membrane'&&corners.some(([px,py])=>Math.hypot(px-.5,py-.5)>=.5))continue;
+    const values=[at(x,y),at(x+1,y),at(x+1,y+1),at(x,y+1)],crossings:Array<readonly[number,number]>=[];
+    for(let edge=0;edge<4;edge++){const next=(edge+1)%4,a=values[edge],b=values[next];if(!Number.isFinite(a)||!Number.isFinite(b)||a===b||(a<0&&b<0)||(a>0&&b>0))continue;const t=Math.max(0,Math.min(1,-a/(b-a))),p=corners[edge],q=corners[next],hit=[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t] as const;if(!crossings.some(([cx,cy])=>Math.hypot(cx-hit[0],cy-hit[1])<1e-9))crossings.push(hit);}
+    if(crossings.length===2)segments.push([crossings[0][0],crossings[0][1],crossings[1][0],crossings[1][1]]);else if(crossings.length===4)segments.push([crossings[0][0],crossings[0][1],crossings[1][0],crossings[1][1]],[crossings[2][0],crossings[2][1],crossings[3][0],crossings[3][1]]);
+  }
+  return segments;
+}
+
 export function surfaceLabel(surface:SurfaceType){return surface==='square-plate'?'Placa cuadrada, bordes simplemente apoyados':'Membrana circular, borde fijo';}
 
 export function defaultCymaticsConfig():CymaticsConfigV1 {return {
