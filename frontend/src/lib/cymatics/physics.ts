@@ -149,7 +149,10 @@ export function computeIdealZeroContours(field:ModalField,surface:SurfaceType):C
 
 export function surfaceLabel(surface:SurfaceType){return surface==='square-plate'?'Placa cuadrada, bordes simplemente apoyados':'Membrana circular, borde fijo';}
 
-export function defaultCymaticsConfig():CymaticsConfigV1 {return {
+export function defaultCymaticsConfig():CymaticsConfigV1 {const config:CymaticsConfigV1={
   schemaVersion:1,modelVersion:CYMATICS_MODEL_VERSION,id:crypto.randomUUID(),createdAt:new Date().toISOString(),title:'Figura sin nombre',surfaceType:'square-plate',boundaryCondition:'simply-supported',
   dimensionsSI:{widthM:.32,heightM:.32,thicknessM:.001,radiusM:.16},materialSI:{youngModulusPa:69e9,poissonRatio:.33,densityKgM3:2700,tensionNm:900,surfaceDensityKgM2:.45},
-  excitationPosition:{x:.37,y:.43},excitationRelativeStrength:1,damping:.025,audioMode:'mono',channelFrequenciesHz:[432],waveform:'sine',modeledComponents:[432],responseMethod:'steady-state-modal-rms',modeCutoff:5,visualScale:'fixed',autoExposure:false,particleSeed:43201,simulationTimeSeconds:0,renderQuality:'medium',view:'particles'};}
+  excitationPosition:{x:.31,y:.37},excitationRelativeStrength:1,damping:.012,audioMode:'mono',channelFrequenciesHz:[AUDIO_MIN_HZ],waveform:'sine',modeledComponents:[AUDIO_MIN_HZ],responseMethod:'steady-state-modal-rms',modeCutoff:5,visualScale:'fixed',autoExposure:false,particleSeed:22022,simulationTimeSeconds:0,renderQuality:'medium',view:'particles'};
+  const frequency=squarePlateFrequencyHz(2,2,config);
+  config.title='Cuatro regiones interiores';config.channelFrequenciesHz=[frequency];config.modeledComponents=[frequency];
+  return config;}
