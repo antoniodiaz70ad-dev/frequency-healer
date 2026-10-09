@@ -5,7 +5,7 @@ import styles from "@/components/landing/landing.module.css";
 import { HARMONIC_ENABLED, VOICE_ENABLED } from "@/lib/voice/feature";
 
 export const metadata: Metadata = {
-  title: "Frequency Healer — Plataforma personal de exploración armónica",
+  title: "Resonance Lab — Laboratorio personal de exploración acústica",
   description:
     "Explora frecuencias, relaciones, octavas y constelaciones como práctica personal observable, sin promesas médicas.",
 };
@@ -31,7 +31,7 @@ const principles = [
 
 const steps = [
   ["Describe tu intención", "Escribe lo que quieres explorar. La voz es opcional; el texto funciona normalmente."],
-  ["Revisa la propuesta", "Frequency Healer muestra una sesión explicable antes de reproducir sonido."],
+  ["Revisa la propuesta", "Resonance Lab muestra una sesión explicable antes de reproducir sonido."],
   ["Confirma y escucha", "La reproducción empieza solo cuando tú confirmas. Puedes detenerla en cualquier momento."],
   ["Registra tu estado", "Guarda claridad, tensión, enfoque, energía, ánimo y reflexión cuando decidas."],
   ["Compara con calma", "La evidencia personal describe repetición; no afirma causalidad automática."],
@@ -80,7 +80,7 @@ const modules = [
   [
     "Exportación V1",
     "Control del usuario",
-    "Descarga tus datos de Frequency Healer desde una lista explícita de espacios propios.",
+    "Descarga tus datos de Resonance Lab desde una lista explícita de espacios propios.",
   ],
 ];
 
@@ -103,7 +103,7 @@ export default function LandingPage() {
           <a
             href="#"
             className={styles.brand}
-            aria-label="Frequency Healer, inicio de la página"
+            aria-label="Resonance Lab, inicio de la página"
           >
             <span className={styles.brandMark} aria-hidden="true">
               ∿
@@ -130,13 +130,13 @@ export default function LandingPage() {
             Descubre tu <em>patrón</em>.
           </h1>
           <p className={styles.heroDescription}>
-            Frequency Healer convierte el sonido en una práctica observable:
+            Resonance Lab convierte el sonido en una práctica observable:
             intención, relación acústica, escucha confirmada y evidencia personal
             N=1 sin prometer efectos médicos.
           </p>
           <div className={styles.actions}>
             <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/"} prefetch={false}>
-              {VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a Frequency Healer"} <Arrow />
+              {VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a Resonance Lab"} <Arrow />
             </Link>
             <a className={styles.secondary} href="#method">
               Ver método <span aria-hidden="true">↓</span>
@@ -210,7 +210,7 @@ export default function LandingPage() {
             </h2>
           </div>
           <p>
-            Lo único de Frequency Healer es la progresión: no se queda en listas
+            Lo único de Resonance Lab es la progresión: no se queda en listas
             de frecuencias. Te lleva de una semilla a relaciones, octavas,
             constelaciones, experiencia registrada y patrón personal.
           </p>
@@ -426,7 +426,7 @@ export default function LandingPage() {
         </h2>
         <div className={styles.actions}>
           <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/"} prefetch={false}>
-            {VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a Frequency Healer"} <Arrow />
+            {VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a Resonance Lab"} <Arrow />
           </Link>
           <a className={styles.secondary} href="#method">
             Revisar método <span aria-hidden="true">↑</span>

@@ -42,6 +42,8 @@ export function observeBrowser() {
         entry.oscillators.push(row);
         const setFrequency = node.frequency.setValueAtTime.bind(node.frequency);
         node.frequency.setValueAtTime = (hz, time) => { row.frequencies.push(hz); return setFrequency(hz, time); };
+        const setTargetFrequency = node.frequency.setTargetAtTime.bind(node.frequency);
+        node.frequency.setTargetAtTime = (hz, time, constant) => { row.frequencies.push(hz); return setTargetFrequency(hz, time, constant); };
         const start = node.start.bind(node), stop = node.stop.bind(node), disconnect = node.disconnect.bind(node);
         node.start = (...values) => { row.starts.push(values[0]); return start(...values); };
         node.stop = (...values) => { row.stops.push(values[0]); return stop(...values); };

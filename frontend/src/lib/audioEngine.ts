@@ -14,6 +14,15 @@ interface ChordVoice {
   panR: StereoPannerNode;
 }
 
+type BrowserAudioContextConstructor = new () => AudioContext;
+
+function createBrowserAudioContext(): AudioContext {
+  const scope = globalThis as typeof globalThis & { webkitAudioContext?: BrowserAudioContextConstructor };
+  const Constructor = scope.AudioContext ?? scope.webkitAudioContext;
+  if (!Constructor) throw new Error('AudioContext is not available.');
+  return new Constructor();
+}
+
 class AudioEngine {
   private ctx: AudioContext | null = null;
   private oscillator: OscillatorNode | null = null;
@@ -36,12 +45,26 @@ class AudioEngine {
 
   private getContext(): AudioContext {
     if (!this.ctx || this.ctx.state === 'closed') {
-      this.ctx = new AudioContext();
+      this.ctx = createBrowserAudioContext();
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
     return this.ctx;
+  }
+
+  /** Unlock and verify browser audio while still handling the user's direct gesture. */
+  async prepareForPlayback(): Promise<void> {
+    const ctx = this.getContext();
+    const osc = ctx.createOscillator(), gain = ctx.createGain(), end = ctx.currentTime + .03;
+    gain.gain.setValueAtTime(.0001, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, end);
+    osc.connect(gain); gain.connect(ctx.destination); osc.start(ctx.currentTime); osc.stop(end);
+    if (ctx.state === 'suspended') await ctx.resume();
+    await Promise.resolve();
+    if (ctx.state === 'suspended') await ctx.resume();
+    if (ctx.state !== 'running') { osc.disconnect(); gain.disconnect(); throw new Error('No se pudo activar el audio en este navegador.'); }
+    setTimeout(() => { try { osc.disconnect(); gain.disconnect(); } catch {} }, 50);
   }
 
   /** Start a single tone */
@@ -181,9 +204,10 @@ class AudioEngine {
   }
 
   /** Change frequency while playing */
-  setFrequency(frequency: number) {
+  setFrequency(frequency: number, binauralDifferenceHz?: number) {
     if (this.oscillator && this.ctx) {
-      this.oscillator.frequency.setValueAtTime(frequency, this.ctx.currentTime);
+      const now=this.ctx.currentTime;this.oscillator.frequency.cancelScheduledValues(now);this.oscillator.frequency.setTargetAtTime(frequency,now,.015);
+      if(this.oscillatorR){const difference=binauralDifferenceHz??Math.max(0,this.oscillatorR.frequency.value-this.oscillator.frequency.value);this.oscillatorR.frequency.cancelScheduledValues(now);this.oscillatorR.frequency.setTargetAtTime(frequency+difference,now,.015);}
     }
   }
 

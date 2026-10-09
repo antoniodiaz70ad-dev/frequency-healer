@@ -37,12 +37,12 @@ export default function DashboardPage() {
   }, []);
 
   return <FHPageShell>
-    <FHPageHeader eyebrow="Sistema personal de exploración acústica" title="Frequency Healer" description="Define una intención, escucha una estructura armónica y registra tu propia experiencia." />
+    <FHPageHeader eyebrow="Sistema personal de exploración acústica" title="Resonance Lab" description="Define una intención, escucha una estructura armónica y registra tu propia experiencia." />
     <nav aria-label="Formas de explorar">
       {VOICE_ENABLED && <FHPrimaryCard className="relative overflow-hidden">
         <p className="fh-label">Sesión guiada</p>
         <h2 className="mt-3 max-w-2xl text-3xl font-medium tracking-[-0.035em] text-[var(--fh-text)] md:text-4xl">¿Qué quieres explorar hoy?</h2>
-        <p className="mt-4 max-w-xl text-base leading-7 text-[var(--fh-text-secondary)]">Describe lo que quieres explorar y Frequency Healer te propondrá una sesión.</p>
+        <p className="mt-4 max-w-xl text-base leading-7 text-[var(--fh-text-secondary)]">Describe lo que quieres explorar y Resonance Lab te propondrá una sesión.</p>
         <p className="mt-2 text-sm text-[var(--fh-text-muted)]">Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p>
         <Link className="fh-action fh-action--primary mt-7" href="/voz">Comenzar sesión guiada <span aria-hidden="true">→</span></Link>
       </FHPrimaryCard>}

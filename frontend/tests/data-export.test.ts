@@ -10,7 +10,7 @@ function voiceRecord(){const proposal=buildProposal(parseLocalIntent('focus 10 m
 
 test('explicit allowlist exports every owned namespace and never reads arbitrary storage',async()=>{
   const memory=new Memory(new Map([['unrelated-secret','do-not-read'],[DISCLAIMER_ACCEPTED_KEY,'1']]));const result=await createUnifiedExport(memory,'2026-09-20T12:00:00.000Z');
-  assert.deepEqual(result.namespaces.map(x=>x.key),[...FREQUENCY_HEALER_STORAGE_ALLOWLIST]);assert.equal(result.namespaces.length,12);assert.equal(result.namespaces.some(x=>x.raw==='do-not-read'),false);assert.equal(memory.reads.includes('unrelated-secret'),false);await verifyUnifiedExport(result);
+  assert.deepEqual(result.namespaces.map(x=>x.key),[...FREQUENCY_HEALER_STORAGE_ALLOWLIST]);assert.equal(result.namespaces.length,13);assert.equal(result.namespaces.some(x=>x.raw==='do-not-read'),false);assert.equal(memory.reads.includes('unrelated-secret'),false);await verifyUnifiedExport(result);
 });
 test('valid voice-rules-v2 export retains mandatory Seed Selection provenance',async()=>{
   const raw=JSON.stringify([voiceRecord()]),result=await createUnifiedExport(new Memory(new Map([[SESSIONS_KEY,raw]])),'2026-09-20T12:00:00.000Z');

@@ -6,6 +6,7 @@ import { CONSTELLATIONS_KEY, ConstellationStore } from './harmonic/constellation
 import { PERSONALIZED_EXPERIMENTS_KEY, PersonalizedExperimentStore } from './personalization/storage';
 import { CONSENT_KEY, SETTINGS_KEY } from './voice/privacy';
 import { SESSIONS_KEY, VoiceStore, loadSettings } from './voice/storage';
+import { CYMATICS_STORAGE_KEY, readCymaticsGallery } from './cymatics/storage';
 
 export const OBE_SESSION_LOGS_KEY = 'fh:obe-session-logs-v1';
 export const NEXT_SESSION_CONFIG_KEY = 'fh:next-session-config-v1';
@@ -16,6 +17,7 @@ export const FREQUENCY_HEALER_STORAGE_ALLOWLIST = Object.freeze([
   CONSTELLATIONS_KEY, DISCOVERY_KEY, PERSONALIZED_EXPERIMENTS_KEY,
   ADAPTIVE_EXPERIMENTS_KEY, OBE_SESSION_LOGS_KEY, NEXT_SESSION_CONFIG_KEY,
   DISCLAIMER_ACCEPTED_KEY,
+  CYMATICS_STORAGE_KEY,
 ] as const);
 
 export type FrequencyHealerStorageKey = typeof FREQUENCY_HEALER_STORAGE_ALLOWLIST[number];
@@ -49,6 +51,7 @@ async function validateNamespace(key:FrequencyHealerStorageKey,raw:string):Promi
   if(key===ADAPTIVE_EXPERIMENTS_KEY)return (await new AdaptiveExperimentStore(store).load()).length;
   if(key===OBE_SESSION_LOGS_KEY)return validateObe(raw);
   if(key===NEXT_SESSION_CONFIG_KEY)return validateNext(raw);
+  if(key===CYMATICS_STORAGE_KEY)return readCymaticsGallery(store).length;
   if(raw!=='1')throw new Error('Aceptación de seguridad inválida.');return 1;
 }
 

@@ -1,3 +1,5 @@
+> Producto renombrado a Resonance Lab el 2026-10-09. Este documento se conserva como registro histórico.
+
 # Frequency Healer V1 Copy Freeze
 
 ## Freeze record

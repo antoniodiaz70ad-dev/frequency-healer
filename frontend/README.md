@@ -1,3 +1,7 @@
+# Resonance Lab
+
+Laboratorio personal para explorar y observar la resonancia del sonido.
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

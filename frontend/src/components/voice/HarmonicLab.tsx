@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef } from 'react';
 import { HarmonicEngine } from '@/lib/harmonic/engine';
 import { buildSchedule, RATIOS, type HarmonicConfig } from '@/lib/harmonic/math';
 import { getAudioEngine } from '@/lib/audioEngine';
@@ -37,10 +37,9 @@ export default function HarmonicLab() {
   const [labView, setLabView] = useState<'basic' | 'advanced'>('basic');
   const [playing, setPlaying] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(playing));
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     if(!constellationPlan&&!previewError)return;
-    const frame=requestAnimationFrame(()=>{previewFeedback.current?.focus();previewFeedback.current?.scrollIntoView({behavior:'smooth',block:'start'});});
-    return()=>cancelAnimationFrame(frame);
+    previewFeedback.current?.focus();previewFeedback.current?.scrollIntoView({behavior:'smooth',block:'start'});
   },[constellationPlan,previewError]);
   let schedule; let invalid = '';
   try { schedule = buildSchedule(config); } catch (e) { invalid = (e as Error).message; }
@@ -198,7 +197,7 @@ export default function HarmonicLab() {
     <ExperimentSession ref={experiment} playbackActive={playing || busy} />
     {labView === 'advanced' && <div className={styles.labAdvancedStack}>
       {schedule && <details open={labView === 'advanced'}><summary>Estructura visible de la sesión</summary><HarmonicStructure config={config} schedule={schedule} /></details>}
-      <details open={labView === 'advanced'}><summary>Complejidad estructural · avanzado</summary><StructureProfile config={config} label="Complejidad estructural · avanzado"/></details>
+      <StructureProfile config={config} label="Complejidad estructural · avanzado"/>
       <PersonalizedAdvisor active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
       <ProtocolDiscovery active={playing || busy} onConfirm={startDiscovery} onStop={stopPlayback}/>
     </div>}

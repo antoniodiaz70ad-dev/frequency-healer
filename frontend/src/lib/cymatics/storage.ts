@@ -1,0 +1,28 @@
+import type { CymaticsConfigV1 } from './types';
+import { AUDIO_MAX_HZ, AUDIO_MIN_HZ, CYMATICS_MODEL_VERSION } from './physics';
+
+export const CYMATICS_STORAGE_KEY='fh:cymatics-gallery-v1';
+const finite=(v:unknown,min:number,max:number)=>typeof v==='number'&&Number.isFinite(v)&&v>=min&&v<=max;
+const exactKeys=(value:object,keys:string[])=>Object.keys(value).length===keys.length&&Object.keys(value).every(key=>keys.includes(key));
+export function validateCymaticsConfig(v:unknown):CymaticsConfigV1 {
+  if(!v||typeof v!=='object')throw new Error('Configuración cimática inválida.');const c=v as CymaticsConfigV1;
+  const keys=['schemaVersion','modelVersion','id','createdAt','title','surfaceType','boundaryCondition','dimensionsSI','materialSI','excitationPosition','excitationRelativeStrength','damping','audioMode','channelFrequenciesHz','waveform','modeledComponents','responseMethod','modeCutoff','visualScale','autoExposure','particleSeed','simulationTimeSeconds','renderQuality','view',...(c.journal===undefined?[]:['journal'])];
+  if(!exactKeys(c,keys))throw new Error('Configuración cimática con campos ausentes o desconocidos.');
+  if(c.schemaVersion!==1||c.modelVersion!==CYMATICS_MODEL_VERSION)throw new Error('Versión de modelo no compatible; no puede reproducirse exactamente.');
+  if(typeof c.id!=='string'||!c.id||typeof c.createdAt!=='string'||!Number.isFinite(Date.parse(c.createdAt))||new Date(c.createdAt).toISOString()!==c.createdAt||typeof c.title!=='string'||c.title.length>100)throw new Error('Identidad inválida.');
+  if(!['square-plate','circular-membrane'].includes(c.surfaceType)||!['simply-supported','fixed-edge'].includes(c.boundaryCondition))throw new Error('Superficie inválida.');
+  if((c.surfaceType==='square-plate')!==(c.boundaryCondition==='simply-supported'))throw new Error('Condición de borde incompatible.');
+  if(!Array.isArray(c.channelFrequenciesHz)||c.channelFrequenciesHz.length<1||c.channelFrequenciesHz.length>2||!c.channelFrequenciesHz.every(f=>finite(f,AUDIO_MIN_HZ,AUDIO_MAX_HZ)))throw new Error('Frecuencias inválidas.');
+  if(c.audioMode==='mono'&&c.channelFrequenciesHz.length!==1||c.audioMode==='binaural'&&(c.channelFrequenciesHz.length!==2||c.channelFrequenciesHz[1]<=c.channelFrequenciesHz[0]))throw new Error('Canales de audio inconsistentes.');
+  if(!['sine','square','triangle','sawtooth'].includes(c.waveform)||!finite(c.damping,.001,.3)||!finite(c.excitationPosition?.x,0,1)||!finite(c.excitationPosition?.y,0,1)||!finite(c.excitationRelativeStrength,.01,10)||!Number.isInteger(c.modeCutoff)||!finite(c.modeCutoff,1,8))throw new Error('Parámetros físicos inválidos.');
+  if(!['field','vibration','nodal-lines','particles'].includes(c.view)||!['mono','binaural'].includes(c.audioMode)||!['low','medium','high'].includes(c.renderQuality))throw new Error('Configuración visual o de audio inválida.');
+  if(!c.dimensionsSI||!exactKeys(c.dimensionsSI,['widthM','heightM','thicknessM','radiusM'])||!c.materialSI||!exactKeys(c.materialSI,['youngModulusPa','poissonRatio','densityKgM3','tensionNm','surfaceDensityKgM2'])||!c.excitationPosition||!exactKeys(c.excitationPosition,['x','y']))throw new Error('Estructura física inválida.');
+  const nums=[c.dimensionsSI.widthM,c.dimensionsSI.heightM,c.dimensionsSI.thicknessM,c.dimensionsSI.radiusM,c.materialSI.youngModulusPa,c.materialSI.densityKgM3,c.materialSI.tensionNm,c.materialSI.surfaceDensityKgM2];if(!nums.every(n=>finite(n,1e-6,1e13))||!finite(c.materialSI.poissonRatio,0,.499))throw new Error('Dimensiones o material inválidos.');
+  if(c.responseMethod!=='steady-state-modal-rms'||!['fixed','auto'].includes(c.visualScale)||typeof c.autoExposure!=='boolean'||c.visualScale!==(c.autoExposure?'auto':'fixed')||!Number.isSafeInteger(c.particleSeed)||!finite(c.particleSeed,0,0xffffffff)||!finite(c.simulationTimeSeconds,0,86400))throw new Error('Metadatos de simulación inválidos.');
+  if(!Array.isArray(c.modeledComponents)||c.modeledComponents.length!==1||c.modeledComponents[0]!==c.channelFrequenciesHz[0])throw new Error('Componentes modelados inconsistentes.');
+  if(c.journal!==undefined){const journal=c.journal;if(!journal||typeof journal!=='object'||!exactKeys(journal,['createdAt','calm','note',...(journal.sessionId===undefined?[]:['sessionId'])])||typeof journal.createdAt!=='string'||!Number.isFinite(Date.parse(journal.createdAt))||new Date(journal.createdAt).toISOString()!==journal.createdAt||!Number.isInteger(journal.calm)||journal.calm<1||journal.calm>10||typeof journal.note!=='string'||journal.note.length>280||(journal.sessionId!==undefined&&(typeof journal.sessionId!=='string'||!journal.sessionId)))throw new Error('Diario cimático inválido: calma debe estar entre 1 y 10 y la nota no puede superar 280 caracteres.');}
+  return structuredClone(c);
+}
+export function readCymaticsGallery(storage:Pick<Storage,'getItem'>=localStorage):CymaticsConfigV1[]{const raw=storage.getItem(CYMATICS_STORAGE_KEY);if(!raw)return[];const parsed=JSON.parse(raw);if(!Array.isArray(parsed))throw new Error('Galería cimática dañada; no fue modificada.');return parsed.map(validateCymaticsConfig);}
+export function saveCymaticsFigure(c:CymaticsConfigV1,storage:Pick<Storage,'getItem'|'setItem'>=localStorage){const rows=readCymaticsGallery(storage);if(rows.some(r=>r.id===c.id))throw new Error('Ese identificador ya existe. Crea una captura nueva.');const valid=validateCymaticsConfig(c);storage.setItem(CYMATICS_STORAGE_KEY,JSON.stringify([...rows,valid]));return valid;}
+export function parseCymaticsImport(raw:string){if(raw.length>100_000)throw new Error('Archivo demasiado grande.');return validateCymaticsConfig(JSON.parse(raw));}
