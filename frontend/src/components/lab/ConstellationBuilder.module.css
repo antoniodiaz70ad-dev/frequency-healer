@@ -9,5 +9,8 @@
 .builder small { display: block; color: #94a3b8; font-size: .65rem; font-weight: normal; }
 .builder dt { color: #94a3b8; font-size: .85rem; }
 .builder button { max-width: 100%; }
+.analysisLink { display: inline-flex; min-height: 42px; align-items: center; margin: .25rem; padding: .55rem .8rem; border: 1px solid #67e8f9; border-radius: 9px; color: #cffafe; text-decoration: none; }
+.analysisLink:hover { background: rgba(103,232,249,.1); }
+.analysisLink:focus-visible { outline: 3px solid #67e8f9; outline-offset: 3px; }
 .builder input[readonly] { font-family: monospace; font-size: .8rem; }
 @media(max-width:480px) { .container { padding: .75rem; } .builder td button { padding: .45rem; margin-right: 0; font-size: .75rem; } }

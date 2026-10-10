@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { compileConstellation, type ConstellationInputV1, type HarmonicConstellationV1, type HarmonicRelationshipV1 } from '@/lib/harmonic/constellations';
 import { assessBuilderPlayability, moveBuilderMember, type BuilderPlayability } from '@/lib/harmonic/builder';
 import { ConstellationStore, CONSTELLATIONS_KEY } from '@/lib/harmonic/constellationStorage';
@@ -84,7 +85,7 @@ function Builder({ context, playbackActive, onPreviewPlayback }: BuilderProps) {
       if(previewing!==null)return;setPreviewing(row.id);setNotice('Preparando vista previa de reproducción…');
       try{await onPreviewPlayback(row);if(mounted.current)setNotice('Preparación terminada. Revisa la confirmación mostrada a continuación.');}
       finally{if(mounted.current)setPreviewing(null);}
-    }}>{previewing===row.id?'Preparando reproducción…':'Preparar reproducción'}</button>}</li>)}</ul>
+    }}>{previewing===row.id?'Preparando reproducción…':'Preparar reproducción'}</button>}<Link className={styles.analysisLink} href={`/laboratorio-cimatico?constellation=${encodeURIComponent(row.id)}`}>Analizar en Laboratorio Cimático</Link></li>)}</ul>
   </div>;
 }
 export default function ConstellationBuilder(props: BuilderProps) {
