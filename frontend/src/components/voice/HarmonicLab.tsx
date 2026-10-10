@@ -36,6 +36,7 @@ export default function HarmonicLab() {
   const [config, setConfig] = useState(initial); const [confirmed, setConfirmed] = useState(false);
   const [labView, setLabView] = useState<'basic' | 'advanced'>('basic');
   const [playing, setPlaying] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState('');
+  const [liveVolume, setLiveVolume] = useState(initial.uiVolume);
   const wakeLockMessage = playbackWakeLockMessage(usePlaybackWakeLock(playing));
   useLayoutEffect(()=>{
     if(!constellationPlan&&!previewError)return;
@@ -78,7 +79,7 @@ export default function HarmonicLab() {
             activeExperiment.current?.handle.finish(activeExperiment.current.id, 'completed'); activeExperiment.current = null;
             setPlaying(false);
           });
-          if (started && run === startRun.current) { activeExperiment.current?.handle.started(activeExperiment.current.id); setPlaying(true); }
+          if (started && run === startRun.current) { setLiveVolume(playbackConfig.uiVolume); activeExperiment.current?.handle.started(activeExperiment.current.id); setPlaying(true); }
         } catch (e) {
           if (run === startRun.current) { activeExperiment.current?.handle.finish(activeExperiment.current.id, 'interrupted'); activeExperiment.current = null; setError((e as Error).message); }
         } finally { if (run === startRun.current) { startPending.current = false; setBusy(false); } }
@@ -96,7 +97,7 @@ export default function HarmonicLab() {
         if (run !== startRun.current) return;
         request.finished('completed'); discovery.current = null; setPlaying(false);
       });
-      if (started && run === startRun.current) { request.started(); setPlaying(true); }
+      if (started && run === startRun.current) { setLiveVolume(exact.uiVolume); request.started(); setPlaying(true); }
       else { request.finished('interrupted'); if (discovery.current === request) discovery.current = null; }
     } catch (e) {
       request.finished('interrupted'); if (discovery.current === request) discovery.current = null;
@@ -144,7 +145,7 @@ export default function HarmonicLab() {
       <label>Relación armónica<select aria-label="Relación" value={config.ratioId} onChange={e => edit({ ratioId: e.target.value as HarmonicConfig['ratioId'] })}>{Object.entries(RATIOS).map(([id, r]) => <option value={id} key={id}>{r.label} ({r.p}:{r.q})</option>)}</select></label>
       <label>Forma de escucha<select aria-label="Modo" value={config.mode} onChange={e => edit({ mode: e.target.value as HarmonicConfig['mode'] })}><option value="sequence">En secuencia</option><option value="simultaneous">Juntas</option></select></label>
       <label>Duración (minutos)<input type="number" min={1} max={60} value={config.durationSeconds / 60} onChange={e => edit({ durationSeconds: Number(e.target.value) * 60 })} /></label>
-      <label>Volumen (0–100)<input type="number" min={0} max={100} value={config.uiVolume} onChange={e => edit({ uiVolume: Number(e.target.value) })} /></label>
+      <div><label htmlFor="harmonic-volume-number">Volumen (0–100)</label><input id="harmonic-volume-number" aria-label="Volumen (0–100)" type="number" min={0} max={100} value={config.uiVolume} onChange={e => edit({ uiVolume: Number(e.target.value) })} /><label className={styles.muted} htmlFor="harmonic-volume-touch">Ajuste táctil</label><input id="harmonic-volume-touch" aria-label="Ajuste táctil de volumen" type="range" min={0} max={100} step={1} value={config.uiVolume} onInput={e => edit({ uiVolume: Number(e.currentTarget.value) })} /></div>
       {(labView === 'advanced' || config.ratioId === 'cascade-13-12') && config.ratioId === 'cascade-13-12' && <><label>Incrementos<input type="number" min={1} max={8} value={config.increments} onChange={e => edit({ increments: Number(e.target.value) })} /></label><label>Trayectoria<select value={config.direction} onChange={e => edit({ direction: e.target.value as HarmonicConfig['direction'] })}><option value="ascending">Ascendente</option><option value="descending">Descendente</option><option value="return">Expansión y retorno</option></select></label></>}
     </div></fieldset></section>
 
@@ -152,6 +153,7 @@ export default function HarmonicLab() {
       {config.ratioId === 'cascade-13-12' && <label className={styles.check}><input type="checkbox" disabled={playing || busy} checked={confirmed} onChange={e => setConfirmed(e.target.checked)} />Acepto la exploración experimental 13/12, sin promesas de resultados.</label>}
       <button className={styles.primary} disabled={playing || busy || (config.ratioId === 'cascade-13-12' && !confirmed)} onClick={async () => { await startPlayback(); }}>Confirmar e iniciar</button>
     </section>}
+    {playing && <section className={styles.liveVolume} aria-label="Control de volumen durante la sesión"><label>Volumen durante esta sesión: <output>{liveVolume}/100</output><input aria-label="Volumen durante la sesión" type="range" min={0} max={100} step={1} value={liveVolume} onInput={e => { const value = Number(e.currentTarget.value); engine.setVolume(value); setLiveVolume(value); }} /></label><p className={styles.muted}>Puedes ajustarlo sin detener ni reiniciar la sesión. Los botones laterales del iPhone controlan además el volumen general del dispositivo.</p></section>}
     {(playing || busy) && <button className={styles.stop} onClick={stopPlayback}>Detener sesión</button>}
     <p role="status">{playing ? 'Audio en curso' : busy ? 'Preparando audio…' : 'Audio detenido'}</p>{wakeLockMessage && <p className={styles.muted}>{wakeLockMessage}</p>}
     {(invalid || error) && <p role="alert" className={styles.error}>{invalid || error}</p>}

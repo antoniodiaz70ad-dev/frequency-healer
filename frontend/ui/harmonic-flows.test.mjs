@@ -208,6 +208,16 @@ test('navigation during audio: closes native graph, never completed, never autos
   assert.deepEqual(await storage(page),{});
 });
 
+test('active harmonic session exposes an iPhone-friendly live volume slider without restarting audio', async t => {
+  const page=await fixture(t);await field(page,'Volumen (0–100)').fill('20');await start(page);await page.waitForTimeout(100);
+  const slider=page.getByRole('slider',{name:'Volumen durante la sesión',exact:true});await slider.waitFor();
+  const before=await probe(page),oscillators=sessionOscillators(before).length;assert.equal(await slider.inputValue(),'20');
+  await slider.evaluate((node,value)=>{node.value=String(value);node.dispatchEvent(new Event('input',{bubbles:true}));},65);
+  await page.getByText('65/100',{exact:true}).waitFor();const after=await probe(page);
+  assert.equal(after.contexts.length,before.contexts.length);assert.equal(sessionOscillators(after).length,oscillators);
+  assert.equal(await button(page,'Detener sesión').isVisible(),true);await button(page,'Detener sesión').click();await page.getByRole('status').filter({hasText:/^Audio detenido$/}).waitFor();assert.equal(await button(page,'Detener sesión').count(),0);
+});
+
 for (const direction of ['ascending','descending','return']) test(`cascade ${direction}: existing consent, schedule and cleanup unchanged`, async t => {
   const page = await fixture(t); await ratio(page).selectOption('cascade-13-12');
   await page.getByRole('combobox',{name:'Trayectoria',exact:true}).selectOption(direction);

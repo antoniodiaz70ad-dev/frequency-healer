@@ -20,6 +20,11 @@
 .steps li { padding: .45rem 0; overflow-wrap: anywhere; }
 .tag { display: inline-block; padding: .3rem .6rem; background: #164e63; border-radius: .5rem; font-size: .8rem; }
 .stop { position: sticky; bottom: calc(.5rem + env(safe-area-inset-bottom)); z-index: 20; width: 100%; background: color-mix(in srgb, var(--fh-danger) 18%, var(--fh-bg)) !important; border: 2px solid var(--fh-danger) !important; color: #ffd1d1 !important; }
+.liveVolume { position: sticky; bottom: calc(5rem + env(safe-area-inset-bottom)); z-index: 19; margin-bottom: .5rem !important; padding: .8rem 1rem !important; border-color: var(--fh-accent) !important; background: color-mix(in srgb, var(--fh-bg) 92%, var(--fh-accent)) !important; box-shadow: var(--fh-shadow); }
+.liveVolume label { margin: 0; color: var(--fh-text); font-weight: 650; }
+.liveVolume output { color: var(--fh-accent); font-family: var(--font-geist-mono), monospace; }
+.liveVolume input[type=range], .workspace input[type=range] { padding-inline: 0; accent-color: var(--fh-accent); touch-action: pan-x; }
+.liveVolume p { margin-bottom: 0; }
 .progress { width: 100%; height: .7rem; accent-color: #22d3ee; }
 .recording { font-weight: 700; border: 2px solid #fb7185; padding: .75rem; border-radius: .5rem; }
 .workspace pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
