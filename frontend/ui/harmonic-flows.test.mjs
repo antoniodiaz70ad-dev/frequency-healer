@@ -386,6 +386,24 @@ test('builder: explicit append, reload, read-only saved record, unchanged JSON e
   const appended=JSON.parse((await storage(page))[CONSTELLATION_KEY]);assert.equal(appended.length,2);assert.deepEqual(appended[0],record);assert.notEqual(appended[1].id,record.id);assert.equal((await storage(page))[KEY],raw);
 });
 
+test('saved constellation transfers exact members to cymatics review without autoplay or new storage',async t=>{
+  const page=await fixture(t);await openBuilder(page);await button(page,'Añadir raíz').click();await button(page,'Añadir ratio').click();
+  await page.getByRole('textbox',{name:'Nombre de constelación (opcional)',exact:true}).fill('Puente cimático');await validBuilder(page);
+  await button(page,'Guardar constelación').click();await button(page,'Constelación guardada').waitFor();
+  const before=await storage(page),writesBefore=(await probe(page)).writes.length;
+  await page.getByRole('link',{name:'Analizar en Laboratorio Cimático',exact:true}).click();
+  const review=page.getByRole('heading',{name:'Revisar constelación antes de analizar',exact:true});await review.waitFor();
+  assert.match(await review.locator('..').innerText(),/432\.00 Hz/);assert.match(await review.locator('..').innerText(),/648\.00 Hz/);
+  assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),before);assert.equal((await probe(page)).writes.length,writesBefore);
+  await page.getByRole('button',{name:'Usar esta frecuencia'}).nth(1).click();
+  await page.getByText('Explorar a fondo',{exact:true}).click();
+  assert.equal(await page.getByRole('spinbutton',{name:'Frecuencia cimática'}).inputValue(),'648');assert.equal((await probe(page)).contexts.length,0);
+  await page.getByRole('checkbox',{name:/1\. Raíz/}).check();await page.getByRole('checkbox',{name:/2\. Ratio/}).check();
+  await page.getByRole('button',{name:'Preparar comparación A\/B',exact:true}).click();
+  assert.equal(await page.getByRole('img',{name:'Comparación A'}).count(),1);assert.equal(await page.getByRole('img',{name:'Comparación B'}).count(),1);
+  const after=await storage(page);assert.equal((await probe(page)).contexts.length,0);assert.equal(after[CONSTELLATION_KEY],before[CONSTELLATION_KEY]);assert.deepEqual(Object.keys(after).sort(),[CONSTELLATION_KEY,'fh:cymatics-ui-v1'].sort());assert.ok((await probe(page)).writes.length<=writesBefore+1);
+});
+
 test('builder: corrupt constellation storage preserved; export original; no other keys or audio',async t=>{
   const page=await fixture(t);
   await page.evaluate(key=>localStorage.setItem(key,'{malformed'),CONSTELLATION_KEY);await page.reload();await openBuilder(page);
