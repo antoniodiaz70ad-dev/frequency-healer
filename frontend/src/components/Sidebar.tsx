@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 const navGroups = [
   { label: "Principal", items: [
-    { href: "/", label: "Inicio", icon: "⚡" },
+    { href: "/inicio", label: "Inicio", icon: "⚡" },
     ...(VOICE_ENABLED ? [{ href: "/voz", label: "Sesión guiada", icon: "✎" }] : []),
   ] },
   { label: "Explorar", items: [
@@ -60,7 +60,7 @@ export default function Sidebar() {
           {navGroups.map(group => <div key={group.label}>
             <p className="fh-label mb-1 px-3 text-[10px]">{group.label}</p>
             {group.items.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
                 className={`flex min-h-11 items-center gap-3 rounded-[var(--fh-radius-control)] px-4 py-3 text-sm transition-colors ${isActive ? "bg-[var(--fh-surface-strong)] text-[var(--fh-accent)] font-medium" : "text-[var(--fh-text-muted)] hover:bg-[var(--fh-surface)] hover:text-[var(--fh-text)]"}`}>

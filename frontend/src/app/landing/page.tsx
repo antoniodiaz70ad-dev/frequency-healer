@@ -42,14 +42,14 @@ const productModes = [
     "Sesión guiada",
     "Para empezar simple",
     "Describe lo que quieres explorar y recibe una propuesta revisable sin elegir Hz, ratios u octavas.",
-    VOICE_ENABLED ? "/voz" : "/",
+    VOICE_ENABLED ? "/voz" : "/inicio",
     VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a la app",
   ],
   [
     "Laboratorio Armónico",
     "Para exploración avanzada",
     "Construye relaciones, octavas, constelaciones y experimentos con trazabilidad matemática.",
-    HARMONIC_ENABLED ? "/laboratorio-armonico" : "/",
+    HARMONIC_ENABLED ? "/laboratorio-armonico" : "/inicio",
     HARMONIC_ENABLED ? "Abrir laboratorio" : "Entrar a la app",
   ],
 ];
@@ -112,7 +112,7 @@ export default function LandingPage() {
           </a>
           <nav aria-label="Navegación de landing">
             <a href="#method">El método</a>
-            <Link href="/" prefetch={false}>
+            <Link href="/inicio" prefetch={false}>
               Entrar a la app <Arrow />
             </Link>
           </nav>
@@ -135,7 +135,7 @@ export default function LandingPage() {
             N=1 sin prometer efectos médicos.
           </p>
           <div className={styles.actions}>
-            <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/"} prefetch={false}>
+            <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/inicio"} prefetch={false}>
               {VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a Resonance Lab"} <Arrow />
             </Link>
             <a className={styles.secondary} href="#method">
@@ -425,7 +425,7 @@ export default function LandingPage() {
           un método <em>honesto</em>.
         </h2>
         <div className={styles.actions}>
-          <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/"} prefetch={false}>
+          <Link className={styles.primary} href={VOICE_ENABLED ? "/voz" : "/inicio"} prefetch={false}>
             {VOICE_ENABLED ? "Comenzar sesión guiada" : "Entrar a Resonance Lab"} <Arrow />
           </Link>
           <a className={styles.secondary} href="#method">

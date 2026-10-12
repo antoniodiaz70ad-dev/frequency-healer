@@ -10,7 +10,7 @@ assert.equal((html.match(/<main\b/g) ?? []).length, 1, 'one main landmark');
 assert.ok(!html.includes('<aside'), 'landing has no application sidebar');
 assert.ok(html.includes('lang="es"'), 'Spanish content declares its language');
 assert.equal(html.includes('href="/laboratorio-armonico"'), enabled, 'lab CTA respects the flag');
-assert.ok(html.includes('href="/"'), 'dashboard entry remains available');
+assert.ok(html.includes('href="/inicio"'), 'dashboard entry remains available');
 assert.equal(html.includes('href="/voz"'), enabled, 'guided CTA respects the voice flag');
 assert.equal(html.includes('Comenzar sesión guiada'), enabled, 'guided label only when available');
 for (const id of ['method', 'relationships', 'process', 'hero-title', 'map-title', 'closing-title']) {
@@ -28,7 +28,10 @@ for (const [file, mime] of [['harmonic-hero.mp4', 'video/mp4'], ['harmonic-hero-
   assert.ok(asset.headers.get('content-type')?.startsWith(mime), file);
   assert.equal((await asset.arrayBuffer()).byteLength, 1024, file);
 }
-const dashboard = await fetch(origin + '/');
+const home = await fetch(origin + '/');
+assert.equal(home.status, 200);
+assert.ok(!(await home.text()).includes('<aside'), 'root renders the public landing');
+const dashboard = await fetch(origin + '/inicio');
 assert.equal(dashboard.status, 200);
 assert.ok((await dashboard.text()).includes('<aside'), 'existing dashboard sidebar preserved');
-console.log(`PASS landing, fallback, gated CTA, media ranges and dashboard frame (${enabled ? 'ON' : 'OFF'})`);
+console.log(`PASS root landing, alias, fallback, gated CTA, media ranges and dashboard frame (${enabled ? 'ON' : 'OFF'})`);
