@@ -3,9 +3,10 @@
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 
-/** Only the public landing opts out of the existing application frame. */
+/** Public landing routes opt out of the existing application frame. */
 export default function AppFrame({ children }: { children: React.ReactNode }) {
-  const landing = usePathname() === "/landing";
+  const pathname = usePathname();
+  const landing = pathname === "/" || pathname === "/landing";
   return landing ? (
     <main>{children}</main>
   ) : (
