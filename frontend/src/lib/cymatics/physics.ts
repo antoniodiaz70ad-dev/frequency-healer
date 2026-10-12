@@ -37,6 +37,13 @@ export function membraneFrequencyHz(m:number,n:number,c:CymaticsConfigV1):number
   return root/(2*Math.PI*c.dimensionsSI.radiusM)*Math.sqrt(c.materialSI.tensionNm/c.materialSI.surfaceDensityKgM2);
 }
 
+/** Integral of mu*phi^2 over the circular membrane for the unnormalised real mode. */
+export function membraneModalMass(m:number,n:number,c:CymaticsConfigV1):number {
+  const root=BESSEL_ROOTS[m]?.[n-1];if(root===undefined)throw new Error('Modo de membrana fuera de la tabla verificada.');
+  const radialNorm=besselJ(m+1,root)**2,angularIntegral=m===0?2*Math.PI:Math.PI;
+  return c.materialSI.surfaceDensityKgM2*c.dimensionsSI.radiusM**2*.5*radialNorm*angularIntegral;
+}
+
 // Stable series for the small integer orders and arguments used by the model.
 export function besselJ(order:number,x:number):number {
   let sum=0, factorialM=1, factorialMO=1;
@@ -62,7 +69,7 @@ export function buildModes(c:CymaticsConfigV1):Mode[] {
       for(const orientation of (m===0?[0]:[0,Math.PI/2])){
         const shape=(x:number,y:number)=>{const dx=2*x-1,dy=2*y-1,r=Math.hypot(dx,dy);if(r>1)return 0;const theta=Math.atan2(dy,dx);return besselJ(m,root*r)*Math.cos(m*theta-orientation);};
         const orientationLabel=orientation===0?'cos':'sen';
-        modes.push({frequencyHz:membraneFrequencyHz(m,n,c),shape,coupling:shape(ex.x,ex.y),modalMass:c.materialSI.surfaceDensityKgM2*Math.PI*c.dimensionsSI.radiusM**2/2,modeId:`membrane-${m}-${n}-${orientationLabel}`,modeLabel:`Membrana (${m}, ${n}) · ${orientationLabel}`});
+        modes.push({frequencyHz:membraneFrequencyHz(m,n,c),shape,coupling:shape(ex.x,ex.y),modalMass:membraneModalMass(m,n,c),modeId:`membrane-${m}-${n}-${orientationLabel}`,modeLabel:`Membrana (${m}, ${n}) · ${orientationLabel}`});
       }
     }
   }
@@ -139,14 +146,14 @@ export function buildResonanceExamples():ResonanceExample[] {
 export function computeModalField(c:CymaticsConfigV1,frequencyHz:number,size=64):ModalField {
   if(!Number.isFinite(frequencyHz)||frequencyHz<AUDIO_MIN_HZ||frequencyHz>AUDIO_MAX_HZ)throw new Error('Frecuencia fuera del rango de audio admitido (0.1–2000 Hz).');
   const modes=buildModes(c), values=new Float32Array(size*size),realValues=new Float32Array(size*size),imaginaryValues=new Float32Array(size*size),omega=2*Math.PI*frequencyHz,zeta=c.damping;
-  let max=0,sumSq=0;const significant=modes.filter(mode=>Math.abs(frequencyHz-mode.frequencyHz)/mode.frequencyHz<Math.max(.02,zeta*3)).length;
+  let max=0,sumSq=0,domainSamples=0;const significant=modes.filter(mode=>Math.abs(frequencyHz-mode.frequencyHz)/mode.frequencyHz<Math.max(.02,zeta*3)).length;
   for(let iy=0;iy<size;iy++)for(let ix=0;ix<size;ix++){
-    const x=(ix+.5)/size,y=(iy+.5)/size;let re=0,im=0;
+    const x=(ix+.5)/size,y=(iy+.5)/size;if(c.surfaceType==='circular-membrane'&&Math.hypot(2*x-1,2*y-1)>1)continue;let re=0,im=0;
     for(const mode of modes){const wj=2*Math.PI*mode.frequencyHz;const a=wj*wj-omega*omega,b=2*zeta*wj*omega,den=a*a+b*b;const force=c.excitationRelativeStrength*mode.coupling/mode.modalMass;const phi=mode.shape(x,y);re+=force*a/den*phi;im-=force*b/den*phi;}
-    const index=iy*size+ix,amplitude=Math.hypot(re,im);values[index]=amplitude;realValues[index]=re;imaginaryValues[index]=im;max=Math.max(max,amplitude);sumSq+=amplitude*amplitude;
+    const index=iy*size+ix,amplitude=Math.hypot(re,im);values[index]=amplitude;realValues[index]=re;imaginaryValues[index]=im;max=Math.max(max,amplitude);sumSq+=amplitude*amplitude;domainSamples++;
   }
   const nearest=modes.length?closest(excitedModes(modes),frequencyHz).frequencyHz:0;
-  const min=modes[0]?.frequencyHz??0,maxMode=modes.at(-1)?.frequencyHz??0,rms=Math.sqrt(sumSq/values.length);
+  const min=modes[0]?.frequencyHz??0,maxMode=modes.at(-1)?.frequencyHz??0,rms=Math.sqrt(sumSq/Math.max(1,domainSamples));
   const outside=frequencyHz<min*.75||frequencyHz>maxMode*1.25;
   return {size,values,realValues,imaginaryValues,maxAmplitude:max,rmsAmplitude:rms,nearestResonanceHz:nearest,modeledMinHz:min,modeledMaxHz:maxMode,status:outside?'outside-modeled-range':significant>2?'mixed':Math.abs(nearest-frequencyHz)/Math.max(nearest,1)<.02?'resonant':'weak'};
 }
@@ -173,7 +180,7 @@ export function computeIdealZeroContours(field:ModalField,surface:SurfaceType):C
     if(surface==='circular-membrane'&&corners.some(([px,py])=>Math.hypot(px-.5,py-.5)>=.5))continue;
     const values=[at(x,y),at(x+1,y),at(x+1,y+1),at(x,y+1)],crossings:Array<readonly[number,number]>=[];
     for(let edge=0;edge<4;edge++){const next=(edge+1)%4,a=values[edge],b=values[next];if(!Number.isFinite(a)||!Number.isFinite(b)||a===b||(a<0&&b<0)||(a>0&&b>0))continue;const t=Math.max(0,Math.min(1,-a/(b-a))),p=corners[edge],q=corners[next],hit=[p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t] as const;if(!crossings.some(([cx,cy])=>Math.hypot(cx-hit[0],cy-hit[1])<1e-9))crossings.push(hit);}
-    if(crossings.length===2)segments.push([crossings[0][0],crossings[0][1],crossings[1][0],crossings[1][1]]);else if(crossings.length===4)segments.push([crossings[0][0],crossings[0][1],crossings[1][0],crossings[1][1]],[crossings[2][0],crossings[2][1],crossings[3][0],crossings[3][1]]);
+    if(crossings.length===2)segments.push([crossings[0][0],crossings[0][1],crossings[1][0],crossings[1][1]]);else if(crossings.length===4){const center=values.reduce((sum,value)=>sum+value,0)/4,sameAsFirst=(center>=0)===(values[0]>=0);if(sameAsFirst)segments.push([crossings[0][0],crossings[0][1],crossings[1][0],crossings[1][1]],[crossings[2][0],crossings[2][1],crossings[3][0],crossings[3][1]]);else segments.push([crossings[3][0],crossings[3][1],crossings[0][0],crossings[0][1]],[crossings[1][0],crossings[1][1],crossings[2][0],crossings[2][1]]);}
   }
   return segments;
 }
