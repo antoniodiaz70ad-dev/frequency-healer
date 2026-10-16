@@ -13,7 +13,7 @@ const FAMILY_LABELS:Record<GeometryFamily,string>={
 };
 const saveBlob=(blob:Blob,name:string)=>{const url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download=name;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),0);};
 
-export default function GeometryLab(){
+export default function GeometryLab({audioPlaying,onListenReference,onStopAudio}:{audioPlaying:boolean;onListenReference:(frequencyHz:number)=>Promise<void>;onStopAudio:()=>void}){
   const titleId=useId();
   const [presetId,setPresetId]=useState(GEOMETRY_PRESETS[0].id);
   const [config,setConfig]=useState<GeometryConfig>(()=>cloneGeometryConfig(GEOMETRY_PRESETS[0]));
@@ -39,7 +39,7 @@ export default function GeometryLab(){
         <label>Fase <output>{config.phase.toFixed(2)}</output><input type="range" min="0" max="1" step=".01" value={config.phase} onInput={event=>patch({phase:Number(event.currentTarget.value)})}/></label>
         <label>Escala <output>{Math.round(config.scale*100)}%</output><input type="range" min=".35" max="1" step=".01" value={config.scale} onInput={event=>patch({scale:Number(event.currentTarget.value)})}/></label>
         <label>Color<input className={styles.color} type="color" value={config.color} onChange={event=>patch({color:event.target.value})}/></label>
-        <div className={styles.acoustic}><span>VARIABLE ACÚSTICA SEPARADA</span><label>Frecuencia de referencia<input type="number" min=".1" max="20000" step=".01" value={config.acousticFrequencyHz} onChange={event=>{const value=Number(event.target.value);if(Number.isFinite(value)&&value>=.1&&value<=20000)patch({acousticFrequencyHz:value});}}/> Hz</label><small>Cambiarla no altera automáticamente la geometría ni inicia audio.</small></div>
+        <div className={styles.acoustic}><span>VARIABLE ACÚSTICA SEPARADA</span><label>Frecuencia de referencia<input type="number" min=".1" max="20000" step=".01" value={config.acousticFrequencyHz} onChange={event=>{const value=Number(event.target.value);if(Number.isFinite(value)&&value>=.1&&value<=20000)patch({acousticFrequencyHz:value});}}/> Hz</label><small>Cambiarla no altera automáticamente la geometría ni inicia audio. El motor audible admite referencias entre 0.1 y 2000 Hz.</small><div className={styles.listenActions}>{audioPlaying?<button onClick={onStopAudio}>Detener frecuencia</button>:<button disabled={config.acousticFrequencyHz>2000} onClick={()=>void onListenReference(config.acousticFrequencyHz)}>Escuchar {config.acousticFrequencyHz.toFixed(2)} Hz</button>}</div></div>
         <div className={styles.actions}><button onClick={reset}>Restablecer preset</button><button onClick={()=>setComparison(cloneGeometryConfig(config))}>Guardar como A</button><button onClick={exportSvg}>Exportar SVG</button><button onClick={exportPng}>Exportar PNG</button></div>
       </div>
     </div>
