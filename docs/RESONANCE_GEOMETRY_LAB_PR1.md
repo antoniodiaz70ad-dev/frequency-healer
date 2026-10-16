@@ -16,6 +16,19 @@ Every generated figure is classified as `ARTISTIC_GEOMETRY`. The acoustic refere
 
 The seven reference presets are original parameter combinations for 33, 66, 99, 333, 666, 999, and 1998 Hz. Their frequency labels are reference metadata, not evidence that a tone exclusively creates the corresponding shape.
 
+## Audio ownership and pre-existing cleanup observations
+
+Geometry Lab now owns only the reference tone that it starts itself. While the Cymatics Lab, microphone, sweep, or guided session owns an active audio/capture state, the geometry reference action is disabled. Its local stop action is not rendered and cannot stop that other activity.
+
+Two stricter browser-harness assertions were already intermittently failing on the unchanged baseline before Geometry Lab was added:
+
+1. `cymatics route: generator parameters, independent binaural views and shared existing audio graph`
+2. `learning flow: silent sweep, stop all, shared chart frequency and frequency-only A/B`
+
+In both cases the audible output reaches silence, but the instrumentation can observe oscillator nodes that have not reported both `ended` and `disconnected` within its eight-second polling window. These are pre-existing lifecycle/observability defects in the shared cymatics audio cleanup path. They are tracked separately from Geometry Lab regressions; this PR does not change the audio engine or claim to resolve them.
+
+The Geometry Lab isolation regression instead verifies that an ordinary Cymatics Lab tone remains active while the geometry controls display `Audio en uso`, and that Geometry Lab exposes no local stop action for that foreign playback.
+
 ## Particle defect registered for the next PR
 
 ### Report
