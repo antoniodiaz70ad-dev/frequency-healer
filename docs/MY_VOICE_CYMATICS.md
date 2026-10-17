@@ -71,3 +71,12 @@ errors now have specific Spanish guidance. The audio context is created/resumed
 inside the initiating button gesture, before awaiting device permission.
 Additional checks cover soft speech, DC rejection and 65 Hz input. The three
 browser tests pass, including low-level input at .003 gain and input-meter updates.
+
+## Circular particle presentation
+
+The laboratory now opens with a fixed-edge circular membrane at the calculated
+(0, 2) resonance. Voice/reference views default to illustrative live particles;
+the other visual modes remain selectable. A/B captures retain the chosen view.
+The lightweight particle clock preserves partial simulation time across live
+pitch updates, so changing fields does not repeatedly restart grain motion.
+The physical default factory remains unchanged for saved files and plate examples.

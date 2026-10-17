@@ -31,6 +31,8 @@ async function pitchNear(page, expected) {
 }
 test('live voice follows pitch, clears silence, captures A/B, exports without audio and stops tracks', {timeout: 45000}, async t => {
   const page = await fixture(t);
+  assert.equal(await page.getByRole('combobox', {name: 'Superficie', exact:true}).inputValue(), 'circular-membrane');
+  assert.equal(await page.getByRole('combobox', {name: 'Visualización de mi voz', exact:true}).inputValue(), 'particles');
   await page.getByRole('button', {name: 'Conectar mi voz en vivo'}).click();
   await pitchNear(page, 220);
   assert.equal(await page.getByLabel('Nivel de entrada del micrófono', {exact:true}).count(), 1);
@@ -38,7 +40,11 @@ test('live voice follows pitch, clears silence, captures A/B, exports without au
   await eventually(async () => { const level = Number(await page.getByLabel('Nivel de entrada del micrófono', {exact:true}).getAttribute('value')); assert.ok(level > 0 && level < .1); });
   await pitchNear(page, 220);
   await page.evaluate(() => { window.__voiceProbe.gain.gain.value = .25; });
-  await page.getByRole('img', {name: 'Cimática de mi voz en vivo', exact: true}).waitFor();
+  const liveCanvas = page.getByRole('img', {name: 'Cimática de mi voz en vivo', exact: true});
+  await liveCanvas.waitFor();
+  const beforeParticles = await liveCanvas.evaluate(node => node.toDataURL());
+  await page.waitForTimeout(400);
+  assert.notEqual(await liveCanvas.evaluate(node => node.toDataURL()), beforeParticles);
   await page.getByRole('button', {name: 'Capturar tono vocal A'}).click();
   await page.evaluate(() => { window.__voiceProbe.oscillator.frequency.value = 330; });
   await pitchNear(page, 330);
@@ -49,6 +55,8 @@ test('live voice follows pitch, clears silence, captures A/B, exports without au
   const download = await downloadPromise;
   const stream = await download.createReadStream(); let content = ''; for await (const chunk of stream) content += chunk;
   const data = JSON.parse(content); assert.equal(data.kind, 'voice-cymatics-comparison');
+  assert.equal(data.captures[0].config.surfaceType, 'circular-membrane');
+  assert.equal(data.captures[0].config.view, 'particles');
   assert.ok(Math.abs(data.captures[0].reading.frequencyHz - 220) < 2);
   assert.ok(Math.abs(data.captures[1].reading.frequencyHz - 330) < 2);
   assert.equal(data.captures[0].config.particleSeed, data.captures[1].config.particleSeed);
