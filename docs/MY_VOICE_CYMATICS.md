@@ -6,7 +6,7 @@ Adds a live voice comparison panel to `/laboratorio-cimatico`, based on
 ## User flow
 
 1. Press **Conectar mi voz en vivo** and allow microphone access.
-2. Sustain a comfortable vowel or hum. Estimated fundamental (80–1200 Hz)
+2. Sustain a comfortable vowel or hum. Estimated fundamental (60–1200 Hz)
    drives a simulated surface beside a 432 Hz reference (editable).
 3. Use **Usar mi tono como referencia** to hold a vocal target, then vary pitch.
 4. Capture vocal A and B to compare two stationary modeled responses using
@@ -44,7 +44,7 @@ Weak/off-range responses remain weak; pitch is never snapped to resonance.
 ## Validation
 
 - TypeScript check, ESLint on changed components/helpers, production build.
-- 267 unit tests passed, including harmonic vocal mixtures, silence/confidence
+- 269 unit tests passed, including harmonic vocal mixtures, silence/confidence
   gating and octave/unison/difference calculations.
 - Three browser integration tests passed with a synthetic microphone and real
   Web Audio analysis: 220→330 Hz tracking, silence, capture/export, mobile width,
@@ -60,3 +60,14 @@ Weak/off-range responses remain weak; pitch is never snapped to resonance.
 Physical microphones, device-specific input processing, Bluetooth latency and
 Safari/iPhone still require device testing. Browser tests use an injected stream;
 they do not certify pitch accuracy on arbitrary voices or microphones.
+
+## Microphone follow-up
+
+Adds an input meter independent of pitch detection, the actual input label and
+a device selector populated after permission. Local low-level voice detection
+uses an RMS gate of .001 (the general pitch detector keeps its .008 default).
+The voice-mode lower bound is 60 Hz for low voices. Permission and hardware
+errors now have specific Spanish guidance. The audio context is created/resumed
+inside the initiating button gesture, before awaiting device permission.
+Additional checks cover soft speech, DC rejection and 65 Hz input. The three
+browser tests pass, including low-level input at .003 gain and input-meter updates.

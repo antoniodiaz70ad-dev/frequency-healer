@@ -33,6 +33,11 @@ test('live voice follows pitch, clears silence, captures A/B, exports without au
   const page = await fixture(t);
   await page.getByRole('button', {name: 'Conectar mi voz en vivo'}).click();
   await pitchNear(page, 220);
+  assert.equal(await page.getByLabel('Nivel de entrada del micrófono', {exact:true}).count(), 1);
+  await page.evaluate(() => { window.__voiceProbe.gain.gain.value = .003; });
+  await eventually(async () => { const level = Number(await page.getByLabel('Nivel de entrada del micrófono', {exact:true}).getAttribute('value')); assert.ok(level > 0 && level < .1); });
+  await pitchNear(page, 220);
+  await page.evaluate(() => { window.__voiceProbe.gain.gain.value = .25; });
   await page.getByRole('img', {name: 'Cimática de mi voz en vivo', exact: true}).waitFor();
   await page.getByRole('button', {name: 'Capturar tono vocal A'}).click();
   await page.evaluate(() => { window.__voiceProbe.oscillator.frequency.value = 330; });

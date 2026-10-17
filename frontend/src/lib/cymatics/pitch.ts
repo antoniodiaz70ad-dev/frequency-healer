@@ -1,11 +1,11 @@
 export interface PitchResult { frequencyHz:number; confidence:number; rms:number; }
 
 /** Normalized autocorrelation pitch detector. Input is analyzed locally and never retained. */
-export function detectPitch(samples:Float32Array,sampleRate:number,minHz=80,maxHz=1200):PitchResult|null {
+export function detectPitch(samples:Float32Array,sampleRate:number,minHz=80,maxHz=1200,minRms=.008):PitchResult|null {
   if(samples.length<256||!Number.isFinite(sampleRate)||sampleRate<=0)return null;
   let mean=0;for(const value of samples)mean+=value;mean/=samples.length;
   let energy=0;for(const value of samples){const centered=value-mean;energy+=centered*centered;}const rms=Math.sqrt(energy/samples.length);
-  if(rms<.008)return null;
+  if(rms<minRms)return null;
   const minLag=Math.max(2,Math.floor(sampleRate/maxHz)),maxLag=Math.min(samples.length>>1,Math.ceil(sampleRate/minHz));
   let bestLag=0,best=-1;const scores:number[]=[];
   for(let lag=minLag;lag<=maxLag;lag++){

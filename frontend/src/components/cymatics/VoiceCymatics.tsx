@@ -4,7 +4,7 @@ import { useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState 
 import type { Ref } from 'react';
 import { FHSurface } from '@/components/ui/FHLayout';
 import { detectPitch } from '@/lib/cymatics/pitch';
-import { compareVoiceFrequency, voiceReading, type VoiceReading } from '@/lib/cymatics/voice';
+import { compareVoiceFrequency, voiceInputRms, voiceReading, type VoiceReading } from '@/lib/cymatics/voice';
 import { computeModalField, surfaceLabel } from '@/lib/cymatics/physics';
 import type { CymaticsConfigV1 } from '@/lib/cymatics/types';
 import { analyzeSpectrum, appendSpectrogramFrame, type SpectrumFrame } from '@/lib/cymatics/spectral';
@@ -28,15 +28,23 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
   const [spectrum, setSpectrum] = useState<SpectrumFrame | null>(null);
   const [history, setHistory] = useState<Float32Array[]>([]);
   const [error, setError] = useState('');
+  const [inputRms, setInputRms] = useState(0);
+  const [inputName, setInputName] = useState('Predeterminado del sistema');
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+  const [deviceId, setDeviceId] = useState('');
+  const [audioSuspended, setAudioSuspended] = useState(false);
+  const setupContext = useRef<AudioContext | null>(null);
   const session = useRef<{ stream: MediaStream; context: AudioContext; source: MediaStreamAudioSourceNode; analyser: AnalyserNode; raf: number } | null>(null);
   const generation = useRef(0);
   const pending = useRef(false);
   const release = useCallback(() => {
     generation.current++; pending.current = false;
+    const setup = setupContext.current; setupContext.current = null;
+    if (setup && setup.state !== 'closed') void setup.close().catch(() => {});
     const active = session.current; session.current = null;
     if (active) { cancelAnimationFrame(active.raf); active.stream.getTracks().forEach(track => track.stop()); active.source.disconnect(); active.analyser.disconnect(); void active.context.close().catch(() => {}); }
   }, []);
-  const stop = useCallback(() => { release(); setStatus('off'); setReading(null); setSpectrum(null); setHistory([]); }, [release]);
+  const stop = useCallback(() => { release(); setStatus('off'); setReading(null); setSpectrum(null); setHistory([]); setInputRms(0); setAudioSuspended(false); }, [release]);
   useImperativeHandle(controlRef, () => ({ stop }), [stop]);
   useEffect(() => {
     const visibility = () => { if (document.hidden) stop(); };
@@ -53,14 +61,19 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
     let context: AudioContext | null = null;
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('El micrófono requiere HTTPS y un navegador compatible.');
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      // Create/resume inside the button gesture, before the permission await (Safari).
+      context = new AudioContext(); setupContext.current = context;
+      void context.resume().catch(() => {});
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { ...(deviceId ? { deviceId: { exact: deviceId } } : {}), echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
       if (token !== generation.current) { stream.getTracks().forEach(track => track.stop()); return; }
-      context = new AudioContext(); await context.resume();
+      if (context.state === 'suspended') await context.resume();
       if (token !== generation.current) { stream.getTracks().forEach(track => track.stop()); await context.close(); return; }
       const source = context.createMediaStreamSource(stream), analyser = context.createAnalyser();
       analyser.fftSize = 4096; source.connect(analyser); // Never connect microphone to speakers.
       const active = { stream, context, source, analyser, raf: 0 };
-      session.current = active; pending.current = false; setStatus('active');
+      session.current = active; setupContext.current = null; pending.current = false; setStatus('active');
+      setInputName(stream.getAudioTracks()[0]?.label || 'Micrófono predeterminado');
+      void navigator.mediaDevices.enumerateDevices?.().then(rows => { if (session.current === active) setDevices(rows.filter(row => row.kind === 'audioinput')); }).catch(() => {});
       stream.getTracks().forEach(track => track.addEventListener('ended', stop, { once: true }));
       const samples = new Float32Array(analyser.fftSize);
       let lastUpdate = -Infinity;
@@ -69,7 +82,8 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
         // Pitch, FFT and modal fields update at 10 Hz; canvas animation stays independent.
         if (now - lastUpdate >= 100) {
           lastUpdate = now; analyser.getFloatTimeDomainData(samples);
-          setReading(voiceReading(detectPitch(samples, active.context.sampleRate), now));
+          setInputRms(voiceInputRms(samples)); setAudioSuspended(active.context.state !== 'running');
+          setReading(voiceReading(detectPitch(samples, active.context.sampleRate, 60, 1200, .001), now, .001));
           const frame = analyzeSpectrum(samples, active.context.sampleRate); setSpectrum(frame); setHistory(rows => appendSpectrogramFrame(rows, frame));
         }
         active.raf = requestAnimationFrame(tick);
@@ -78,7 +92,7 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
     } catch (cause) {
       stream?.getTracks().forEach(track => track.stop());
       if (context && context.state !== 'closed') void context.close().catch(() => {});
-      if (token === generation.current) { stop(); setError(cause instanceof Error ? cause.message : 'No se pudo acceder al micrófono.'); }
+      if (token === generation.current) { stop(); setError(cause instanceof DOMException ? ({ NotAllowedError: 'Permiso denegado: permite el micrófono en los ajustes del sitio de Chrome y revisa el permiso de Chrome en el sistema.', NotFoundError: 'No hay un micrófono disponible. Conecta o habilita una entrada de audio.', NotReadableError: 'El sistema no puede abrir el micrófono. Revisa la entrada elegida y si otra aplicación la está usando.', OverconstrainedError: 'El micrófono seleccionado ya no está disponible. Selecciona el predeterminado.' }[cause.name] ?? cause.message) : cause instanceof Error ? cause.message : 'No se pudo acceder al micrófono.'); }
     }
   };
   const physical = base;
@@ -106,9 +120,11 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
     <p>Sostén una vocal «aaa» o «mmm» y cambia suavemente de tono. Observa tu figura junto a una referencia, o captura dos tonos de tu voz para compararlos.</p>
     <div className={styles.voiceControls}>
       {status === 'off' ? <button onClick={() => void start()}>Conectar mi voz en vivo</button> : <button onClick={stop}>{status === 'requesting' ? 'Cancelar solicitud de micrófono' : 'Detener mi voz'}</button>}
-      <label>Referencia (Hz)<input aria-label="Referencia de voz en Hz" type="number" min="80" max="1200" step=".1" value={referenceHz} onChange={event => { const hz = Number(event.target.value); if (Number.isFinite(hz) && hz >= 80 && hz <= 1200) setReferenceHz(hz); }}/></label>
+      <label>Referencia (Hz)<input aria-label="Referencia de voz en Hz" type="number" min="60" max="1200" step=".1" value={referenceHz} onChange={event => { const hz = Number(event.target.value); if (Number.isFinite(hz) && hz >= 60 && hz <= 1200) setReferenceHz(hz); }}/></label>
       <button disabled={!reading} onClick={() => reading && setReferenceHz(reading.frequencyHz)}>Usar mi tono como referencia</button>
     </div>
+    <div className={styles.voiceControls}><label>Micrófono<select aria-label="Micrófono de entrada" value={deviceId} onChange={event => { stop(); setDeviceId(event.target.value); }}><option value="">Predeterminado del sistema</option>{devices.filter(device => device.deviceId && device.deviceId !== 'default').map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Entrada ${index + 1}`}</option>)}</select></label><small>Para cambiar de entrada: elígela y vuelve a conectar.</small></div>
+    {status === 'active' && <div className={styles.voiceInput}><p>Entrada: {inputName}</p><label>Nivel de entrada <meter aria-label="Nivel de entrada del micrófono" min="0" max="1" value={Math.min(1, inputRms * 20)}/></label><p>{inputRms >= .001 ? 'Llega sonido al micrófono.' : 'Sin señal suficiente: habla cerca del micrófono o selecciona otra entrada.'} Nivel digital: {inputRms > 0 ? `${(20 * Math.log10(inputRms)).toFixed(0)} dBFS RMS` : 'silencio'}. No mide presión sonora.</p>{audioSuspended && <button onClick={() => { void session.current?.context.resume().catch(() => setError('No se pudo reactivar el audio. Detén y vuelve a conectar.')); }}>Reactivar análisis de audio</button>}</div>}
     {error && <p role="alert">No se pudo conectar: {error}. Revisa el permiso del micrófono y vuelve a intentar.</p>}
     <p role="status">{status === 'requesting' ? 'Esperando permiso del micrófono…' : status === 'active' ? reading ? 'Tono detectado · voz conectada a la simulación' : 'Sin tono estable · sostén una vocal sin forzar la voz' : 'Micrófono apagado'}</p>
     <div className={styles.voiceMetrics}>
@@ -127,6 +143,6 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
     {captures.some(Boolean) && <div className={styles.channels}>{captures.map((row, index) => row && <section key={index}><h3>Tono vocal {index === 0 ? 'A' : 'B'} · {row.reading.frequencyHz.toFixed(1)} Hz</h3><CymaticsCanvas config={row.config} field={capturedFields[index]!} label={`Captura vocal ${index === 0 ? 'A' : 'B'}`} scaleMax={capturedScale} showContours/><button onClick={() => { stop(); onApply(structuredClone(row.config)); }}>Explorar tono vocal {index === 0 ? 'A' : 'B'} en el laboratorio</button></section>)}</div>}
     {capturedDifference && <p>B respecto de A: {capturedDifference.differenceHz.toFixed(1)} Hz · {capturedDifference.semitones.toFixed(2)} semitonos. Mismas condiciones físicas y escala común.</p>}
     {spectrum && <details><summary>Ver espectro y armónicos de mi voz</summary><SpectralAnalyzer frame={spectrum} history={history}/></details>}
-    <p><small>Se analiza la fundamental estimada (80–1200 Hz), no una «frecuencia única personal». El espectro muestra otros componentes; la figura usa solo la fundamental, con fuerza virtual fija, no el timbre completo ni el volumen vocal. Es una respuesta estacionaria ideal recalculada en vivo; no una medición física de tu cuerpo. El audio se procesa localmente, sin grabar ni transmitir. Las capturas contienen números y configuración, nunca audio. Al conectar se detienen generador, barrido y sesión guiada; iniciar otra fuente detiene este micrófono.</small></p>
+    <p><small>Se analiza la fundamental estimada (60–1200 Hz), no una «frecuencia única personal». El espectro muestra otros componentes; la figura usa solo la fundamental, con fuerza virtual fija, no el timbre completo ni el volumen vocal. Es una respuesta estacionaria ideal recalculada en vivo; no una medición física de tu cuerpo. El audio se procesa localmente, sin grabar ni transmitir. Las capturas contienen números y configuración, nunca audio. Al conectar se detienen generador, barrido y sesión guiada; iniciar otra fuente detiene este micrófono.</small></p>
   </FHSurface>;
 }
