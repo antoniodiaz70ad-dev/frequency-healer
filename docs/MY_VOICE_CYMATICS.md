@@ -80,3 +80,21 @@ the other visual modes remain selectable. A/B captures retain the chosen view.
 The lightweight particle clock preserves partial simulation time across live
 pitch updates, so changing fields does not repeatedly restart grain motion.
 The physical default factory remains unchanged for saved files and plate examples.
+
+## Voice expansion
+
+A new explicit visual multiplier (×1, ×2, ×4, ×8; default ×1) separates the
+measured vocal fundamental from the applied simulation frequency. The waveform
+and input spectrum remain the original microphone signal. It does not start
+playback, change microphone pitch estimation or snap to a resonance.
+
+The applied frequency is limited to 2000 Hz without clamping. Out-of-range
+requests show an error and disable the live field/capture until a lower factor
+is chosen. The reference input now accepts 60–2000 Hz. Resonance guidance shows
+the nearest calculated mode, absolute/relative detuning and corresponding raw
+vocal target for the selected factor. A frequency can still lie outside the
+truncated modal basis; that limitation remains explicit.
+
+Snapshots record raw pitch, multiplier and applied configuration separately.
+Captured fields and comparison intervals use the applied frequencies. The JSON
+also retains the raw reading so the transformation can be independently checked.

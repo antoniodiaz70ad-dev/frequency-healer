@@ -18,3 +18,12 @@ export function voiceInputRms(samples: Float32Array): number {
   let sum = 0; for (const value of samples) sum += (value - mean) ** 2;
   return Math.sqrt(sum / samples.length);
 }
+
+export const VOICE_MULTIPLIERS = [1, 2, 4, 8] as const;
+export type VoiceMultiplier = typeof VOICE_MULTIPLIERS[number];
+/** Explicit visual transposition. Never clamp or snap the measured voice. */
+export function expandVoiceFrequency(hz: number, multiplier: VoiceMultiplier): number | null {
+  if (!Number.isFinite(hz) || hz < 60 || hz > 1200 || !VOICE_MULTIPLIERS.includes(multiplier)) return null;
+  const applied = hz * multiplier;
+  return applied <= 2000 ? applied : null;
+}

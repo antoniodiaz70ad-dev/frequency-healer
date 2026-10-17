@@ -108,3 +108,34 @@ test('reference input allows clearing, sequential typing, decimals and invalid d
   assert.equal(await input.getAttribute('aria-invalid'), 'false');
   assert.equal(await page.getByRole('alert').filter({hasText: 'Introduce una referencia'}).count(), 0);
 });
+
+test('voice multiplier separates raw and applied frequencies, captures factors and rejects overflow', {timeout:60000}, async t => {
+  const page = await fixture(t);
+  await page.getByRole('button', {name:'Conectar mi voz en vivo',exact:true}).click();
+  await pitchNear(page, 220);
+  const multiplier = page.getByLabel('Multiplicador de voz', {exact:true});
+  await multiplier.selectOption('4');
+  await eventually(async () => { const metrics = await page.locator('[class*="voiceMetrics"]').innerText(); assert.match(metrics, /Frecuencia aplicada\s+8[78]\d\.\d Hz · ×4/); });
+  await page.getByRole('status', {name:'Cercanía a resonancia',exact:true}).waitFor();
+  await page.getByRole('button', {name:'Capturar tono vocal A',exact:true}).click();
+  await page.getByRole('button', {name:'Usar frecuencia aplicada como referencia',exact:true}).click();
+  assert.ok(Math.abs(Number(await page.getByRole('spinbutton', {name:'Referencia de voz en Hz',exact:true}).inputValue()) - 880) < 2);
+  await multiplier.selectOption('8');
+  await page.evaluate(() => {window.__voiceProbe.oscillator.frequency.value=330;});
+  await pitchNear(page, 330);
+  await page.getByRole('alert').filter({hasText:'supera el límite de 2000 Hz'}).waitFor();
+  assert.equal(await page.getByRole('button', {name:'Capturar tono vocal B',exact:true}).isDisabled(),true);
+  assert.equal(await page.getByRole('img', {name:'Cimática de mi voz en vivo',exact:true}).count(),0);
+  await multiplier.selectOption('2');
+  await page.getByRole('img', {name:'Cimática de mi voz en vivo',exact:true}).waitFor();
+  await page.getByRole('button', {name:'Capturar tono vocal B',exact:true}).click();
+  const pendingDownload=page.waitForEvent('download');
+  await page.getByRole('button', {name:'Exportar comparación de voz',exact:true}).click();
+  const stream=await (await pendingDownload).createReadStream();let json='';for await(const chunk of stream)json+=chunk;
+  const data=JSON.parse(json);
+  assert.equal(data.captures[0].multiplier,4);assert.equal(data.captures[1].multiplier,2);
+  assert.ok(Math.abs(data.captures[0].reading.frequencyHz-220)<2);
+  assert.ok(Math.abs(data.captures[0].config.channelFrequenciesHz[0]-880)<2);
+  assert.ok(Math.abs(data.captures[1].config.channelFrequenciesHz[0]-660)<2);
+  await page.getByRole('button', {name:'Detener mi voz',exact:true}).click();
+});

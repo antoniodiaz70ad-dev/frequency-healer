@@ -35,3 +35,14 @@ test('low vocal pitch at 65 Hz is supported by voice mode', () => {
   const reading = voiceReading(detectPitch(vocal(65), rate, 60, 1200, .001), 1, .001);
   assert.ok(reading); assert.ok(Math.abs(reading.frequencyHz - 65) < 1);
 });
+
+test('voice expansion preserves raw pitch and rejects overflow without clamping', async () => {
+  const { expandVoiceFrequency } = await import('../src/lib/cymatics/voice');
+  assert.equal(expandVoiceFrequency(150, 1), 150);
+  assert.equal(expandVoiceFrequency(150, 2), 300);
+  assert.equal(expandVoiceFrequency(150, 4), 600);
+  assert.equal(expandVoiceFrequency(150, 8), 1200);
+  assert.equal(expandVoiceFrequency(250, 8), 2000);
+  assert.equal(expandVoiceFrequency(330, 8), null);
+  assert.equal(expandVoiceFrequency(NaN, 4), null);
+});
