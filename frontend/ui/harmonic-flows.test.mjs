@@ -198,7 +198,7 @@ test('experiment: exact final immutable snapshot, missing ratings, explicit save
 test('navigation during audio: closes native graph, never completed, never autosaved', async t => {
   const page = await fixture(t); await page.getByRole('checkbox',{name:'Registrar la próxima sesión',exact:true}).check();
   await start(page); await page.getByRole('status').filter({hasText:'Experimento: En curso'}).waitFor();
-  await page.getByRole('link',{name:'Inicio',exact:true}).click(); await page.waitForURL(harness.origin + '/inicio');
+  await page.getByRole('link',{name:'Inicio',exact:true}).click(); await page.waitForURL(harness.origin + '/');
   await clean(page); const data = await probe(page);
   assert.ok(data.statuses.some(s=>s.includes('En curso'))); assert.ok(data.statuses.every(s=>!s.includes('Completado')));
   assert.deepEqual(data.writes,[]); assert.deepEqual(await storage(page),{});
@@ -860,7 +860,7 @@ test('3B.2 failed explicit save retains exportable memory draft and retries unch
   await page.evaluate(()=>window.__restoreSave());await button(page,'Guardar sesión').click();await page.getByRole('heading',{name:'Sesión guardada',exact:true}).waitFor();assert.deepEqual(JSON.parse((await storage(page))['fh:voice-sessions-v1']),[draft]);
 });
 test('3B.2 unsaved navigation stops playback without persisting a completed record',async t=>{
-  const page=await guidedProposal(t),before=await storage(page);await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();await page.getByRole('link',{name:'Inicio',exact:true}).click();await page.waitForURL(harness.origin+'/inicio');await clean(page);assert.deepEqual(await storage(page),before);
+  const page=await guidedProposal(t),before=await storage(page);await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();await page.getByRole('link',{name:'Inicio',exact:true}).click();await page.waitForURL(harness.origin+'/');await clean(page);assert.deepEqual(await storage(page),before);
 });
 test('3B.3C legacy surfaces preserve data and require explicit playback',async t=>{
   const page=await fixture(t);
