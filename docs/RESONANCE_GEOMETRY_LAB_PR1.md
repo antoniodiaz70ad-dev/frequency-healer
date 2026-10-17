@@ -6,6 +6,8 @@ This increment adds a deterministic artistic geometry engine. It does not change
 
 Every generated figure is classified as `ARTISTIC_GEOMETRY`. The acoustic reference frequency is stored separately from the geometric parameters and does not participate in the geometry signature.
 
+The main SVG may rotate as an artistic visualization. Frequency is mapped logarithmically from 0.1–20,000 Hz to a bounded, deliberately slowed speed of 8–60 degrees per second; this does not represent acoustic cycles. `rotationDeg` remains the initial orientation, the user can pause motion independently, and reduced-motion preferences disable animation without changing audio or configuration.
+
 ## Mathematical families
 
 - Star polygons `{n/k}`. Coprime pairs produce a single cycle. Non-coprime pairs remain valid compound polygons with `gcd(n,k)` cycles.

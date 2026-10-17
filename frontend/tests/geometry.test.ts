@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createGeometryScene, geometrySignature } from '../src/lib/geometry/math';
+import { createGeometryScene, frequencyToVisualMotion, geometrySignature } from '../src/lib/geometry/math';
 import { GEOMETRY_PRESETS, cloneGeometryConfig } from '../src/lib/geometry/presets';
 import { renderGeometrySvg } from '../src/lib/geometry/export';
 import { rasterizeGeometrySvg } from '../src/lib/geometry/browserExport';
@@ -23,6 +23,16 @@ test('acoustic frequency is independent from geometry identity and scene output'
   const a=cloneGeometryConfig(GEOMETRY_PRESETS[3]),b={...a,acousticFrequencyHz:432};
   assert.deepEqual(createGeometryScene(a),createGeometryScene(b));
   assert.equal(geometrySignature(a),geometrySignature(b));
+});
+
+test('acoustic reference maps monotonically to bounded visual rotation without changing geometry',()=>{
+  const low=frequencyToVisualMotion(33),middle=frequencyToVisualMotion(666),high=frequencyToVisualMotion(1998);
+  assert.ok(low.degreesPerSecond<middle.degreesPerSecond&&middle.degreesPerSecond<high.degreesPerSecond);
+  for(const motion of [frequencyToVisualMotion(-1),low,middle,high,frequencyToVisualMotion(99_999),frequencyToVisualMotion(Number.NaN)]){
+    assert.ok(Number.isFinite(motion.durationSeconds));
+    assert.ok(motion.degreesPerSecond>=8&&motion.degreesPerSecond<=60);
+  }
+  assert.equal(frequencyToVisualMotion(666).durationSeconds,360/frequencyToVisualMotion(666).degreesPerSecond);
 });
 
 test('geometrically relevant fields change the signature and reset clones remain detached',()=>{

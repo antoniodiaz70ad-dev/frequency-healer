@@ -60,3 +60,11 @@ export function createGeometryScene(config: GeometryConfig): GeometryScene {
 export function geometrySignature(config: GeometryConfig): string {
   return [config.engineVersion,config.family,config.vertices,config.step,config.symmetry,config.rotationDeg,config.phase,config.scale,config.color].join(':');
 }
+
+/** Maps an acoustic reference to a deliberately slowed artistic rotation. */
+export function frequencyToVisualMotion(frequencyHz: number): { durationSeconds: number; degreesPerSecond: number } {
+  const safeFrequency = Math.min(20_000, Math.max(0.1, Number.isFinite(frequencyHz) ? frequencyHz : 0.1));
+  const octavePosition = Math.log2(safeFrequency / 0.1) / Math.log2(20_000 / 0.1);
+  const degreesPerSecond = 8 + octavePosition * 52;
+  return { degreesPerSecond, durationSeconds: 360 / degreesPerSecond };
+}

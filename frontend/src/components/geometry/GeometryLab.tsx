@@ -1,7 +1,7 @@
 'use client';
-import { useId, useState } from 'react';
+import { useId, useState, type CSSProperties } from 'react';
 import { GEOMETRY_PRESETS, cloneGeometryConfig } from '@/lib/geometry/presets';
-import { geometrySignature } from '@/lib/geometry/math';
+import { frequencyToVisualMotion, geometrySignature } from '@/lib/geometry/math';
 import { renderGeometrySvg } from '@/lib/geometry/export';
 import { rasterizeGeometrySvg } from '@/lib/geometry/browserExport';
 import { normalizeStarParameters, starCycleCount, starKind } from '@/lib/geometry/validation';
@@ -19,6 +19,7 @@ export default function GeometryLab({audioBusy,playingReferenceHz,onListenRefere
   const [presetId,setPresetId]=useState(GEOMETRY_PRESETS[0].id);
   const [config,setConfig]=useState<GeometryConfig>(()=>cloneGeometryConfig(GEOMETRY_PRESETS[0]));
   const [comparison,setComparison]=useState<GeometryConfig|null>(null);
+  const [motionEnabled,setMotionEnabled]=useState(true);
   const [exportState,setExportState]=useState<'idle'|'working'|'done'|'error'>('idle');
   const [exportMessage,setExportMessage]=useState('');
   const original=GEOMETRY_PRESETS.find(row=>row.id===presetId)??GEOMETRY_PRESETS[0];
@@ -28,17 +29,19 @@ export default function GeometryLab({audioBusy,playingReferenceHz,onListenRefere
   const exportSvg=()=>saveBlob(new Blob([renderGeometrySvg(config)],{type:'image/svg+xml'}),`${config.id}.svg`);
   const exportPng=async()=>{setExportState('working');setExportMessage('Preparando PNG…');try{const blob=await rasterizeGeometrySvg(renderGeometrySvg(config));saveBlob(blob,`${config.id}.png`);setExportState('done');setExportMessage('PNG exportado.');}catch(error){setExportState('error');setExportMessage(error instanceof Error?error.message:'No se pudo exportar el PNG.');}};
   const cycleDescription=config.family==='star-polygon'?starKind(config.vertices,config.step)==='single-cycle'?'Ciclo único':`Compuesta · ${starCycleCount(config.vertices,config.step)} ciclos`:null;
+  const visualMotion=frequencyToVisualMotion(config.acousticFrequencyHz);
   return <section className={styles.lab} aria-labelledby={titleId}>
     <header className={styles.header}><div><p className={styles.kicker}>GEOMETRÍA ARTÍSTICA · MOTOR INDEPENDIENTE</p><h2 id={titleId}>Resonance Geometry Lab</h2><p>Construcciones matemáticas generativas. La frecuencia acústica es una referencia independiente y no demuestra que el sonido produzca esta figura.</p></div><span className={styles.badge}>ARTISTIC GEOMETRY</span></header>
-    <div className={styles.presetRail} aria-label="Presets geométricos">{GEOMETRY_PRESETS.map(row=><button key={row.id} aria-pressed={presetId===row.id} onClick={()=>selectPreset(row.id)}><span>{row.acousticFrequencyHz} Hz</span><small>{row.name}</small></button>)}</div>
+    <div className={styles.presetRail} aria-label="Presets geométricos">{GEOMETRY_PRESETS.map(row=><button key={row.id} data-geometry-preset={row.id} aria-pressed={presetId===row.id} onClick={()=>selectPreset(row.id)}><span>{row.acousticFrequencyHz} Hz</span><small>{row.name}</small></button>)}</div>
     <div className={styles.stage}>
-      <div className={styles.preview}><GeometrySvg config={config}/><div className={styles.caption}><strong>{config.name}</strong><span>{FAMILY_LABELS[config.family]}</span></div></div>
+      <div className={styles.preview} style={{'--geometry-motion-duration':`${visualMotion.durationSeconds}s`} as CSSProperties}><GeometrySvg config={config} animated={motionEnabled}/><div className={styles.caption}><strong>{config.name}</strong><span>{FAMILY_LABELS[config.family]}</span></div></div>
       <div className={styles.controls}>
         <label>Familia<select value={config.family} onChange={event=>patch({family:event.target.value as GeometryFamily})}>{Object.entries(FAMILY_LABELS).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
         <div className={styles.split}><label>Vértices<input type="number" min="3" max="72" value={config.vertices} onChange={event=>setConfig(current=>({...current,...normalizeStarParameters(current,{vertices:Number(event.target.value)})}))}/></label><label>Paso k<input type="number" min="1" max={Math.max(1,config.vertices-1)} value={config.step} onChange={event=>setConfig(current=>({...current,...normalizeStarParameters(current,{step:Number(event.target.value)})}))}/></label></div>
         {cycleDescription&&<p className={styles.helper}>{cycleDescription}. Los polígonos compuestos se conservan como varios ciclos; no se fuerzan a ser coprimos.</p>}
         <label>Simetría <output>{config.symmetry}</output><input type="range" min="1" max="36" step="1" value={config.symmetry} onInput={event=>patch({symmetry:Number(event.currentTarget.value)})}/></label>
         <label>Rotación <output>{config.rotationDeg}°</output><input type="range" min="-180" max="180" step="1" value={config.rotationDeg} onInput={event=>patch({rotationDeg:Number(event.currentTarget.value)})}/></label>
+        <div className={styles.motionControl}><div><span>MOVIMIENTO ARTÍSTICO</span><strong>{visualMotion.degreesPerSecond.toFixed(1)}°/s</strong></div><p>La frecuencia de referencia controla una rotación visual desacelerada. El ángulo de rotación define la orientación inicial; no representa ciclos acústicos reales.</p><button type="button" aria-pressed={motionEnabled} onClick={()=>setMotionEnabled(value=>!value)}>{motionEnabled?'Pausar movimiento':'Reanudar movimiento'}</button></div>
         <label>Fase <output>{config.phase.toFixed(2)}</output><input type="range" min="0" max="1" step=".01" value={config.phase} onInput={event=>patch({phase:Number(event.currentTarget.value)})}/></label>
         <label>Escala <output>{Math.round(config.scale*100)}%</output><input type="range" min=".35" max="1" step=".01" value={config.scale} onInput={event=>patch({scale:Number(event.currentTarget.value)})}/></label>
         <label>Color<input className={styles.color} type="color" value={config.color} onChange={event=>patch({color:event.target.value})}/></label>
