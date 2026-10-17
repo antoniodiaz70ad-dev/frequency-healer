@@ -89,3 +89,22 @@ test('permission denial recovers and pending permission cancellation releases la
   await eventually(async () => assert.ok(await page.evaluate(() => window.__voiceProbe.tracks.every(track => track.readyState === 'ended'))));
   assert.equal(await page.getByRole('button', {name: 'Conectar mi voz en vivo'}).count(), 1);
 });
+
+
+test('reference input allows clearing, sequential typing, decimals and invalid draft recovery', {timeout: 45000}, async t => {
+  const page = await fixture(t);
+  const input = page.getByRole('spinbutton', {name: 'Referencia de voz en Hz', exact:true});
+  await input.fill(''); assert.equal(await input.inputValue(), '');
+  await input.pressSequentially('528'); assert.equal(await input.inputValue(), '528');
+  await page.getByRole('heading', {name:'Referencia · 528.0 Hz', exact:true}).waitFor();
+  await input.fill('65.25'); await input.press('Enter');
+  assert.equal(await input.inputValue(), '65.25');
+  await input.fill('4'); await input.press('Enter');
+  await page.getByRole('alert').filter({hasText: 'Introduce una referencia'}).waitFor();
+  assert.equal(await input.inputValue(), '4');
+  await page.getByRole('heading', {name:'Referencia · 65.3 Hz', exact:true}).waitFor();
+  await input.fill('432'); await input.press('Tab');
+  await page.getByRole('heading', {name:'Referencia · 432.0 Hz', exact:true}).waitFor();
+  assert.equal(await input.getAttribute('aria-invalid'), 'false');
+  assert.equal(await page.getByRole('alert').filter({hasText: 'Introduce una referencia'}).count(), 0);
+});

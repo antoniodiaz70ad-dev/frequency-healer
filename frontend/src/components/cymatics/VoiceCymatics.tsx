@@ -23,6 +23,8 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
   const [status, setStatus] = useState<'off' | 'requesting' | 'active'>('off');
   const [reading, setReading] = useState<VoiceReading | null>(null);
   const [referenceHz, setReferenceHz] = useState(432);
+  const [referenceInput, setReferenceInput] = useState('432');
+  const [referenceError, setReferenceError] = useState('');
   const [voiceView, setVoiceView] = useState<CymaticsConfigV1['view']>('particles');
   const [base, setBase] = useState<CymaticsConfigV1>(() => structuredClone(config));
   const [captures, setCaptures] = useState<[Capture | null, Capture | null]>([null, null]);
@@ -111,6 +113,13 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
   const capturedFields = useMemo(() => captures.map(row => row ? computeModalField(row.config, row.reading.frequencyHz, 40) : null), [captures]);
   const capturedScale = Math.max(...capturedFields.map(field => field?.maxAmplitude ?? 0), 1e-20);
   const capturedDifference = captures[0] && captures[1] ? compareVoiceFrequency(captures[1].reading.frequencyHz, captures[0].reading.frequencyHz) : null;
+  const editReference = (draft: string, validate = false) => {
+    setReferenceInput(draft);
+    const hz = draft.trim() === '' ? NaN : Number(draft);
+    const valid = Number.isFinite(hz) && hz >= 60 && hz <= 1200;
+    if (valid) setReferenceHz(hz);
+    setReferenceError(validate && !valid ? 'Introduce una referencia entre 60 y 1200 Hz. La simulación conserva el último valor válido.' : '');
+  };
   const exportCaptures = () => {
     const blob = new Blob([JSON.stringify({ schemaVersion: 1, kind: 'voice-cymatics-comparison', interpretation: 'Fundamental estimada; simulación monofrecuencia, no vibración corporal medida.', captures }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = 'mi-voz-cimatica.json'; link.click(); URL.revokeObjectURL(url);
@@ -122,9 +131,10 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
     <div className={styles.voiceControls}>
       {status === 'off' ? <button onClick={() => void start()}>Conectar mi voz en vivo</button> : <button onClick={stop}>{status === 'requesting' ? 'Cancelar solicitud de micrófono' : 'Detener mi voz'}</button>}
       <label>Vista de mi voz<select aria-label="Visualización de mi voz" value={voiceView} onChange={event => setVoiceView(event.target.value as CymaticsConfigV1['view'])}><option value="particles">Partículas ilustrativas en vivo</option><option value="field">Campo de amplitud</option><option value="vibration">Vibración ilustrativa en vivo</option><option value="nodal-lines">Contornos de amplitud mínima</option></select></label>
-      <label>Referencia (Hz)<input aria-label="Referencia de voz en Hz" type="number" min="60" max="1200" step=".1" value={referenceHz} onChange={event => { const hz = Number(event.target.value); if (Number.isFinite(hz) && hz >= 60 && hz <= 1200) setReferenceHz(hz); }}/></label>
-      <button disabled={!reading} onClick={() => reading && setReferenceHz(reading.frequencyHz)}>Usar mi tono como referencia</button>
+      <label>Referencia (Hz)<input aria-label="Referencia de voz en Hz" aria-invalid={!!referenceError} aria-describedby={referenceError ? "voice-reference-error" : undefined} type="number" inputMode="decimal" min="60" max="1200" step="any" value={referenceInput} onChange={event => editReference(event.target.value)} onBlur={() => editReference(referenceInput, true)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); editReference(referenceInput, true); } }}/></label>
+      <button disabled={!reading} onClick={() => { if (reading) editReference(reading.frequencyHz.toFixed(2), true); }}>Usar mi tono como referencia</button>
     </div>
+    {referenceError && <p id="voice-reference-error" role="alert">{referenceError}</p>}
     <div className={styles.voiceControls}><label>Micrófono<select aria-label="Micrófono de entrada" value={deviceId} onChange={event => { stop(); setDeviceId(event.target.value); }}><option value="">Predeterminado del sistema</option>{devices.filter(device => device.deviceId && device.deviceId !== 'default').map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Entrada ${index + 1}`}</option>)}</select></label><small>Para cambiar de entrada: elígela y vuelve a conectar.</small></div>
     {status === 'active' && <div className={styles.voiceInput}><p>Entrada: {inputName}</p><label>Nivel de entrada <meter aria-label="Nivel de entrada del micrófono" min="0" max="1" value={Math.min(1, inputRms * 20)}/></label><p>{inputRms >= .001 ? 'Llega sonido al micrófono.' : 'Sin señal suficiente: habla cerca del micrófono o selecciona otra entrada.'} Nivel digital: {inputRms > 0 ? `${(20 * Math.log10(inputRms)).toFixed(0)} dBFS RMS` : 'silencio'}. No mide presión sonora.</p>{audioSuspended && <button onClick={() => { void session.current?.context.resume().catch(() => setError('No se pudo reactivar el audio. Detén y vuelve a conectar.')); }}>Reactivar análisis de audio</button>}</div>}
     {error && <p role="alert">No se pudo conectar: {error}. Revisa el permiso del micrófono y vuelve a intentar.</p>}
