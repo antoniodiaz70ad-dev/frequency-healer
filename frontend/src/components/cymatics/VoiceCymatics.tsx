@@ -5,7 +5,8 @@ import type { Ref } from 'react';
 import { FHSurface } from '@/components/ui/FHLayout';
 import { detectPitch } from '@/lib/cymatics/pitch';
 import { compareVoiceFrequency, expandVoiceFrequency, VOICE_MULTIPLIERS, type VoiceMultiplier, voiceInputRms, voiceReading, type VoiceReading } from '@/lib/cymatics/voice';
-import { computeModalField, surfaceLabel } from '@/lib/cymatics/physics';
+import { buildModes, computeModalField, surfaceLabel } from '@/lib/cymatics/physics';
+import { readVoiceSessions, saveVoiceSession, type VoiceSession } from '@/lib/cymatics/voiceSessions';
 import type { CymaticsConfigV1 } from '@/lib/cymatics/types';
 import { analyzeSpectrum, appendSpectrogramFrame, type SpectrumFrame } from '@/lib/cymatics/spectral';
 import CymaticsCanvas from './CymaticsCanvas';
@@ -13,13 +14,16 @@ import SpectralAnalyzer from './SpectralAnalyzer';
 import styles from './cymatics.module.css';
 
 export interface VoiceCymaticsHandle { stop: () => void; }
-interface Capture { multiplier: VoiceMultiplier; reading: VoiceReading; config: CymaticsConfigV1; createdAt: string; }
+type Capture = VoiceSession['captures'][number];
 interface Props { config: CymaticsConfigV1; controlRef: Ref<VoiceCymaticsHandle>; onStart: () => void; onApply: (config: CymaticsConfigV1) => void; }
 function toneConfig(base: CymaticsConfigV1, hz: number, view: CymaticsConfigV1['view']): CymaticsConfigV1 {
   return { ...base, audioMode: 'mono', channelFrequenciesHz: [hz], modeledComponents: [hz], waveform: 'sine', excitationRelativeStrength: 1, autoExposure: false, visualScale: 'fixed', renderQuality: 'low', view };
 }
 
 export default function VoiceCymatics({ config, controlRef, onStart, onApply }: Props) {
+  const [savedSessions, setSavedSessions] = useState<VoiceSession[]>([]);
+  const [saveMessage, setSaveMessage] = useState('');
+  useEffect(() => { try { const rows = readVoiceSessions(); queueMicrotask(() => setSavedSessions(rows)); } catch { queueMicrotask(() => setSaveMessage('No se pudieron leer tus sesiones locales. Los datos no se modificaron.')); } }, []);
   const [status, setStatus] = useState<'off' | 'requesting' | 'active'>('off');
   const [reading, setReading] = useState<VoiceReading | null>(null);
   const [referenceHz, setReferenceHz] = useState(432);
@@ -126,12 +130,25 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
     const blob = new Blob([JSON.stringify({ schemaVersion: 1, kind: 'voice-cymatics-comparison', interpretation: 'Fundamental estimada y multiplicador explícito; configuración usa frecuencia aplicada, no vibración corporal medida.', captures }, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = 'mi-voz-cimatica.json'; link.click(); URL.revokeObjectURL(url);
   };
+  const modes = useMemo(() => buildModes(physical), [physical]);
+  const suggestedMultiplier = reading ? [...VOICE_MULTIPLIERS].reverse().find(value => { const hz = expandVoiceFrequency(reading.frequencyHz, value); return hz !== null && hz >= modes[0].frequencyHz && hz <= modes[modes.length - 1].frequencyHz; }) : undefined;
+  const guideStep = !captures[0] ? 1 : !captures[1] ? 2 : 3;
+  const saveComparison = () => {
+    if (!captures[0] || !captures[1]) return;
+    try { const row: VoiceSession = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), captures: [captures[0], captures[1]] }; setSavedSessions(saveVoiceSession(row)); setSaveMessage('Comparación guardada en este navegador. Puedes recuperarla en Mis comparaciones.'); }
+    catch { setSaveMessage('No se pudo guardar. Exporta la comparación JSON para conservarla.'); }
+  };
   return <FHSurface className={styles.voicePanel}>
     <p className={styles.kicker}>INTERACCIÓN EN VIVO · MICRÓFONO</p>
     <h2>Mi frecuencia · Mi voz</h2>
+    <ol className={styles.voiceSteps} aria-label="Pasos de mi sesión vocal">{['Captura tu tono A', 'Explora y captura B', 'Compara y guarda'].map((label, index) => <li key={label} aria-current={guideStep === index + 1 ? 'step' : undefined}><strong>{index + 1}.</strong> {label}</li>)}</ol>
+    <p role="status">{guideStep === 1 ? 'Conecta el micrófono, sostén una vocal cómoda y pulsa Capturar tono vocal A.' : guideStep === 2 ? 'Cambia suavemente de tono, sin forzar la voz, y captura B. Mantén el mismo multiplicador para comparar solo tu tono.' : 'Ya tienes dos capturas. Revisa la diferencia y guarda tu comparación.'}</p>
     <p>Sostén una vocal «aaa» o «mmm» y cambia suavemente de tono. Observa tu figura junto a una referencia, o captura dos tonos de tu voz para compararlos.</p>
     <div className={styles.voiceControls}>
       {status === 'off' ? <button onClick={() => void start()}>Conectar mi voz en vivo</button> : <button onClick={stop}>{status === 'requesting' ? 'Cancelar solicitud de micrófono' : 'Detener mi voz'}</button>}
+    </div>
+    <details><summary>Ajustar voz, referencia y micrófono</summary>
+    <div className={styles.voiceControls}>
       <label>Voz expandida<select aria-label="Multiplicador de voz" value={multiplier} onChange={event => setMultiplier(Number(event.target.value) as VoiceMultiplier)}>{VOICE_MULTIPLIERS.map(value => <option key={value} value={value}>×{value}{value === 1 ? " · voz original" : " · frecuencia multiplicada"}</option>)}</select></label>
       <label>Vista de mi voz<select aria-label="Visualización de mi voz" value={voiceView} onChange={event => setVoiceView(event.target.value as CymaticsConfigV1['view'])}><option value="particles">Partículas ilustrativas en vivo</option><option value="field">Campo de amplitud</option><option value="vibration">Vibración ilustrativa en vivo</option><option value="nodal-lines">Contornos de amplitud mínima</option></select></label>
       <label>Referencia (Hz)<input aria-label="Referencia de voz en Hz" aria-invalid={!!referenceError} aria-describedby={referenceError ? "voice-reference-error" : undefined} type="number" inputMode="decimal" min="60" max="2000" step="any" value={referenceInput} onChange={event => editReference(event.target.value)} onBlur={() => editReference(referenceInput, true)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); editReference(referenceInput, true); } }}/></label>
@@ -139,6 +156,7 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
     </div>
     {referenceError && <p id="voice-reference-error" role="alert">{referenceError}</p>}
     <div className={styles.voiceControls}><label>Micrófono<select aria-label="Micrófono de entrada" value={deviceId} onChange={event => { stop(); setDeviceId(event.target.value); }}><option value="">Predeterminado del sistema</option>{devices.filter(device => device.deviceId && device.deviceId !== 'default').map((device, index) => <option key={device.deviceId} value={device.deviceId}>{device.label || `Entrada ${index + 1}`}</option>)}</select></label><small>Para cambiar de entrada: elígela y vuelve a conectar.</small></div>
+    </details>
     {status === 'active' && <div className={styles.voiceInput}><p>Entrada: {inputName}</p><label>Nivel de entrada <meter aria-label="Nivel de entrada del micrófono" min="0" max="1" value={Math.min(1, inputRms * 20)}/></label><p>{inputRms >= .001 ? 'Llega sonido al micrófono.' : 'Sin señal suficiente: habla cerca del micrófono o selecciona otra entrada.'} Nivel digital: {inputRms > 0 ? `${(20 * Math.log10(inputRms)).toFixed(0)} dBFS RMS` : 'silencio'}. No mide presión sonora.</p>{audioSuspended && <button onClick={() => { void session.current?.context.resume().catch(() => setError('No se pudo reactivar el audio. Detén y vuelve a conectar.')); }}>Reactivar análisis de audio</button>}</div>}
     {error && <p role="alert">No se pudo conectar: {error}. Revisa el permiso del micrófono y vuelve a intentar.</p>}
     <p role="status">{status === 'requesting' ? 'Esperando permiso del micrófono…' : status === 'active' ? reading ? 'Tono detectado · voz conectada a la simulación' : 'Sin tono estable · sostén una vocal sin forzar la voz' : 'Micrófono apagado'}</p>
@@ -157,10 +175,12 @@ export default function VoiceCymatics({ config, controlRef, onStart, onApply }: 
       <section><h3>Referencia · {referenceHz.toFixed(1)} Hz</h3><CymaticsCanvas config={referenceConfig} field={referenceField} label="Cimática de referencia vocal" scaleMax={sharedScale} showContours={voiceView !== 'particles'}/></section>
     </div>
     <p>{surfaceLabel(physical.surfaceType)}. Ambas vistas comparten superficie, material, excitación, fuerza virtual y escala de color. {voiceView === 'particles' ? 'Las partículas migran de forma ilustrativa hacia regiones de menor amplitud. Al cambiar de tono conservan su posición; sostén la vocal unos segundos para observar la organización.' : 'La escala se ajusta al máximo de la pareja en cada lectura; no compares brillo entre momentos distintos.'} Los parámetros físicos quedan fijados al conectar; reconecta para tomar los cambios del laboratorio.</p>
-    {liveField?.status === 'outside-modeled-range' && <p>La frecuencia aplicada está fuera del rango modal calculado: la respuesta puede ser débil y no se fuerza una figura.</p>}
-    <div className={styles.voiceControls}><button disabled={!liveConfig} onClick={() => capture(0)}>Capturar tono vocal A</button><button disabled={!liveConfig} onClick={() => capture(1)}>Capturar tono vocal B</button><button disabled={!captures[0] || !captures[1]} onClick={exportCaptures}>Exportar comparación de voz</button></div>
+    {(liveField?.status === 'outside-modeled-range' || (reading && appliedHz === null)) && <div role="status"><p>La frecuencia aplicada está fuera del rango calculado. Tu voz se detecta, pero la simulación puede no mostrar una figura clara.</p>{suggestedMultiplier !== undefined && suggestedMultiplier !== multiplier && <button onClick={() => setMultiplier(suggestedMultiplier)}>Usar ×{suggestedMultiplier} para entrar al rango visual</button>}<p><small>El ajuste multiplica únicamente la frecuencia de la simulación; conserva visible tu tono original.</small></p></div>}
+    <div className={styles.voiceControls}><button disabled={!liveConfig} onClick={() => capture(0)}>Capturar tono vocal A</button><button disabled={!liveConfig} onClick={() => capture(1)}>Capturar tono vocal B</button><button disabled={!captures[0] || !captures[1]} onClick={saveComparison}>Guardar comparación vocal</button><button disabled={!captures[0] || !captures[1]} onClick={exportCaptures}>Exportar comparación de voz</button></div>
     {captures.some(Boolean) && <div className={styles.channels}>{captures.map((row, index) => row && <section key={index}><h3>Tono vocal {index === 0 ? 'A' : 'B'} · {row.reading.frequencyHz.toFixed(1)} Hz</h3><p>Frecuencia aplicada: {row.config.channelFrequenciesHz[0].toFixed(1)} Hz · ×{row.multiplier}</p><CymaticsCanvas config={row.config} field={capturedFields[index]!} label={`Captura vocal ${index === 0 ? 'A' : 'B'}`} scaleMax={capturedScale} showContours={row.config.view !== 'particles'}/><button onClick={() => { stop(); onApply(structuredClone(row.config)); }}>Explorar tono vocal {index === 0 ? 'A' : 'B'} en el laboratorio</button></section>)}</div>}
-    {capturedDifference && <p>Frecuencia aplicada B respecto de A: {capturedDifference.differenceHz.toFixed(1)} Hz · {capturedDifference.semitones.toFixed(2)} semitonos. Mismas condiciones físicas y escala común.</p>}
+    {capturedDifference && <p>Frecuencia aplicada B respecto de A: {capturedDifference.differenceHz.toFixed(1)} Hz · {capturedDifference.semitones.toFixed(2)} semitonos. Escala visual común. {captures[0]?.multiplier === captures[1]?.multiplier ? 'Mismo multiplicador.' : 'Cambiaste el multiplicador: esta diferencia no representa solo el cambio de tu tono vocal.'} La figura no indica tu estado de salud ni un nivel de conciencia.</p>}
+    {saveMessage && <p role="status">{saveMessage}</p>}
+    <details><summary>Mis comparaciones ({savedSessions.length})</summary><p>Guardadas en este navegador y dirección web. No se sincronizan entre dispositivos ni entre preview y producción. Exporta JSON como respaldo.</p>{savedSessions.length === 0 ? <p>Aún no has guardado comparaciones vocales aquí.</p> : <ul>{savedSessions.map(row => <li key={row.id}><button onClick={() => { stop(); setCaptures(structuredClone(row.captures)); setSaveMessage('Comparación recuperada. No se ha activado el micrófono ni el sonido.'); }}>{new Date(row.createdAt).toLocaleString('es-MX')} · {row.captures[0].reading.frequencyHz.toFixed(1)} / {row.captures[1].reading.frequencyHz.toFixed(1)} Hz · Abrir</button></li>)}</ul>}</details>
     {spectrum && <details><summary>Ver espectro y armónicos de mi voz</summary><SpectralAnalyzer frame={spectrum} history={history}/></details>}
     <p><small>Se analiza la fundamental estimada (60–1200 Hz), no una «frecuencia única personal». El espectro muestra otros componentes; la figura usa la fundamental multiplicada por el factor elegido, con fuerza virtual fija, no el timbre completo ni el volumen vocal. Es una respuesta estacionaria ideal recalculada en vivo; no una medición física de tu cuerpo. El audio se procesa localmente, sin grabar ni transmitir. Las capturas contienen números y configuración, nunca audio. Al conectar se detienen generador, barrido y sesión guiada; iniciar otra fuente detiene este micrófono.</small></p>
   </FHSurface>;
