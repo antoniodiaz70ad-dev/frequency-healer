@@ -3,6 +3,8 @@ import { validateProposal } from './rules';
 import { object, text, validateIntent, validateRatings } from './validation';
 import { SETTINGS_KEY } from './privacy';
 import type { SessionMarkerV1, VoiceSessionProposalV1, VoiceSessionRecordV1 } from './types';
+import type { DailyActionV1, DailyActionRevisionV1 } from './types';
+import { currentDailyAction, validateDailyAction } from './dailyPractice';
 export const SESSIONS_KEY = 'fh:voice-sessions-v1';
 export interface StorageLike { getItem(key: string): string | null; setItem(key: string, value: string): void }
 export type Lock = <T>(operation: () => T | Promise<T>) => Promise<T>;
@@ -35,6 +37,7 @@ export function validateRecord(value: unknown): VoiceSessionRecordV1 {
   return { schemaVersion: 1, id: text(v.id, 100), createdAt: iso(v.createdAt), ...(v.completedAt === undefined ? {} : { completedAt: iso(v.completedAt) }), status: v.status as VoiceSessionRecordV1['status'], intent, proposal,
     ...(v.before === undefined ? {} : { before: validateRatings(v.before) }), ...(v.after === undefined ? {} : { after: validateRatings(v.after) }), markers,
     ...(v.reflection === undefined ? {} : { reflection: text(v.reflection, 500, true) }), ...(v.originalWords === undefined ? {} : { originalWords: text(v.originalWords, 500, true) }),
+    ...(v.dailyAction === undefined ? {} : { dailyAction: validateDailyAction(v.dailyAction) }),
     technical: { actualDurationMs: duration, ...(tech.stopReason === undefined ? {} : { stopReason: text(tech.stopReason, 50) }) } };
 }
 export function loadRecords(storage: StorageLike): VoiceSessionRecordV1[] { return parseRecords(storage.getItem(SESSIONS_KEY)); }
@@ -56,8 +59,21 @@ export class VoiceStore {
       this.storage.setItem(SESSIONS_KEY, JSON.stringify(next)); return next;
     });
   }
-  save(value: VoiceSessionRecordV1) { const record = validateRecord(value); return this.mutate(rows => { if (rows.some(r => r.id === record.id)) return rows; if (rows.length >= 100) throw new Error('Límite de 100 sesiones. Exporta o borra registros antes de guardar.'); return [record, ...rows]; }); }
+  save(value: VoiceSessionRecordV1) { const record = validateRecord(value); return this.mutate(rows => { const existing = rows.find(r => r.id === record.id); if (existing) { if (JSON.stringify(existing) !== JSON.stringify(record)) throw new Error('Ya existe una sesión distinta con este ID. No se sobrescribió.'); return rows; } if (rows.length >= 100) throw new Error('Límite de 100 sesiones. Exporta o borra registros antes de guardar.'); return [record, ...rows]; }); }
   remove(id: string) { return this.mutate(rows => rows.filter(r => r.id !== id)); }
+  updateDailyAction(id: string, expected: DailyActionV1, change: Pick<DailyActionRevisionV1, 'text' | 'status'>, changedAt = new Date().toISOString()) {
+    const expectedValue = validateDailyAction(expected);
+    return this.mutate(rows => {
+      const record = rows.find(row => row.id === id);
+      if (!record?.dailyAction) throw new Error('La acción ya no está disponible. Recarga el historial.');
+      if (JSON.stringify(record.dailyAction) !== JSON.stringify(expectedValue)) throw new Error('Otra pestaña cambió esta acción. Recarga antes de volver a editar.');
+      const latest = currentDailyAction(record.dailyAction);
+      const revision = { text: text(change.text, 280), status: change.status, changedAt };
+      if (latest.text === revision.text && latest.status === revision.status) return rows;
+      const dailyAction = validateDailyAction({ schemaVersion: 1, revisions: [...record.dailyAction.revisions, revision] });
+      return rows.map(row => row.id === id ? { ...row, dailyAction } : row);
+    });
+  }
   clear() { return this.mutate(() => []); }
 }
 export function loadSettings(storage: StorageLike) {
