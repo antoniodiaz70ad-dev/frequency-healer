@@ -47,6 +47,6 @@ Compatibility boundary: this new version reads old records. An older deployed cl
 
 Local unit/integration suite: **267 passed**. TypeScript and ESLint passed. Production builds with flags ON and OFF passed, together with both existing HTTP/landing smoke runs. Feature-disabled routes correctly return 404.
 
-Browser tests are provided but were not executed locally: the pinned Chromium and headless-shell downloads returned invalid/empty ZIPs in this environment. The repository's existing Flags ON CI job runs `ui/*.test.mjs`, including these cases. CI/browser results must be checked before merging. No physical listening, mobile-device microphone, Safari test or screenshot is claimed.
+The three dedicated browser tests passed locally against the production build: the complete 390 × 844 mobile text flow (save, reload, follow-up, export and delete), the desktop optional-action/discard flow, and invalid-intention recovery without autoplay or microphone access. The same browser suite also passed in the existing Flags ON CI job. No physical listening, mobile-device microphone, Safari test or screenshot is claimed.
 
 Reviewed against the installed Next.js guides and the React best-practices checklist. No dependency, acoustic engine, physics model, protocol rule, OBE diary, Bentov or pending cymatics PR changes. No merge or production deployment is part of this task.

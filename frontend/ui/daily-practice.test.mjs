@@ -61,6 +61,7 @@ test('daily text flow saves action atomically, reloads, follows up, exports and 
   assert.equal(original.dailyAction.revisions[0].status, 'pending'); assert.deepEqual(original.before, {}); assert.deepEqual(original.after, {});
   assert.equal((await probe(page)).writes.filter(row => row.key === KEY).length, 1);
   await page.getByRole('link', { name: 'Volver al inicio', exact: true }).click();
+  await page.getByRole('heading', { name: 'Resonance Lab', exact: true }).waitFor();
   await page.reload(); await button(page, 'La hice').click();
   await page.getByRole('status').filter({ hasText: 'Estado: Hecha' }).waitFor();
   await button(page, 'Sigue pendiente').click();
@@ -94,6 +95,6 @@ test('daily optional action and ratings can be omitted and discard persists no s
 test('whitespace intention is recoverable without playback or an unhandled rejection', { timeout: 30000 }, async t => {
   const page = await openDaily(t);
   await page.getByRole('textbox', { name: 'Mi intención para hoy', exact: true }).fill('   ');
-  await button(page, 'Revisar mi intención').click(); await page.getByRole('alert').waitFor();
+  await button(page, 'Revisar mi intención').click(); await page.getByRole('alert').filter({ hasText: 'Texto: máximo 500 caracteres.' }).waitFor();
   await prepare(page); assert.equal((await probe(page)).contexts.length, 0);
 });
