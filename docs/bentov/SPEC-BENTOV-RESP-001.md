@@ -1,3 +1,5 @@
+> **Referencia histórica sustituida el 2026-10-23.** El encargo vigente está en [SPEC-BENTOV-RESP-002.md](./SPEC-BENTOV-RESP-002.md). Sus parámetros, alcance y criterios prevalecen sobre este documento. La versión vigente incluye el recorrido completo y conserva producción intacta.
+
 # SPEC-BENTOV-RESP-001 — Laboratorio Bentov: Resonancia cardiorrespiratoria V1
 
 Fecha: 2026-10-21
