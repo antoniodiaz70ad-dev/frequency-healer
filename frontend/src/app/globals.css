@@ -199,6 +199,21 @@ input[type="range"] {
   background: #374151;
   outline: none;
 }
+
+/* Bentov v1.1: educational oscillator and paced-breathing visuals. */
+.bentov-theory { border: 1px solid var(--fh-border); border-radius: var(--fh-radius-surface); background: var(--fh-surface); padding: 1.25rem; }
+.bentov-theory summary { cursor: pointer; color: var(--fh-text); font-weight: 600; }
+.bentov-theory p { margin-top: .75rem; max-width: 48rem; color: var(--fh-text-muted); line-height: 1.6; }
+.bentov-pendulum { display: grid; gap: .75rem; margin-block: 1.25rem; color: var(--fh-text-secondary); }
+.bentov-pendulum__track { position: relative; height: 3rem; border-bottom: 1px solid var(--fh-border-strong); }
+.bentov-pendulum__track::after { position: absolute; left: 50%; bottom: -.3rem; width: 1px; height: .6rem; background: var(--fh-text-muted); content: ""; }
+.bentov-pendulum__track span { position: absolute; bottom: -.6rem; width: 1.2rem; height: 1.2rem; translate: -50% 0; border-radius: 999px; background: var(--fh-harmonic); box-shadow: 0 0 1.5rem rgb(115 215 204 / 45%); }
+.bentov-controls { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1rem; margin-block: 1rem; }
+.bentov-controls label { display: grid; gap: .4rem; color: var(--fh-text-secondary); font-size: .85rem; }
+.bentov-breath { display: grid; place-items: center; gap: .5rem; min-height: 15rem; }
+.bentov-breath__orb { width: 9rem; height: 9rem; border: 1px solid var(--fh-harmonic); border-radius: 999px; background: radial-gradient(circle, rgb(115 215 204 / 28%), rgb(115 215 204 / 4%) 70%); box-shadow: 0 0 3rem rgb(115 215 204 / 18%); transition: transform 120ms linear; }
+@media (max-width: 42rem) { .bentov-controls { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .bentov-breath__orb, .bentov-pendulum__track span { transition: none !important; } }
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
