@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { HARMONIC_ENABLED, VOICE_ENABLED } from "@/lib/voice/feature";
-import { VoiceStore } from "@/lib/voice/storage";
+import { SESSIONS_KEY, VoiceStore } from "@/lib/voice/storage";
+import { latestActionSession } from "@/lib/voice/dailyPractice";
+import DailyActionCard from "@/components/voice/DailyActionCard";
 import type { VoiceSessionRecordV1 } from "@/lib/voice/types";
 import { FHEmptyState, FHPageHeader, FHPageShell, FHPrimaryCard, FHSection, FHSurface } from "@/components/ui/FHLayout";
 import { FHStateBadge } from "@/components/ui/FHBadges";
@@ -22,30 +24,34 @@ function formatDate(value: string | number) {
 }
 
 export default function DashboardPage() {
-  const [latest, setLatest] = useState<VoiceSessionRecordV1 | null>(null);
+  const [records, setRecords] = useState<VoiceSessionRecordV1[]>([]);
   const [historyAvailable, setHistoryAvailable] = useState(true);
+  const latest = records[0] ?? null;
+  const actionSession = latestActionSession(records);
+  const refreshRecords = () => {
+    try { setRecords(new VoiceStore(localStorage).load()); setHistoryAvailable(true); }
+    catch { setRecords([]); setHistoryAvailable(false); }
+  };
 
   useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const records = new VoiceStore(localStorage).load();
-        setLatest(records[0] ?? null);
-      } catch {
-        setHistoryAvailable(false);
-      }
-    });
+    queueMicrotask(refreshRecords);
+    const changed = (event: StorageEvent) => { if (event.key === SESSIONS_KEY || event.key === null) refreshRecords(); };
+    window.addEventListener('storage', changed);
+    window.addEventListener('focus', refreshRecords);
+    return () => { window.removeEventListener('storage', changed); window.removeEventListener('focus', refreshRecords); };
   }, []);
 
   return <FHPageShell>
     <FHPageHeader eyebrow="Sistema personal de exploración acústica" title="Resonance Lab" description="Define una intención, escucha una estructura armónica y registra tu propia experiencia." />
     <nav aria-label="Formas de explorar">
       {VOICE_ENABLED && <FHPrimaryCard className="relative overflow-hidden">
-        <p className="fh-label">Sesión guiada</p>
-        <h2 className="mt-3 max-w-2xl text-3xl font-medium tracking-[-0.035em] text-[var(--fh-text)] md:text-4xl">¿Qué quieres explorar hoy?</h2>
-        <p className="mt-4 max-w-xl text-base leading-7 text-[var(--fh-text-secondary)]">Describe lo que quieres explorar y Resonance Lab te propondrá una sesión.</p>
+        <p className="fh-label">Práctica cotidiana</p>
+        <h2 className="mt-3 max-w-2xl text-3xl font-medium tracking-[-0.035em] text-[var(--fh-text)] md:text-4xl">Sintonizar mi día</h2>
+        <p className="mt-4 max-w-xl text-base leading-7 text-[var(--fh-text-secondary)]">Elige una intención, escucha durante cinco minutos y concreta una acción para hoy.</p>
         <p className="mt-2 text-sm text-[var(--fh-text-muted)]">Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p>
-        <Link className="fh-action fh-action--primary mt-7" href="/voz">Comenzar sesión guiada <span aria-hidden="true">→</span></Link>
+        <div className="mt-7 flex flex-wrap gap-3"><Link className="fh-action fh-action--primary" href="/voz?practica=diaria">Sintonizar mi día <span aria-hidden="true">→</span></Link><Link className="fh-action fh-action--secondary" href="/voz">Comenzar sesión guiada</Link></div>
       </FHPrimaryCard>}
+      {historyAvailable && actionSession && <FHSection title="De la intención a la acción"><DailyActionCard key={actionSession.id} record={actionSession} onSaved={setRecords} onReload={refreshRecords} /></FHSection>}
       <FHSection title="Tu actividad">
         {!historyAvailable ? <FHEmptyState>El historial personal no está disponible en este dispositivo. No se modificó ningún dato.</FHEmptyState> : latest ? <FHSurface variant="subtle" className="grid gap-5 p-5 md:grid-cols-[1fr_auto] md:items-center">
           <div><div className="flex flex-wrap items-center gap-2"><FHStateBadge state={latest.status}>Sesión {latest.status === "completed" ? "completada" : latest.status}</FHStateBadge><span className="text-xs text-[var(--fh-text-muted)]">{formatDate(latest.createdAt)}</span></div><h3 className="mt-3 text-lg font-medium text-[var(--fh-text)]">{latest.intent.intention}</h3><p className="mt-1 text-sm text-[var(--fh-text-secondary)]">Tu registro permanece en este dispositivo.</p></div>
