@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createUnifiedExport, verifyUnifiedExport, FREQUENCY_HEALER_STORAGE_ALLOWLIST, DISCLAIMER_ACCEPTED_KEY, type ReadOnlyStorage } from '../src/lib/dataExport';
+import { createUnifiedExport, createUnifiedExportV1, verifyUnifiedExport, verifyUnifiedExportV1, FREQUENCY_HEALER_STORAGE_ALLOWLIST, FREQUENCY_HEALER_STORAGE_ALLOWLIST_V2, DISCLAIMER_ACCEPTED_KEY, type ReadOnlyStorage } from '../src/lib/dataExport';
 import { SESSIONS_KEY } from '../src/lib/voice/storage';
 import { buildProposal } from '../src/lib/voice/rules';
 import { parseLocalIntent } from '../src/lib/voice/intentParser';
@@ -10,7 +10,7 @@ function voiceRecord(){const proposal=buildProposal(parseLocalIntent('focus 10 m
 
 test('explicit allowlist exports every owned namespace and never reads arbitrary storage',async()=>{
   const memory=new Memory(new Map([['unrelated-secret','do-not-read'],[DISCLAIMER_ACCEPTED_KEY,'1']]));const result=await createUnifiedExport(memory,'2026-09-20T12:00:00.000Z');
-  assert.deepEqual(result.namespaces.map(x=>x.key),[...FREQUENCY_HEALER_STORAGE_ALLOWLIST]);assert.equal(result.namespaces.length,13);assert.equal(result.namespaces.some(x=>x.raw==='do-not-read'),false);assert.equal(memory.reads.includes('unrelated-secret'),false);await verifyUnifiedExport(result);
+  assert.deepEqual(result.namespaces.map(x=>x.key),[...FREQUENCY_HEALER_STORAGE_ALLOWLIST_V2]);assert.equal(result.namespaces.length,16);assert.equal(result.namespaces.some(x=>x.raw==='do-not-read'),false);assert.equal(memory.reads.includes('unrelated-secret'),false);await verifyUnifiedExport(result);
 });
 test('valid voice-rules-v2 export retains mandatory Seed Selection provenance',async()=>{
   const raw=JSON.stringify([voiceRecord()]),result=await createUnifiedExport(new Memory(new Map([[SESSIONS_KEY,raw]])),'2026-09-20T12:00:00.000Z');
@@ -30,3 +30,4 @@ test('verifier rejects content, declared validation, allowlist and provenance ta
 test('generation and verification are read-only and export has no import surface',async()=>{
   const memory=new Memory(),result=await createUnifiedExport(memory);await verifyUnifiedExport(result);assert.equal('setItem' in memory,false);const api=await import('../src/lib/dataExport');assert.equal(Object.keys(api).some(name=>/import/i.test(name)),false);
 });
+test('legacy V1 export still verifies with its historical allowlist',async()=>{const value=await createUnifiedExportV1(new Memory(),'2026-09-20T12:00:00.000Z');assert.equal(value.schemaVersion,1);assert.deepEqual(value.namespaces.map(x=>x.key),[...FREQUENCY_HEALER_STORAGE_ALLOWLIST]);await verifyUnifiedExportV1(value);await verifyUnifiedExport(value);});
