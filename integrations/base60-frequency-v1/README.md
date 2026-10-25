@@ -1,6 +1,6 @@
 # Frequency Healer ↔ Base60: contrato v1 y encargo de implementación
 
-Fecha: 2026-10-24. Estado: contrato ejecutable y tareas; **las aplicaciones todavía no están conectadas**. Estos archivos no se importan desde la aplicación. No hay endpoints, tablas, envío de datos ni sincronización activados por esta entrega. Sin merge ni publicación a producción.
+Actualizado: 2026-10-25. Estado: **implementación en borrador, desactivada por defecto**. Ya existen paneles de intercambio, API y migración con RLS. No está activado en producción ni validado con autenticación real en staging. Consulta [IMPLEMENTATION.md](IMPLEMENTATION.md) para el estado actual; las secciones de encargo siguientes conservan el diseño inicial.
 
 ## Resultado solicitado
 

@@ -7,9 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsc -p tsconfig.test.json && node --test .test-build/tests/*.test.js",
+    "test": "tsc -p tsconfig.test.json && node --test .test-build/tests/*.test.js && npm run test:bridge",
     "typecheck": "tsc --noEmit",
-    "test:ui": "node --test --test-concurrency=1 ui/*.test.mjs"
+    "test:ui": "node --test --test-concurrency=1 ui/*.test.mjs",
+    "test:bridge": "node --test ../integrations/base60-frequency-v1/contract.test.mjs"
   },
   "dependencies": {
     "next": "16.4.0",
