@@ -3,7 +3,7 @@ import type { GuidedPlaybackEngine } from './mediaHarmonicEngine';
 import { RunScope, transition, type JourneyState } from './stateMachine';
 import { buildProposal, validateProposal, type ProposalEdits } from './rules';
 import { parseCommand } from './commands';
-import { validateRatings, parseIntentJSON, text } from './validation';
+import { validateIntent, validateRatings, parseIntentJSON, text } from './validation';
 import { interpretCanonicalIntent } from './intentParser';
 import type { ParsedIntentionV1, VoiceSessionProposalV1, VoiceSessionRecordV1, SelfRatingV1, SessionMarkerV1 } from './types';
 import type { SeedEvidenceInputV1 } from './seedSelection';
@@ -29,6 +29,11 @@ export class VoiceOrchestrator {
   interpret(raw: string) {
     if (!this.move('interpreting')) return;
     try { this.intent = interpretCanonicalIntent(raw).intent; this.error = ''; this.move('review_intent'); }
+    catch (e) { this.error = (e as Error).message; this.move('interpretation_error'); }
+  }
+  reviewIntent(value: ParsedIntentionV1) {
+    if (!this.move('interpreting')) return;
+    try { this.intent = validateIntent(value); this.error = ''; this.move('review_intent'); }
     catch (e) { this.error = (e as Error).message; this.move('interpretation_error'); }
   }
   async interpretRemote(raw: string) {
