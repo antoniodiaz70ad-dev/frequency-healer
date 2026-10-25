@@ -7,6 +7,8 @@ import { PERSONALIZED_EXPERIMENTS_KEY, PersonalizedExperimentStore } from './per
 import { CONSENT_KEY, SETTINGS_KEY } from './voice/privacy';
 import { SESSIONS_KEY, VoiceStore, loadSettings } from './voice/storage';
 import { CYMATICS_STORAGE_KEY, readCymaticsGallery } from './cymatics/storage';
+import { BENTOV_DRAFT_KEY, BENTOV_PROGRAMS_KEY, BENTOV_SESSIONS_KEY } from './bentov/storage';
+import { parsePrograms, parseSessions } from './bentov/validation';
 
 export const OBE_SESSION_LOGS_KEY = 'fh:obe-session-logs-v1';
 export const NEXT_SESSION_CONFIG_KEY = 'fh:next-session-config-v1';
@@ -19,6 +21,10 @@ export const FREQUENCY_HEALER_STORAGE_ALLOWLIST = Object.freeze([
   DISCLAIMER_ACCEPTED_KEY,
   CYMATICS_STORAGE_KEY,
 ] as const);
+export const FREQUENCY_HEALER_STORAGE_ALLOWLIST_V2 = Object.freeze([
+  ...FREQUENCY_HEALER_STORAGE_ALLOWLIST,
+  BENTOV_PROGRAMS_KEY, BENTOV_SESSIONS_KEY, BENTOV_DRAFT_KEY,
+] as const);
 
 export type FrequencyHealerStorageKey = typeof FREQUENCY_HEALER_STORAGE_ALLOWLIST[number];
 export interface ReadOnlyStorage { getItem(key:string):string|null }
@@ -27,6 +33,12 @@ export interface UnifiedExportV1 {
   schemaVersion:1;generationVersion:'frequency-healer-data-export-v1';exportedAt:string;
   seedSelectionProvenance:{requiredForRuleVersion:'voice-rules-v2';seedRegistryVersion:'seed-registry-v1';seedSelectionVersion:'seed-selection-v1';voiceRecordsStatus:'absent'|'valid'|'invalid';legacyProposalCount:number;v2ProposalCount:number};
   namespaces:ExportNamespace[];integrity:{algorithm:'sha256';digest:string};
+}
+export interface UnifiedExportV2 {
+  schemaVersion:2;generationVersion:'frequency-healer-data-export-v2';exportedAt:string;
+  seedSelectionProvenance:UnifiedExportV1['seedSelectionProvenance'];
+  namespaces:Array<Omit<ExportNamespace,'key'>&{key:typeof FREQUENCY_HEALER_STORAGE_ALLOWLIST_V2[number]}>;
+  integrity:{algorithm:'sha256';digest:string};
 }
 
 const reader=(raw:string|null):{getItem:(key:string)=>string|null;setItem:()=>never}=>({getItem:()=>raw,setItem:()=>{throw new Error('El exportador es de solo lectura.');}});
@@ -54,6 +66,12 @@ async function validateNamespace(key:FrequencyHealerStorageKey,raw:string):Promi
   if(key===CYMATICS_STORAGE_KEY)return readCymaticsGallery(store).length;
   if(raw!=='1')throw new Error('Aceptación de seguridad inválida.');return 1;
 }
+async function validateNamespaceV2(key:typeof FREQUENCY_HEALER_STORAGE_ALLOWLIST_V2[number],raw:string):Promise<number>{
+  if(key===BENTOV_PROGRAMS_KEY)return parsePrograms(raw).length;
+  if(key===BENTOV_SESSIONS_KEY)return parseSessions(raw).length;
+  if(key===BENTOV_DRAFT_KEY){const value=object(JSON.parse(raw));if(value.schemaVersion!==1||!iso(value.updatedAt)||!value.session||typeof value.session!=='object')throw new Error('Borrador Bentov inválido.');return 1;}
+  return validateNamespace(key as FrequencyHealerStorageKey,raw);
+}
 
 function seedCounts(raw:string|null){
   if(raw===null)return {voiceRecordsStatus:'absent' as const,legacyProposalCount:0,v2ProposalCount:0};
@@ -66,7 +84,7 @@ function seedCounts(raw:string|null){
 function canonicalPayload(value:Omit<UnifiedExportV1,'integrity'>){return JSON.stringify(value);}
 async function sha256(value:string){const bytes=new TextEncoder().encode(value),hash=await crypto.subtle.digest('SHA-256',bytes);return `sha256:${Array.from(new Uint8Array(hash),x=>x.toString(16).padStart(2,'0')).join('')}`;}
 
-export async function createUnifiedExport(storage:ReadOnlyStorage,exportedAt=new Date().toISOString()):Promise<UnifiedExportV1>{
+export async function createUnifiedExportV1(storage:ReadOnlyStorage,exportedAt=new Date().toISOString()):Promise<UnifiedExportV1>{
   if(!iso(exportedAt))throw new Error('Fecha de exportación inválida.');
   const namespaces:ExportNamespace[]=[];
   for(const key of FREQUENCY_HEALER_STORAGE_ALLOWLIST){const raw=storage.getItem(key);if(raw===null){namespaces.push({key,raw:null,status:'absent'});continue;}try{namespaces.push({key,raw,status:'valid',recordCount:await validateNamespace(key,raw)});}catch(e){namespaces.push({key,raw,status:'invalid',error:(e as Error).message});}}
@@ -75,7 +93,7 @@ export async function createUnifiedExport(storage:ReadOnlyStorage,exportedAt=new
   return {...payload,integrity:{algorithm:'sha256',digest:await sha256(canonicalPayload(payload))}};
 }
 
-export async function verifyUnifiedExport(input:unknown):Promise<UnifiedExportV1>{
+export async function verifyUnifiedExportV1(input:unknown):Promise<UnifiedExportV1>{
   const value=object(input) as unknown as UnifiedExportV1;
   if(value.schemaVersion!==1||value.generationVersion!=='frequency-healer-data-export-v1'||!iso(value.exportedAt)||!Array.isArray(value.namespaces)||value.integrity?.algorithm!=='sha256')throw new Error('Contrato de exportación inválido.');
   if(value.namespaces.length!==FREQUENCY_HEALER_STORAGE_ALLOWLIST.length||value.namespaces.some((row,index)=>row.key!==FREQUENCY_HEALER_STORAGE_ALLOWLIST[index]))throw new Error('La allowlist o su orden no coincide.');
@@ -84,4 +102,21 @@ export async function verifyUnifiedExport(input:unknown):Promise<UnifiedExportV1
   const counts=seedCounts(read.get(SESSIONS_KEY)??null),provenance=value.seedSelectionProvenance;
   if(!provenance||provenance.requiredForRuleVersion!=='voice-rules-v2'||provenance.seedRegistryVersion!=='seed-registry-v1'||provenance.seedSelectionVersion!=='seed-selection-v1'||provenance.legacyProposalCount!==counts.legacyProposalCount||provenance.v2ProposalCount!==counts.v2ProposalCount)throw new Error('Procedencia Seed Selection V1 inválida.');
   const {integrity,...payload}=value;if(integrity.digest!==await sha256(canonicalPayload(payload)))throw new Error('La huella SHA-256 no coincide.');return value;
+}
+
+export async function createUnifiedExport(storage:ReadOnlyStorage,exportedAt=new Date().toISOString()):Promise<UnifiedExportV2>{
+  if(!iso(exportedAt))throw new Error('Fecha de exportación inválida.');
+  const namespaces:UnifiedExportV2['namespaces']=[];
+  for(const key of FREQUENCY_HEALER_STORAGE_ALLOWLIST_V2){const raw=storage.getItem(key);if(raw===null){namespaces.push({key,raw:null,status:'absent'});continue;}try{namespaces.push({key,raw,status:'valid',recordCount:await validateNamespaceV2(key,raw)});}catch(e){namespaces.push({key,raw,status:'invalid',error:(e as Error).message});}}
+  const payload={schemaVersion:2 as const,generationVersion:'frequency-healer-data-export-v2' as const,exportedAt,seedSelectionProvenance:{requiredForRuleVersion:'voice-rules-v2' as const,seedRegistryVersion:'seed-registry-v1' as const,seedSelectionVersion:'seed-selection-v1' as const,...seedCounts(storage.getItem(SESSIONS_KEY))},namespaces};
+  return {...payload,integrity:{algorithm:'sha256',digest:await sha256(JSON.stringify(payload))}};
+}
+export async function verifyUnifiedExport(input:unknown):Promise<UnifiedExportV1|UnifiedExportV2>{
+  const candidate=object(input);
+  if(candidate.schemaVersion===1)return verifyUnifiedExportV1(input);
+  const value=candidate as unknown as UnifiedExportV2;if(value.schemaVersion!==2||value.generationVersion!=='frequency-healer-data-export-v2'||!iso(value.exportedAt)||!Array.isArray(value.namespaces)||value.integrity?.algorithm!=='sha256')throw new Error('Contrato de exportación V2 inválido.');
+  if(value.namespaces.length!==FREQUENCY_HEALER_STORAGE_ALLOWLIST_V2.length||value.namespaces.some((row,index)=>row.key!==FREQUENCY_HEALER_STORAGE_ALLOWLIST_V2[index]))throw new Error('La allowlist V2 o su orden no coincide.');
+  const read=new Map<string,string|null>();for(const row of value.namespaces){if(!['absent','valid','invalid'].includes(row.status)||!(row.raw===null||typeof row.raw==='string')||(row.raw===null)!==(row.status==='absent'))throw new Error('Entrada V2 inválida.');if(row.raw!==null){try{const count=await validateNamespaceV2(row.key,row.raw);if(row.status!=='valid'||row.recordCount!==count||row.error!==undefined)throw new Error('Validación V2 declarada inconsistente.');}catch(e){if((e as Error).message==='Validación V2 declarada inconsistente.')throw e;if(row.status!=='invalid'||typeof row.error!=='string'||row.recordCount!==undefined)throw new Error('Error V2 no declarado.');}}read.set(row.key,row.raw)}
+  const counts=seedCounts(read.get(SESSIONS_KEY)??null),p=value.seedSelectionProvenance;if(!p||p.requiredForRuleVersion!=='voice-rules-v2'||p.seedRegistryVersion!=='seed-registry-v1'||p.seedSelectionVersion!=='seed-selection-v1'||p.legacyProposalCount!==counts.legacyProposalCount||p.v2ProposalCount!==counts.v2ProposalCount)throw new Error('Procedencia Seed Selection V1 inválida.');
+  const {integrity,...payload}=value;if(integrity.digest!==await sha256(JSON.stringify(payload)))throw new Error('La huella SHA-256 no coincide.');return value;
 }

@@ -52,6 +52,13 @@ const productModes = [
     HARMONIC_ENABLED ? "/laboratorio-armonico" : "/inicio",
     HARMONIC_ENABLED ? "Abrir laboratorio" : "Entrar a la app",
   ],
+  [
+    "Respiración y atención",
+    "Para practicar con presencia",
+    "Explora una guía respiratoria, un péndulo armónico educativo y un programa personal de 14 días.",
+    "/respiracion-atencion",
+    "Abrir práctica",
+  ],
 ];
 
 const trustSignals = [
@@ -275,7 +282,7 @@ export default function LandingPage() {
 
       <section className={`${styles.section} ${styles.modes}`} aria-labelledby="modes-title">
         <div className={styles.sectionIntro}>
-          <Label>03 — DOS ENTRADAS CLARAS</Label>
+          <Label>03 — TRES ENTRADAS CLARAS</Label>
           <h2 id="modes-title">
             Simple cuando quieres empezar.
             <br />

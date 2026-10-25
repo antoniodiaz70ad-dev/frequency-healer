@@ -14,6 +14,7 @@ import UnifiedDataExport from "@/components/data/UnifiedDataExport";
 
 const explore = [
   { href: "/laboratorio-armonico", title: "Laboratorio Armónico", text: "Construye, escucha y comprende relaciones armónicas exactas.", gated: true },
+  { href: "/respiracion-atencion", title: "Respiración y atención", text: "Practica respiración guiada, explora el péndulo educativo y registra tu experiencia." },
   { href: "/biblioteca", title: "Atlas de frecuencias", text: "Consulta el archivo histórico y exploratorio con su clasificación." },
   { href: "/protocolos", title: "Protocolos históricos", text: "Revisa secuencias heredadas y su estado actual." },
   { href: "/generador", title: "Generador manual", text: "Configura directamente una señal como herramienta avanzada." },
