@@ -8,7 +8,7 @@ export class MockVoiceAdapter implements VoiceAdapter {
   interruptions = 0;
   async connect(_stream: MediaStream | null, signal: AbortSignal, emit: (event: VoiceEvent) => void) {
     if (signal.aborted) throw new DOMException('Cancelado', 'AbortError');
-    this.emit = emit;
+    this.emit = emit; this.paused = false;
   }
   say(text: string) { if (this.emit && !this.paused) this.spoken.push(text); }
   interrupt() { this.interruptions++; }

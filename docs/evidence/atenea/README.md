@@ -2,7 +2,7 @@
 
 Datos sintéticos, sin credenciales, audio grabado ni solicitudes a OpenAI.
 
-- `tests.txt`: suite completa de dominio/integración (38 archivos, sin fallos), incluidos 16 escenarios nuevos ATENEA.
+- `tests.txt`: suite completa de dominio/integración (38 archivos, sin fallos), incluidos 17 escenarios nuevos ATENEA.
 - `typecheck.txt`, `lint.txt`: comandos completados con código 0.
 - `ui-on.txt`: tres pruebas HTTP/escritorio/viewport móvil, sin fallos, dispositivo de audio falso de Chromium.
 - `ui-off.txt`: gate HTTP pasa; las dos pruebas visuales no corresponden con flag apagado y se omiten.

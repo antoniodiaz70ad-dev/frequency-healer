@@ -50,6 +50,12 @@ test('pause mutes input, continue restores it, verbal end closes hardware', asyn
   f.say('terminar'); assert.equal(f.stops(), 1); assert.equal(f.track.onended, null);
   assert.equal(f.session.getSnapshot().microphone, false); assert.equal(f.voice.spoken.length, 0);
 });
+test('explicit restart after ending while paused resets the adapter and consent', async () => {
+  const f = fixture(); await f.session.start('diario', true, false);
+  f.say('guarda solo el resumen'); f.session.pause(); f.session.end();
+  await f.session.start('observador', true, false);
+  assert.equal(f.voice.spoken.length, 1); assert.equal(f.session.approvedExport(), null); f.session.end();
+});
 test('60 seconds of silence does not speak, disconnect or grant consent', async t => {
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const f = fixture(); await f.session.start('observador', true, false); f.say('más silencio');
