@@ -13,7 +13,7 @@ export async function startLocalServer(enabled, logFile) {
   await new Promise(resolve => reservation.close(resolve));
   const origin = `http://127.0.0.1:${port}`;
   const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', String(port)], {
-    env: { ...process.env, NEXT_PUBLIC_VOICE_JOURNEY_ENABLED: String(enabled), NEXT_PUBLIC_HARMONIC_LAB_ENABLED: String(enabled), VOICE_AI_ENABLED: 'false' },
+    env: { ...process.env, NEXT_PUBLIC_VOICE_JOURNEY_ENABLED: String(enabled), NEXT_PUBLIC_HARMONIC_LAB_ENABLED: String(enabled), VOICE_AI_ENABLED: 'false', ATENEA_VOICE_ORIGIN: origin },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   let log = '', spawnError, closing;

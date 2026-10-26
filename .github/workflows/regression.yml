@@ -64,6 +64,7 @@ jobs:
       NEXT_PUBLIC_VOICE_JOURNEY_ENABLED: ${{ matrix.enabled }}
       NEXT_PUBLIC_HARMONIC_LAB_ENABLED: ${{ matrix.enabled }}
       VOICE_AI_ENABLED: 'false'
+      ATENEA_VOICE_ENABLED: ${{ matrix.enabled }}
       NEXT_TELEMETRY_DISABLED: '1'
       FH_UI_BROWSER: chromium
       FH_UI_ARTIFACTS_DIR: artifacts/ui
@@ -94,6 +95,16 @@ jobs:
         if: matrix.state == 'ON'
         timeout-minutes: 6
         run: npm run test:ui 2>&1 | tee artifacts/ui.log
+      - name: ATENEA disabled route and endpoint
+        if: matrix.state == 'OFF'
+        run: node --test ui/atenea-flow.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atenea-${{ matrix.state }}
+          path: frontend/artifacts/ui/atenea-*.png
+          retention-days: 7
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

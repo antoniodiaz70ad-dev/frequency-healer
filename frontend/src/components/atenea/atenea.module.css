@@ -1,0 +1,12 @@
+.main { max-width: 760px; margin: 0 auto; padding: 48px 20px; line-height: 1.65; }
+.main h1 { font-size: clamp(2rem, 6vw, 3.2rem); line-height: 1.15; margin: 16px 0; }
+.badge { color: #94d8cc; text-transform: uppercase; letter-spacing: .12em; }
+.card, .notice { margin: 24px 0; padding: 24px; border: 1px solid #526678; border-radius: 18px; background: #142331; color: #f0f7fc; }
+.notice { background: #20372f; }
+.main label { display: block; margin: 16px 0; }
+.main input:not([type=checkbox]), .main select, .main textarea { display: block; width: 100%; margin-top: 8px; padding: 12px; border: 1px solid #94a9bb; border-radius: 8px; background: #0d1c29; color: #fff; }
+.main textarea { min-height: 120px; }
+.main button { min-height: 44px; padding: 10px 16px; margin: 6px 6px 6px 0; border-radius: 10px; border: 1px solid #85c9bc; background: #b8ecdf; color: #0a2924; cursor: pointer; }
+.main button:disabled { opacity: .45; cursor: default; }
+.main :focus-visible { outline: 3px solid #ffd58a; outline-offset: 3px; }
+.controls { display: flex; flex-wrap: wrap; gap: 6px; }
