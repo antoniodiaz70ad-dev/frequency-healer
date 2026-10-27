@@ -29,6 +29,18 @@ test('cymatics navigation cancels every scheduled canvas animation frame', {time
   await page.waitForFunction(()=>window.__pendingCanvasFrames()===0,{},{timeout:5000});
 });
 
+test('response curve keeps its modal samples when moving the marker and invalidates on damping changes', {timeout:45000}, async t=>{
+  const page=await fixture(t),chart=page.getByRole('img',{name:'Curva de amplitud RMS relativa frente a frecuencia'});
+  const points=()=>chart.locator('polyline').getAttribute('points');
+  const before=await points(),marker=await chart.locator('line').nth(2).getAttribute('x1');
+  await chart.press('ArrowRight');
+  await eventually(async()=>assert.notEqual(await chart.locator('line').nth(2).getAttribute('x1'),marker));
+  assert.equal(await points(),before);
+  await page.getByText('Superficie, excitación y visual',{exact:true}).click();
+  await page.getByRole('spinbutton',{name:'Amortiguamiento cimático'}).fill('0.08');
+  await eventually(async()=>assert.notEqual(await points(),before));
+});
+
 test('cymatics route: generator parameters, independent binaural views and shared existing audio graph', {timeout:45000}, async t=>{
   const page=await fixture(t);assert.equal(await page.getByRole('spinbutton',{name:'Frecuencia cimática'}).inputValue(),'432');assert.equal(await page.getByRole('img',{name:'Canal izquierdo'}).count(),1);assert.equal(await page.getByRole('img',{name:'Canal derecho'}).count(),1);assert.match(await page.getByText(/Diferencia:/).first().innerText(),/8.0 Hz; no es un tono emitido/);
   await page.getByRole('button',{name:'Escuchar tono'}).click();let probe=await page.evaluate(()=>window.__fhUI.snapshot());assert.deepEqual(probe.contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])).slice(-2),[432,440]);await page.getByRole('button',{name:'Detener sonido'}).click();await eventually(async()=>{probe=await page.evaluate(()=>window.__fhUI.snapshot());assert.ok(probe.contexts[0].oscillators.every(o=>o.ended&&o.disconnected));});
@@ -107,7 +119,7 @@ test('guided cymatics session requires start, supports skipping every step and o
   }
   await page.getByRole('region',{name:'Registro de práctica'}).waitFor();
   await page.getByRole('button',{name:'Terminar',exact:true}).click();
-  await eventually(async()=>{const probe=await page.evaluate(()=>window.__fhUI.snapshot());assert.ok(probe.contexts.every(context=>context.state==='closed'));});
+  await eventually(async()=>{const probe=await page.evaluate(()=>window.__fhUI.snapshot());assert.ok(probe.contexts.every(context=>context.oscillators.every(oscillator=>oscillator.ended&&oscillator.disconnected)));});
 });
 
 test('scientific experiment save is explicit, immutable and uses only the V2 namespace', {timeout:45000}, async t=>{
@@ -117,4 +129,9 @@ test('scientific experiment save is explicit, immutable and uses only the V2 nam
 
 test('simplified mobile entry shows title, guided action and first resonance card without scrolling', {timeout:45000}, async t=>{
   const page=await fixture(t,{viewport:{width:390,height:844},simpleEntry:true});await page.getByRole('heading',{name:'Laboratorio de Resonancia'}).waitFor();const start=page.getByRole('button',{name:'Iniciar sesión guiada (10 min)'}),first=page.getByRole('heading',{name:'Cuatro regiones interiores'});assert.equal(await start.isVisible(),true);assert.equal(await first.isVisible(),true);const box=await first.boundingBox();assert.ok(box&&box.y<844);assert.equal(await page.getByText('Explorar a fondo',{exact:true}).isVisible(),true);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+});
+
+// Preserve the original animated pointer coverage alongside reduced-motion keyboard coverage.
+test('guided cymatics animated pointer flow supports every step and opens the journal', {timeout:90000}, async t=>{
+  const page=await fixture(t);assert.equal((await page.evaluate(()=>window.__fhUI.snapshot())).contexts.length,0);await page.getByRole('button',{name:'Iniciar sesión guiada (10 min)'}).click();await page.getByText('Preparación',{exact:true}).waitFor();assert.equal((await page.evaluate(()=>window.__fhUI.snapshot())).contexts.length,0);const skip=page.getByRole('button',{name:'Saltar paso'});for(const name of ['Anclaje','Barrido','Quietud','Registro','Cierre']){await skip.waitFor({state:'visible'});await skip.click({force:true,noWaitAfter:true});await page.getByText(name,{exact:true}).waitFor();}await page.getByRole('region',{name:'Registro de práctica'}).waitFor();await page.getByRole('button',{name:'Terminar'}).click({force:true,noWaitAfter:true});await page.getByRole('button',{name:'Escuchar tono'}).waitFor();
 });

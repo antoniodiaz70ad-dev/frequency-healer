@@ -1,0 +1,20 @@
+TAP version 13
+# Subtest: guided cymatics session requires start, supports skipping every step and opens the journal
+ok 1 - guided cymatics session requires start, supports skipping every step and opens the journal
+  ---
+  duration_ms: 11614.074956
+  ...
+# Subtest: guided cymatics animated pointer flow supports every step and opens the journal
+ok 2 - guided cymatics animated pointer flow supports every step and opens the journal
+  ---
+  duration_ms: 12548.67236
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 24699.670903

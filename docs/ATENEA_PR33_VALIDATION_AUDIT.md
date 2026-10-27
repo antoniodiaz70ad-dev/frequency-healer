@@ -28,7 +28,7 @@ El job Quality del head recibido sí contiene **306 aprobadas, 0 fallidas, 0 omi
 | --- | --- | --- |
 | Navegación durante audio | Reproducido en los logs del head y de main. Sidebar enlaza `/inicio`; el test esperaba `/`. Preexistente, confianza alta. | Corregir solo la expectativa a `/inicio`; conservar las comprobaciones de cierre de audio y ausencia de guardado. |
 | Navegación de sesión guiada sin guardar | Mismo error y evidencia anterior. Preexistente, confianza alta. | Misma corrección; ambos tests pasan localmente después. |
-| Cimática, `Saltar paso` | Reproducido en head y en un worktree limpio de main, con ATENEA y Live apagados. CI recibido también falla; main histórico pasó ese caso. Preexistente y sensible a ejecución, confianza alta. | Fuga de animación demostrada y corregida, con regresión antes/después. **El timeout original de `Saltar paso` persiste en la repetición local posterior: no se declara resuelto y sigue bloqueando la validación.** No aumentar timeouts ni cambiar a eventos sintéticos para ocultarlo. |
+| Cimática, `Saltar paso` | Reproducido en head y en un worktree limpio de main, con ATENEA y Live apagados. CI recibido también falla; main histórico pasó ese caso. Preexistente y sensible a ejecución, confianza alta. | Corregir fuga RAF y recálculo repetido de la curva modal. Después pasan ambos recorridos dirigidos y la suite completa local (124/124), sin aumentar timeouts. Falta confirmar Chromium exacto de CI. |
 | Bentov | Pasa en CI actual y en pruebas dirigidas, pero se reprodujo en la suite local completa: timeout esperando `10:00`. El primer frame ya cambia el texto a `09:59` porque se redondean hacia abajo los segundos restantes. Código y expectativa ya estaban en main; confianza alta. | Corregir únicamente la prueba para aceptar el inicio del conteo (`10:00` o `09:5x`), manteniendo comprobaciones de práctica activa, controles y ausencia de audio. No modificar el módulo ni aumentar timeouts. |
 
 ### Defecto comprobado de Cimática
@@ -36,6 +36,10 @@ El job Quality del head recibido sí contiene **306 aprobadas, 0 fallidas, 0 omi
 `CymaticsCanvas` podía iniciar otra cadena de `requestAnimationFrame` al recibir `ResizeObserver`, conservando la anterior. El cleanup cancelaba solo el último ID. La instrumentación delegó en las APIs nativas del navegador: observó 4 frames pendientes después de navegar fuera del laboratorio; durante la sesión guiada los pendientes crecieron hasta 60. La prueba nueva de desmontaje falla contra main sin el arreglo.
 
 El arreglo mantiene una sola solicitud pendiente por canvas, cancela la anterior antes de cada render y marca el efecto inactivo al desmontarlo. No cambia física, frecuencias, audio, consentimiento o almacenamiento. La prueba nueva exige que queden cero callbacks pendientes después de navegar a `/inicio`. Falla antes y pasa después del arreglo. La medición independiente pasa de 4 callbacks residuales a 0 después de salir; el build final se regeneró desde un directorio de salida vacío para evitar reutilizar un bundle previo.
+
+La fuga no explicaba todo el timeout. Un perfil CPU posterior localizó más de 30 segundos de muestras en `besselJ` y `computeModalField` durante el recorrido fallido. `ResponseChart` recalculaba los 101 campos de su curva en cada render del reloj o barrido, incluso sin cambiar la física ni el rango modal. Se memoriza la misma curva por configuración física y extremos de rango: no se reduce resolución, no se aproxima la fórmula y el marcador sigue cambiando. La clave excluye solo metadatos, vista y frecuencias actuales que `computeResponseCurve` no utiliza. Una regresión comprueba que mover el marcador conserva la curva y cambiar amortiguamiento la invalida.
+
+Se conserva como prueba adicional el recorrido animado original con puntero, además del caso de teclado/movimiento reducido recibido en `34321e9`. Ambos pasan en la repetición dirigida (2/2). Al llegar al final, la prueba de teclado reveló una expectativa nueva incorrecta: exigía `AudioContext.state === closed`, pero `stopWithFade` conserva el contexto compartido y detiene/desconecta sus nodos. La aserción comprueba ahora osciladores terminados y desconectados, conforme al contrato existente; no se modifica el motor de audio.
 
 ## Diferencias entre local y CI
 
@@ -55,13 +59,14 @@ Los resultados locales posteriores y la ejecución de CI corregida deben evaluar
 
 - Dominio con Node 22.14.0: 306 pruebas, 305 aprobadas, 0 fallidas, 1 omisión explícita de Redis real. No confundirlo con el resultado CI de 306/306.
 - Build limpio, TypeScript y ESLint completados correctamente. El build limpio utiliza Node 22.14.0.
-- Dos regresiones de navegación corregidas: 2/2. Prueba dirigida posterior: Bentov y cancelación de frames pasan; `Saltar paso` falla (2/3).
+- **Suite UI final completa: 124/124 aprobadas, 0 fallos, 0 cancelaciones, 0 omisiones** (194.3 s), incluyendo los dos recorridos guiados, Bentov, navegación, desmontaje, invalidación de curva y ATENEA simulado. Evidencia: `evidence/pr33-audit/ui-final.txt`. No equivale a voz real ni al Chromium exacto de CI.
+- Dos regresiones de navegación corregidas: 2/2. Bentov y cancelación de frames pasan. La primera corrección de fuga dejaba el timeout de `Saltar paso` visible (2/3); después de corregir el recálculo redundante, pasan las dos variantes guiadas (2/2).
 - Instrumentación nativa independiente: 4 callbacks después del desmontaje antes del arreglo, 0 después.
 - Gates OFF: HTTP aprobado, dos escenarios visuales omitidos porque no corresponden con el laboratorio apagado.
 - Una primera ejecución completa posterior reprodujo Bentov y evidenció que se estaba sirviendo un bundle anterior al arreglo del canvas. Se conservó esa salida de build fuera del repositorio y se regeneró desde cero antes de aceptar la prueba de limpieza. No se presenta aquella ejecución como verificación exitosa.
-- Falta una suite UI completa aprobada del nuevo código con Chromium exacto de CI. El shell corregido debe impedir el verde si Cimática vuelve a fallar. **NO-GO permanece aunque una ejecución aislada pase.**
+- Falta la suite UI completa del nuevo SHA con Chromium exacto de CI. El shell corregido debe impedir el verde si algún caso vuelve a fallar. **NO-GO permanece aunque el CI pase**, por los bloqueos operativos de voz real.
 
-Siguiente investigación de Cimática: conservar trace/captura del timeout exacto de pointer input, identificar el paso que lo dispara y perfilar el hilo principal durante el barrido/recálculo. Separar latencia de automatización de bloqueo de interacción real antes de modificar render o física adicional. La fuga arreglada es real, pero la evidencia no permite atribuirle todo el timeout.
+Validación siguiente: CI con Chromium fijado del nuevo SHA. La suite local y la invalidación de curva ante cambios físicos ya pasan. Estos resultados no autorizan voz real ni demuestran dispositivos físicos.
 
 ## Dependencias de una prueba real segura
 

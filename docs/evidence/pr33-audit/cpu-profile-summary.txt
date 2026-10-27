@@ -1,0 +1,103 @@
+begin Anclaje
+end Anclaje 5107
+begin Barrido
+end Barrido 14405
+begin Quietud
+failure locator.press: Timeout 8000ms exceeded.
+Call log:
+[2m  - waiting for getByRole('button', { name: 'Saltar paso' })[22m
+[2m    - locator resolved to <button>Saltar paso</button>[22m
+[2m  - elementHandle.press("Enter")[22m
+
+[
+  {
+    "name": "a",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 10653.379
+  },
+  {
+    "name": "u",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 8555.974
+  },
+  {
+    "name": "a",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 3871.232
+  },
+  {
+    "name": "u",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 2248.633
+  },
+  {
+    "name": "u",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 1888.664
+  },
+  {
+    "name": "u",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 719.469
+  },
+  {
+    "name": "a",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 682.174
+  },
+  {
+    "name": "a",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 659.254
+  },
+  {
+    "name": "a",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 608.038
+  },
+  {
+    "name": "u",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 479.326
+  },
+  {
+    "name": "u",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 476.82
+  },
+  {
+    "name": "a",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 353.101
+  },
+  {
+    "name": "u",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 283.216
+  },
+  {
+    "name": "(idle)",
+    "url": "",
+    "line": -1,
+    "ms": 220.631
+  },
+  {
+    "name": "a",
+    "url": "http://127.0.0.1:43029/_next/static/chunks/2_u1kwswvd01s.js",
+    "line": 0,
+    "ms": 216.222
+  }
+]
