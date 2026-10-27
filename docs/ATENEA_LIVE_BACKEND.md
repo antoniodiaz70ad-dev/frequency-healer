@@ -47,6 +47,8 @@ Todos los flags están apagados si faltan o no son exactamente `true`. **No se c
 
 Los flags de readiness expresan configuración, no prueban acceso real. El scheduler externo debe invocar `POST /api/atenea-voz/reap` cada minuto y alertar si `confirmed < processed` persiste. No depende del navegador. Hay un máximo de 25 cierres por lote; se procesan en paralelo con timeout por socket. Deben medirse backlog/latencia y capacidad antes de habilitar tráfico.
 
+Aunque todos los flags estén en `true`, la creación sigue bloqueada si no existe un token de scheduler de al menos 32 caracteres. Las rutas de cierre permanecen disponibles al apagar la creación.
+
 ## Límites y bloqueos antes de habilitar
 
 1. **Proveedor real:** sin llamadas ni credenciales en estas pruebas. Validar disponibilidad, políticas de retención reales y restricciones de eventos con la cuenta de staging. `store:false` no equivale a prometer ausencia de retención operativa del proveedor.
@@ -64,5 +66,7 @@ Los flags de readiness expresan configuración, no prueban acceso real. El sched
 - Transporte con fakes: orden de listeners, negociación, pausa, cancelación/creación tardía, caption sin consentimiento, pérdida de canal y confirmación/inconfirmación de cierre.
 - Redis **real en CI**: servicio `redis:7-alpine`, scripts Lua ejecutados por clientes concurrentes, replay, presupuesto y limpieza de referencias caducadas. El test se omite localmente si `ATENEA_TEST_REDIS_PORT` no está configurado. No confundir el doble de almacén de las pruebas de servicio con esta prueba real.
 - Build y E2E de laboratorio/flags ON/OFF en CI. Sin secretos de proveedores.
+
+Se corrigió una falsa señal de CI: el pipeline heredado con `tee` no propagaba fallos del proceso anterior. Los dos jobs ahora usan `shell: bash` explícito para activar `pipefail`. También se actualizaron dos expectativas de navegación a la ruta actual `/inicio`; el caso de transiciones cimáticas usa la entrada guiada y teclado con movimiento reducido, conservando las verificaciones de cada paso y cierre de audio. No se modifica el comportamiento de esas pantallas ni se omiten sus tests.
 
 El PR enlaza los resultados del commit final. La integración permanece **incompleta / NO-GO** mientras falten los bloqueos anteriores, aunque el CI sea verde.

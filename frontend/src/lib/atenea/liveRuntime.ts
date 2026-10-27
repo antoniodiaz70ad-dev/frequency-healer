@@ -18,7 +18,7 @@ export function liveDependencies(): LiveDependencies | null {
     if (!Array.isArray(jwks.keys) || !jwks.keys.length || jwks.keys.some((key: { kty?: string; d?: string }) => key.kty !== 'RSA' || key.d)) return null;
     const redis = new Redis({ url: env.UPSTASH_REDIS_REST_URL!, token: env.UPSTASH_REDIS_REST_TOKEN!, retry: { retries: 0 }, signal: () => AbortSignal.timeout(5000) });
     return { origin: env.ATENEA_VOICE_ORIGIN!,
-      enabled: env.ATENEA_LIVE_ENABLED === 'true' && env.ATENEA_LIVE_REVIEWED === 'true' && env.ATENEA_REAPER_READY === 'true',
+      enabled: env.ATENEA_LIVE_ENABLED === 'true' && env.ATENEA_LIVE_REVIEWED === 'true' && env.ATENEA_REAPER_READY === 'true' && (env.ATENEA_REAPER_TOKEN?.length ?? 0) >= 32,
       authenticate: accessTokenAuthenticator(jwks, env.ATENEA_AUTH_ISSUER!, env.ATENEA_AUTH_AUDIENCE!),
       store: new RedisLiveStore(redis), provider: new OpenAILiveProvider(env.OPENAI_API_KEY!),
     };

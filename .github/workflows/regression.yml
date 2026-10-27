@@ -32,6 +32,7 @@ jobs:
       ATENEA_TEST_REDIS_PORT: '6379'
     defaults:
       run:
+        shell: bash
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
@@ -84,6 +85,7 @@ jobs:
       FH_UI_ARTIFACTS_DIR: artifacts/ui
     defaults:
       run:
+        shell: bash
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
