@@ -1,0 +1,650 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 test:ui
+> node --test --test-concurrency=1 ui/*.test.mjs
+
+TAP version 13
+# Subtest: staging page has no microphone, disk session or voice calls; mocked SDK login is lost on reload
+ok 1 - staging page has no microphone, disk session or voice calls; mocked SDK login is lost on reload
+  ---
+  duration_ms: 1226.554832
+  ...
+# Subtest: the real probe rejects missing identity and foreign origin without contacting the provider
+ok 2 - the real probe rejects missing identity and foreign origin without contacting the provider
+  ---
+  duration_ms: 36.278817
+  ...
+# Subtest: server flag and API fail closed, including cross-origin requests
+ok 3 - server flag and API fail closed, including cross-origin requests
+  ---
+  duration_ms: 746.173978
+  ...
+# Subtest: staging identity page and probe remain closed without separate staging configuration
+ok 4 - staging identity page and probe remain closed without separate staging configuration
+  ---
+  duration_ms: 36.239707
+  ...
+# Subtest: local session, mic cleanup and privacy at 1280px
+ok 5 - local session, mic cleanup and privacy at 1280px
+  ---
+  duration_ms: 682.391003
+  ...
+# Subtest: local session, mic cleanup and privacy at 390px
+ok 6 - local session, mic cleanup and privacy at 390px
+  ---
+  duration_ms: 606.149471
+  ...
+# Subtest: Bentov complete entry is keyboard/mobile usable and starts no audio
+ok 7 - Bentov complete entry is keyboard/mobile usable and starts no audio
+  ---
+  duration_ms: 1089.942851
+  ...
+# Subtest: cymatics navigation cancels every scheduled canvas animation frame
+ok 8 - cymatics navigation cancels every scheduled canvas animation frame
+  ---
+  duration_ms: 2927.80203
+  ...
+# Subtest: response curve keeps its modal samples when moving the marker and invalidates on damping changes
+ok 9 - response curve keeps its modal samples when moving the marker and invalidates on damping changes
+  ---
+  duration_ms: 3226.118716
+  ...
+# Subtest: cymatics route: generator parameters, independent binaural views and shared existing audio graph
+ok 10 - cymatics route: generator parameters, independent binaural views and shared existing audio graph
+  ---
+  duration_ms: 2868.938916
+  ...
+# Subtest: cymatics route: surface switch, A/B, explicit gallery save and reload
+ok 11 - cymatics route: surface switch, A/B, explicit gallery save and reload
+  ---
+  duration_ms: 9211.934561
+  ...
+# Subtest: cymatics resonance demo exposes three computed patterns, does not autoplay and preserves binaural separation
+ok 12 - cymatics resonance demo exposes three computed patterns, does not autoplay and preserves binaural separation
+  ---
+  duration_ms: 9062.815953
+  ...
+# Subtest: cymatics live frequency control redraws the computed surface and follows existing audio without autoplay
+ok 13 - cymatics live frequency control redraws the computed surface and follows existing audio without autoplay
+  ---
+  duration_ms: 5217.363033
+  ...
+# Subtest: cymatics mobile reduced-motion repaints immediately without hide/show workaround
+ok 14 - cymatics mobile reduced-motion repaints immediately without hide/show workaround
+  ---
+  duration_ms: 3330.768326
+  ...
+# Subtest: cymatics particles migrate and reveal the newly calculated field when frequency changes
+ok 15 - cymatics particles migrate and reveal the newly calculated field when frequency changes
+  ---
+  duration_ms: 4117.323352
+  ...
+# Subtest: interactive plate exposes accessible tools, keyboard tuning, scatter and local microphone disclosure
+ok 16 - interactive plate exposes accessible tools, keyboard tuning, scatter and local microphone disclosure
+  ---
+  duration_ms: 3223.74319
+  ...
+# Subtest: mode map exposes calculated resonances and tuning a tile never starts audio
+ok 17 - mode map exposes calculated resonances and tuning a tile never starts audio
+  ---
+  duration_ms: 2450.284574
+  ...
+# Subtest: cymatics rejects unsafe live controls and updates volume during existing playback
+ok 18 - cymatics rejects unsafe live controls and updates volume during existing playback
+  ---
+  duration_ms: 4571.319672
+  ...
+# Subtest: learning flow: silent sweep, stop all, shared chart frequency and frequency-only A/B
+ok 19 - learning flow: silent sweep, stop all, shared chart frequency and frequency-only A/B
+  ---
+  duration_ms: 5609.341682
+  ...
+# Subtest: circular membrane explorer exposes calculated geometry and applies forced response without autoplay
+ok 20 - circular membrane explorer exposes calculated geometry and applies forced response without autoplay
+  ---
+  duration_ms: 6779.731099
+  ...
+# Subtest: circular membrane explorer remains readable and keyboard-operable on mobile
+ok 21 - circular membrane explorer remains readable and keyboard-operable on mobile
+  ---
+  duration_ms: 2913.54325
+  ...
+# Subtest: preparing the plate experiment returns the upper membrane explorer to ideal mode
+ok 22 - preparing the plate experiment returns the upper membrane explorer to ideal mode
+  ---
+  duration_ms: 5283.038074
+  ...
+# Subtest: guided cymatics session requires start, supports skipping every step and opens the journal
+ok 23 - guided cymatics session requires start, supports skipping every step and opens the journal
+  ---
+  duration_ms: 11845.467915
+  ...
+# Subtest: scientific experiment save is explicit, immutable and uses only the V2 namespace
+ok 24 - scientific experiment save is explicit, immutable and uses only the V2 namespace
+  ---
+  duration_ms: 3365.98575
+  ...
+# Subtest: simplified mobile entry shows title, guided action and first resonance card without scrolling
+ok 25 - simplified mobile entry shows title, guided action and first resonance card without scrolling
+  ---
+  duration_ms: 1232.115906
+  ...
+# Subtest: guided cymatics animated pointer flow supports every step and opens the journal
+ok 26 - guided cymatics animated pointer flow supports every step and opens the journal
+  ---
+  duration_ms: 14371.695781
+  ...
+# Subtest: ratio 1:1: select ≠ apply ≠ play; native audio and stop cleanup
+ok 27 - ratio 1:1: select ≠ apply ≠ play; native audio and stop cleanup
+  ---
+  duration_ms: 1323.023462
+  ...
+# Subtest: ratio 3:2: select ≠ apply ≠ play; native audio and stop cleanup
+ok 28 - ratio 3:2: select ≠ apply ≠ play; native audio and stop cleanup
+  ---
+  duration_ms: 721.520469
+  ...
+# Subtest: ratio 4:3: select ≠ apply ≠ play; native audio and stop cleanup
+ok 29 - ratio 4:3: select ≠ apply ≠ play; native audio and stop cleanup
+  ---
+  duration_ms: 779.216838
+  ...
+# Subtest: ratio 5:4: select ≠ apply ≠ play; native audio and stop cleanup
+ok 30 - ratio 5:4: select ≠ apply ≠ play; native audio and stop cleanup
+  ---
+  duration_ms: 882.262626
+  ...
+# Subtest: ratio 6:5: select ≠ apply ≠ play; native audio and stop cleanup
+ok 31 - ratio 6:5: select ≠ apply ≠ play; native audio and stop cleanup
+  ---
+  duration_ms: 712.658279
+  ...
+# Subtest: unsupported 5:3: visible, exploration-only, cannot apply
+ok 32 - unsupported 5:3: visible, exploration-only, cannot apply
+  ---
+  duration_ms: 479.068618
+  ...
+# Subtest: unsupported 2:1: visible, exploration-only, cannot apply
+ok 33 - unsupported 2:1: visible, exploration-only, cannot apply
+  ---
+  duration_ms: 466.401636
+  ...
+# Subtest: octave sequence: preview, seed-only Apply, confirm and stop
+ok 34 - octave sequence: preview, seed-only Apply, confirm and stop
+  ---
+  duration_ms: 851.246786
+  ...
+# Subtest: octave simultaneous: preview, seed-only Apply, confirm and stop
+ok 35 - octave simultaneous: preview, seed-only Apply, confirm and stop
+  ---
+  duration_ms: 888.67714
+  ...
+# Subtest: invalid octaves: omitted bounds and valid seed with invalid derived frequency never correct controls
+ok 36 - invalid octaves: omitted bounds and valid seed with invalid derived frequency never correct controls
+  ---
+  duration_ms: 694.598433
+  ...
+# Subtest: stale selections and cancellation do not mutate form or start playback
+ok 37 - stale selections and cancellation do not mutate form or start playback
+  ---
+  duration_ms: 691.743601
+  ...
+# Subtest: composition ratio-first: same final V1 configuration and frequencies
+ok 38 - composition ratio-first: same final V1 configuration and frequencies
+  ---
+  duration_ms: 739.470244
+  ...
+# Subtest: composition octave-first: same final V1 configuration and frequencies
+ok 39 - composition octave-first: same final V1 configuration and frequencies
+  ---
+  duration_ms: 785.386618
+  ...
+# Subtest: experiment: exact final immutable snapshot, missing ratings, explicit save and reload
+ok 40 - experiment: exact final immutable snapshot, missing ratings, explicit save and reload
+  ---
+  duration_ms: 1075.391489
+  ...
+# Subtest: navigation during audio: closes native graph, never completed, never autosaved
+ok 41 - navigation during audio: closes native graph, never completed, never autosaved
+  ---
+  duration_ms: 565.623382
+  ...
+# Subtest: active harmonic session exposes an iPhone-friendly live volume slider without restarting audio
+ok 42 - active harmonic session exposes an iPhone-friendly live volume slider without restarting audio
+  ---
+  duration_ms: 496.216571
+  ...
+# Subtest: cascade ascending: existing consent, schedule and cleanup unchanged
+ok 43 - cascade ascending: existing consent, schedule and cleanup unchanged
+  ---
+  duration_ms: 617.905919
+  ...
+# Subtest: cascade descending: existing consent, schedule and cleanup unchanged
+ok 44 - cascade descending: existing consent, schedule and cleanup unchanged
+  ---
+  duration_ms: 677.231457
+  ...
+# Subtest: cascade return: existing consent, schedule and cleanup unchanged
+ok 45 - cascade return: existing consent, schedule and cleanup unchanged
+  ---
+  duration_ms: 644.139857
+  ...
+# Subtest: reader prepared: exact lifecycle, missing optionals and no writes
+ok 46 - reader prepared: exact lifecycle, missing optionals and no writes
+  ---
+  duration_ms: 626.454017
+  ...
+# Subtest: reader started: exact lifecycle, missing optionals and no writes
+ok 47 - reader started: exact lifecycle, missing optionals and no writes
+  ---
+  duration_ms: 834.95921
+  ...
+# Subtest: reader completed: exact lifecycle, missing optionals and no writes
+ok 48 - reader completed: exact lifecycle, missing optionals and no writes
+  ---
+  duration_ms: 557.829869
+  ...
+# Subtest: reader cancelled: exact lifecycle, missing optionals and no writes
+ok 49 - reader cancelled: exact lifecycle, missing optionals and no writes
+  ---
+  duration_ms: 609.641022
+  ...
+# Subtest: reader interrupted: exact lifecycle, missing optionals and no writes
+ok 50 - reader interrupted: exact lifecycle, missing optionals and no writes
+  ---
+  duration_ms: 620.721568
+  ...
+# Subtest: reader complete: all stored fields, zeros, explicit progression and unchanged export
+ok 51 - reader complete: all stored fields, zeros, explicit progression and unchanged export
+  ---
+  duration_ms: 571.13465
+  ...
+# Subtest: reader cascade: exact stored configuration with unavailable harmonic representation
+ok 52 - reader cascade: exact stored configuration with unavailable harmonic representation
+  ---
+  duration_ms: 545.279234
+  ...
+# Subtest: reader invalid storage (JSON): no repair or rendering
+ok 53 - reader invalid storage (JSON): no repair or rendering
+  ---
+  duration_ms: 455.793597
+  ...
+# Subtest: reader invalid storage (schema): no repair or rendering
+ok 54 - reader invalid storage (schema): no repair or rendering
+  ---
+  duration_ms: 487.173256
+  ...
+# Subtest: builder: independent exact members, multiplicity, sequence reorder, name invariant and no side effects
+ok 55 - builder: independent exact members, multiplicity, sequence reorder, name invariant and no side effects
+  ---
+  duration_ms: 972.62985
+  ...
+# Subtest: builder: unsupported ratios and octave types remain available; invalid values never clamp or save
+ok 56 - builder: unsupported ratios and octave types remain available; invalid values never clamp or save
+  ---
+  duration_ms: 1020.36801
+  ...
+# Subtest: builder: explicit append, reload, read-only saved record, unchanged JSON export and separate namespace
+ok 57 - builder: explicit append, reload, read-only saved record, unchanged JSON export and separate namespace
+  ---
+  duration_ms: 1355.796835
+  ...
+# Subtest: saved constellation transfers exact members to cymatics review without autoplay or new storage
+ok 58 - saved constellation transfers exact members to cymatics review without autoplay or new storage
+  ---
+  duration_ms: 5725.64564
+  ...
+# Subtest: builder: corrupt constellation storage preserved; export original; no other keys or audio
+ok 59 - builder: corrupt constellation storage preserved; export original; no other keys or audio
+  ---
+  duration_ms: 632.438989
+  ...
+# Subtest: saved constellation sequence: load and preview silent, confirmation exact voices, stop and snapshot
+ok 60 - saved constellation sequence: load and preview silent, confirmation exact voices, stop and snapshot
+  ---
+  duration_ms: 1589.632706
+  ...
+# Subtest: saved constellation simultaneous: load and preview silent, confirmation exact voices, stop and snapshot
+ok 61 - saved constellation simultaneous: load and preview silent, confirmation exact voices, stop and snapshot
+  ---
+  duration_ms: 2034.209799
+  ...
+# Subtest: saved constellation rejects 5:3 without dropping members
+ok 62 - saved constellation rejects 5:3 without dropping members
+  ---
+  duration_ms: 1088.101445
+  ...
+# Subtest: saved constellation rejects 2:1 without dropping members
+ok 63 - saved constellation rejects 2:1 without dropping members
+  ---
+  duration_ms: 1078.69317
+  ...
+# Subtest: saved constellation rejects octave without dropping members
+ok 64 - saved constellation rejects octave without dropping members
+  ---
+  duration_ms: 1126.13897
+  ...
+# Subtest: saved constellation: controls invalidate preview and changed saved record is rejected on confirmation
+ok 65 - saved constellation: controls invalidate preview and changed saved record is rejected on confirmation
+  ---
+  duration_ms: 1396.486559
+  ...
+# Subtest: saved constellation navigation: cleanup, no completed and no experiment autosave
+ok 66 - saved constellation navigation: cleanup, no completed and no experiment autosave
+  ---
+  duration_ms: 1600.760327
+  ...
+# Subtest: saved constellation natural end: completed only after native end, no autosave
+ok 67 - saved constellation natural end: completed only after native end, no autosave
+  ---
+  duration_ms: 2954.664696
+  ...
+# Subtest: guided relaxation: Quiero calma; interpretation, rule, provenance, no autoplay
+ok 68 - guided relaxation: Quiero calma; interpretation, rule, provenance, no autoplay
+  ---
+  duration_ms: 844.316603
+  ...
+# Subtest: guided focus: Necesito concentrarme; interpretation, rule, provenance, no autoplay
+ok 69 - guided focus: Necesito concentrarme; interpretation, rule, provenance, no autoplay
+  ---
+  duration_ms: 847.723766
+  ...
+# Subtest: guided sleep_preparation: Quiero dormir mejor; interpretation, rule, provenance, no autoplay
+ok 70 - guided sleep_preparation: Quiero dormir mejor; interpretation, rule, provenance, no autoplay
+  ---
+  duration_ms: 816.757353
+  ...
+# Subtest: guided relaxation: Quiero recuperarme después de una reunión; interpretation, rule, provenance, no autoplay
+ok 71 - guided relaxation: Quiero recuperarme después de una reunión; interpretation, rule, provenance, no autoplay
+  ---
+  duration_ms: 800.437823
+  ...
+# Subtest: guided relaxation: Quiero sentirme más centrado; interpretation, rule, provenance, no autoplay
+ok 72 - guided relaxation: Quiero sentirme más centrado; interpretation, rule, provenance, no autoplay
+  ---
+  duration_ms: 802.287703
+  ...
+# Subtest: guided creative_exploration: Quiero creatividad; interpretation, rule, provenance, no autoplay
+ok 73 - guided creative_exploration: Quiero creatividad; interpretation, rule, provenance, no autoplay
+  ---
+  duration_ms: 880.698416
+  ...
+# Subtest: guided reflection: Quiero meditar; interpretation, rule, provenance, no autoplay
+ok 74 - guided reflection: Quiero meditar; interpretation, rule, provenance, no autoplay
+  ---
+  duration_ms: 854.712396
+  ...
+# Subtest: guided relaxation: quiero evitar drenaje energético; interpretation, rule, provenance, no autoplay
+ok 75 - guided relaxation: quiero evitar drenaje energético; interpretation, rule, provenance, no autoplay
+  ---
+  duration_ms: 876.29804
+  ...
+# Subtest: guided correction and medical boundary: no hidden recommendation or audio
+ok 76 - guided correction and medical boundary: no hidden recommendation or audio
+  ---
+  duration_ms: 744.372683
+  ...
+# Subtest: guided evidence UI N=0: no ranking mutation, export, no storage write
+ok 77 - guided evidence UI N=0: no ranking mutation, export, no storage write
+  ---
+  duration_ms: 954.378326
+  ...
+# Subtest: guided evidence UI N=4: no ranking mutation, export, no storage write
+ok 78 - guided evidence UI N=4: no ranking mutation, export, no storage write
+  ---
+  duration_ms: 882.683404
+  ...
+# Subtest: guided evidence UI N=5: no ranking mutation, export, no storage write
+ok 79 - guided evidence UI N=5: no ranking mutation, export, no storage write
+  ---
+  duration_ms: 843.990367
+  ...
+# Subtest: guided evidence UI N=9: no ranking mutation, export, no storage write
+ok 80 - guided evidence UI N=9: no ranking mutation, export, no storage write
+  ---
+  duration_ms: 813.385995
+  ...
+# Subtest: guided evidence UI N=10: no ranking mutation, export, no storage write
+ok 81 - guided evidence UI N=10: no ranking mutation, export, no storage write
+  ---
+  duration_ms: 801.273755
+  ...
+# Subtest: guided corrupt history: evidence unavailable, never N=0 or repair
+ok 82 - guided corrupt history: evidence unavailable, never N=0 or repair
+  ---
+  duration_ms: 554.510861
+  ...
+# Subtest: guided confirmation: exact existing rule, shared stop, explicit unchanged experiment snapshot
+ok 83 - guided confirmation: exact existing rule, shared stop, explicit unchanged experiment snapshot
+  ---
+  duration_ms: 800.934134
+  ...
+# Subtest: guided creativity: extra consent, unchanged cascade and navigation cleanup
+ok 84 - guided creativity: extra consent, unchanged cascade and navigation cleanup
+  ---
+  duration_ms: 759.864852
+  ...
+# Subtest: V2 audit: exact identity/definition/config, source rename/delete independent and export unchanged
+ok 85 - V2 audit: exact identity/definition/config, source rename/delete independent and export unchanged
+  ---
+  duration_ms: 2074.027593
+  ...
+# Subtest: V2 invalid signature is preserved, while legacy V1 still renders unchanged
+ok 86 - V2 invalid signature is preserved, while legacy V1 still renders unchanged
+  ---
+  duration_ms: 1793.139716
+  ...
+# Subtest: V2 confirmation race during Web Crypto: changed source rejects without audio/autosave/completed
+ok 87 - V2 confirmation race during Web Crypto: changed source rejects without audio/autosave/completed
+  ---
+  duration_ms: 1270.030744
+  ...
+# Subtest: 2B Voice Journey shares rationale and evidence without changing legacy proposal or starting early
+ok 88 - 2B Voice Journey shares rationale and evidence without changing legacy proposal or starting early
+  ---
+  duration_ms: 1022.682845
+  ...
+# Subtest: 2B unknown intention requires human review; Voice medical text creates no proposal
+ok 89 - 2B unknown intention requires human review; Voice medical text creates no proposal
+  ---
+  duration_ms: 659.164279
+  ...
+# Subtest: Discovery UI create/review/activate/confirm/cancel/save/reload: assignment fixed, context and zero preserved
+ok 90 - Discovery UI create/review/activate/confirm/cancel/save/reload: assignment fixed, context and zero preserved
+  ---
+  duration_ms: 1440.745216
+  ...
+# Subtest: Discovery saved constellation: UI plan creation, source deletion independent, natural completion/save and next assignment
+ok 91 - Discovery saved constellation: UI plan creation, source deletion independent, natural completion/save and next assignment
+  ---
+  duration_ms: 3311.101426
+  ...
+# Subtest: Discovery navigation interruption keeps unresolved reservation, no false completed result, explicit recovery
+ok 92 - Discovery navigation interruption keeps unresolved reservation, no false completed result, explicit recovery
+  ---
+  duration_ms: 1213.261292
+  ...
+# Subtest: Discovery corruption is preserved and exportable; no silent repair or playback
+ok 93 - Discovery corruption is preserved and exportable; no silent repair or playback
+  ---
+  duration_ms: 547.026972
+  ...
+# Subtest: Personalization B: ranked top/alternative, rationale, native audio, explicit exact experiment and export
+ok 94 - Personalization B: ranked top/alternative, rationale, native audio, explicit exact experiment and export
+  ---
+  duration_ms: 2503.593586
+  ...
+# Subtest: Personalization A: ranked top/alternative, rationale, native audio, explicit exact experiment and export
+ok 95 - Personalization A: ranked top/alternative, rationale, native audio, explicit exact experiment and export
+  ---
+  duration_ms: 1296.174291
+  ...
+# Subtest: Personalization expectation confound and preliminary evidence retain alternatives and original order
+ok 96 - Personalization expectation confound and preliminary evidence retain alternatives and original order
+  ---
+  duration_ms: 711.437658
+  ...
+# Subtest: Personalization changed evidence rejects confirmation without audio or implicit save
+ok 97 - Personalization changed evidence rejects confirmation without audio or implicit save
+  ---
+  duration_ms: 723.341226
+  ...
+# Subtest: Personalization navigation interrupts native audio without completed state, save or plan mutation
+ok 98 - Personalization navigation interrupts native audio without completed state, save or plan mutation
+  ---
+  duration_ms: 974.292162
+  ...
+# Subtest: Personalization corrupt source cannot become no-evidence fallback or overwrite
+ok 99 - Personalization corrupt source cannot become no-evidence fallback or overwrite
+  ---
+  duration_ms: 400.587101
+  ...
+# Subtest: Personalization Web Crypto race rejects newly changed evidence before engine access
+ok 100 - Personalization Web Crypto race rejects newly changed evidence before engine access
+  ---
+  duration_ms: 727.723703
+  ...
+# Subtest: HIP guided explanation displays exact versioned HCI without changing proposal, storage or playback
+ok 101 - HIP guided explanation displays exact versioned HCI without changing proposal, storage or playback
+  ---
+  duration_ms: 909.83413
+  ...
+# Subtest: HIP Lab advanced sequence/simultaneous view updates descriptors only and retains exact audio
+ok 102 - HIP Lab advanced sequence/simultaneous view updates descriptors only and retains exact audio
+  ---
+  duration_ms: 663.935062
+  ...
+# Subtest: HIP personal profiles and structural groups preserve ranking, seed strata, evidence bytes and export versions
+ok 103 - HIP personal profiles and structural groups preserve ranking, seed strata, evidence bytes and export versions
+  ---
+  duration_ms: 964.444058
+  ...
+# Subtest: HIP sparse structural evidence shows insufficient sessions, never pattern claims or missing-to-zero
+ok 104 - HIP sparse structural evidence shows insufficient sessions, never pattern claims or missing-to-zero
+  ---
+  duration_ms: 713.195357
+  ...
+# Subtest: HIP Voice Journey explanation is optional, shows disclaimer and keeps existing confirmed playback
+ok 105 - HIP Voice Journey explanation is optional, shows disclaimer and keeps existing confirmed playback
+  ---
+  duration_ms: 992.301509
+  ...
+# Subtest: HIP saved constellation preview retains exact multiplicity, immutable source and explicit playback
+ok 106 - HIP saved constellation preview retains exact multiplicity, immutable source and explicit playback
+  ---
+  duration_ms: 1529.83692
+  ...
+# Subtest: HIP invalid manual input hides the old profile, never corrects values or starts audio
+ok 107 - HIP invalid manual input hides the old profile, never corrects values or starts audio
+  ---
+  duration_ms: 456.663183
+  ...
+# Subtest: Adaptive accept: best differs from next, explicit audio/save, exact audit and equal follow-up eligibility
+ok 108 - Adaptive accept: best differs from next, explicit audio/save, exact audit and equal follow-up eligibility
+  ---
+  duration_ms: 2603.426542
+  ...
+# Subtest: Adaptive override: best differs from next, explicit audio/save, exact audit and equal follow-up eligibility
+ok 109 - Adaptive override: best differs from next, explicit audio/save, exact audit and equal follow-up eligibility
+  ---
+  duration_ms: 2672.706626
+  ...
+# Subtest: Adaptive active fixed plan requires outside-plan choice and never mutates assignments
+ok 110 - Adaptive active fixed plan requires outside-plan choice and never mutates assignments
+  ---
+  duration_ms: 1094.742944
+  ...
+# Subtest: Adaptive navigation interrupts without saving or false completion
+ok 111 - Adaptive navigation interrupts without saving or false completion
+  ---
+  duration_ms: 1033.780385
+  ...
+# Subtest: Adaptive changed evidence rejects preview confirmation without audio
+ok 112 - Adaptive changed evidence rejects preview confirmation without audio
+  ---
+  duration_ms: 869.01813
+  ...
+# Subtest: Adaptive corrupt history is preserved and cannot become an empty evidence fallback
+ok 113 - Adaptive corrupt history is preserved and cannot become an empty evidence fallback
+  ---
+  duration_ms: 772.815754
+  ...
+# Subtest: Adaptive asynchronous signature race rejects evidence changes before audio
+ok 114 - Adaptive asynchronous signature race rejects evidence changes before audio
+  ---
+  duration_ms: 865.5306
+  ...
+# Subtest: Adaptive zero evidence keeps deterministic original order without inventing a best match
+ok 115 - Adaptive zero evidence keeps deterministic original order without inventing a best match
+  ---
+  duration_ms: 759.519496
+  ...
+# Subtest: 3B.1 desktop: guided primary entry, separate Lab, unchanged URLs and no storage/audio side effects
+ok 116 - 3B.1 desktop: guided primary entry, separate Lab, unchanged URLs and no storage/audio side effects
+  ---
+  duration_ms: 720.80056
+  ...
+# Subtest: 3B.1 mobile: guided primary entry, separate Lab, unchanged URLs and no storage/audio side effects
+ok 117 - 3B.1 mobile: guided primary entry, separate Lab, unchanged URLs and no storage/audio side effects
+  ---
+  duration_ms: 1678.467295
+  ...
+# Subtest: 3B.1 text-only guided session works with microphone unavailable and keeps the existing proposal/storage contract
+ok 118 - 3B.1 text-only guided session works with microphone unavailable and keeps the existing proposal/storage contract
+  ---
+  duration_ms: 961.721642
+  ...
+# Subtest: 3B.2 desktop linear journey, disclosures, back, explicit save and missing ratings
+ok 119 - 3B.2 desktop linear journey, disclosures, back, explicit save and missing ratings
+  ---
+  duration_ms: 1269.119399
+  ...
+# Subtest: 3B.2 mobile linear journey, disclosures, back, explicit save and missing ratings
+ok 120 - 3B.2 mobile linear journey, disclosures, back, explicit save and missing ratings
+  ---
+  duration_ms: 1139.808323
+  ...
+# Subtest: 3B.2 revised recommendation requires review and experimental consent at confirmation
+ok 121 - 3B.2 revised recommendation requires review and experimental consent at confirmation
+  ---
+  duration_ms: 1247.942518
+  ...
+# Subtest: 3B.2 failed explicit save retains exportable memory draft and retries unchanged
+ok 122 - 3B.2 failed explicit save retains exportable memory draft and retries unchanged
+  ---
+  duration_ms: 903.168336
+  ...
+# Subtest: 3B.2 unsaved navigation stops playback without persisting a completed record
+ok 123 - 3B.2 unsaved navigation stops playback without persisting a completed record
+  ---
+  duration_ms: 756.674067
+  ...
+# Subtest: 3B.3C legacy surfaces preserve data and require explicit playback
+ok 124 - 3B.3C legacy surfaces preserve data and require explicit playback
+  ---
+  duration_ms: 1200.516784
+  ...
+# Subtest: 3B.3D OBE visual surfaces at 390px preserve contracts and fit viewport
+ok 125 - 3B.3D OBE visual surfaces at 390px preserve contracts and fit viewport
+  ---
+  duration_ms: 1656.451781
+  ...
+# Subtest: 3B.3D OBE visual surfaces at 768px preserve contracts and fit viewport
+ok 126 - 3B.3D OBE visual surfaces at 768px preserve contracts and fit viewport
+  ---
+  duration_ms: 1731.258638
+  ...
+# Subtest: 3B.3D OBE visual surfaces at 1440px preserve contracts and fit viewport
+ok 127 - 3B.3D OBE visual surfaces at 1440px preserve contracts and fit viewport
+  ---
+  duration_ms: 1727.515471
+  ...
+1..127
+# tests 127
+# suites 0
+# pass 127
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 216689.694225

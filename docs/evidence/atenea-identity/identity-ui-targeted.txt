@@ -1,0 +1,20 @@
+TAP version 13
+# Subtest: staging page has no microphone, disk session or voice calls; mocked SDK login is lost on reload
+ok 1 - staging page has no microphone, disk session or voice calls; mocked SDK login is lost on reload
+  ---
+  duration_ms: 1535.507681
+  ...
+# Subtest: the real probe rejects missing identity and foreign origin without contacting the provider
+ok 2 - the real probe rejects missing identity and foreign origin without contacting the provider
+  ---
+  duration_ms: 40.874065
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2048.922015

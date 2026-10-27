@@ -1,0 +1,4 @@
+{
+  "nativeAsMethod": "TypeError: Failed to execute 'fetch' on 'Window': Illegal invocation",
+  "wrappedStatus": 200
+}

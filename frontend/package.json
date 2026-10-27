@@ -2,6 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "engines": { "node": ">=22.0.0" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,6 +13,7 @@
     "test:ui": "node --test --test-concurrency=1 ui/*.test.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
     "@upstash/redis": "1.40.0",
     "jose": "6.2.13",
     "next": "16.4.3",
