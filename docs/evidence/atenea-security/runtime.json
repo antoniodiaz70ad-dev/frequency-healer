@@ -1,0 +1,10 @@
+{
+  "node": "22.14.0",
+  "next": "16.4.3",
+  "eslint-config-next": "16.4.3",
+  "zod": "4.6.7",
+  "sharp": "0.35.5",
+  "playwright-core": "1.63.0",
+  "localChromium": "153.0.8010.0",
+  "CIChromium": "153.0.8010.12 (v1243), expected pinned browser; see PR CI logs"
+}
