@@ -44,6 +44,13 @@ export class RedisLiveStore implements LiveStore {
   async find(user: string, requestId: string) {
     return this.redis.get<LiveRecord>(recordKey(user, requestId));
   }
+  async active(user: string) {
+    const requestId = await this.redis.get<string>(activeKey(user));
+    if (!requestId) return null;
+    const record = await this.find(user, requestId);
+    if (!record) throw new Error('Active session metadata unavailable');
+    return record;
+  }
   async finish(user: string, requestId: string) {
     await this.redis.eval(finishScript, [recordKey(user, requestId), activeKey(user), dueKey], [requestId, retention]);
   }

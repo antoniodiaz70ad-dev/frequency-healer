@@ -1,0 +1,18 @@
+✔ WebRTC listener order, SDP exchange, startup confirmation and restricted pause commands (35.076411ms)
+✔ close stops microphone immediately and waits for remote confirmation before releasing peer (1.106178ms)
+✔ transcript fragments remain captions, never become final commands or consent (0.929173ms)
+✔ no consent or aborted startup cannot create a remote session (0.603514ms)
+✔ lost channel and failed backend closure report unconfirmed rather than successful finalization (1.064425ms)
+✔ late successful create after cancellation is closed using the original reservation and identity (1.630444ms)
+✔ closing during ICE gathering cancels startup immediately without creating a billable session (1.176944ms)
+✔ a channel closing during send still falls back to authenticated remote closure and frees resources (1.644174ms)
+✔ blocked remote playback closes the microphone and billable session instead of listening inaudibly (0.667069ms)
+✔ HttpOnly app session mode sends same-origin credentials without reading or forwarding a JWT (0.6669ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 51.424082

@@ -112,6 +112,14 @@ jobs:
         if: matrix.state == 'ON'
         timeout-minutes: 6
         run: npm run test:ui 2>&1 | tee artifacts/ui.log
+      - name: Staging consent page fails closed without provider configuration
+        if: matrix.state == 'ON'
+        env:
+          ATENEA_STAGING_ENABLED: 'true'
+          ATENEA_LIVE_ENABLED: 'false'
+          ATENEA_LIVE_REVIEWED: 'false'
+          ATENEA_REAPER_READY: 'false'
+        run: node scripts/staging-ui-smoke.mjs
       - name: ATENEA disabled route and endpoint
         if: matrix.state == 'OFF'
         run: node --test ui/atenea-flow.test.mjs
