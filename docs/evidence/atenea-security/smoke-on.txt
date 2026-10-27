@@ -1,0 +1,12 @@
+PASS / 200
+PASS /inicio 200
+PASS /generador 200
+PASS /protocolos 200
+PASS /biblioteca 200
+PASS /sesion-nueva 200
+PASS /diario 200
+PASS /voz 200
+PASS /laboratorio-armonico 200
+PASS /api/voice/interpret guarded / no credentials fallback
+PASS /api/voice/transcribe guarded / no credentials fallback
+PASS root landing, alias, fallback, gated CTA, media ranges and dashboard frame (ON)

@@ -1,3 +1,3 @@
 {
-  "git": { "deploymentEnabled": { "codex/atenea-voz-mvp": false } }
+  "git": { "deploymentEnabled": { "codex/atenea-voz-mvp": false, "codex/atenea-next-security-20261027": false } }
 }

@@ -1,5 +1,7 @@
 # PR #33 — auditoría de regresión y preparación de voz real
 
+Actualización posterior: esta rama aplica Next.js 16.4.3 y retira los avisos conocidos de dependencias descritos abajo. Véase [actualización de seguridad del 27 de octubre](ATENEA_NEXT_SECURITY_2026-10-27.md). El resto del dictamen operativo NO-GO permanece; el texto original conserva la evidencia de la versión auditada.
+
 Fecha de revisión: 26 de octubre de 2026 (America/Mexico_City).
 Base: `02859cd79992e319e1764334560a22baa3845074`.
 Head recibido: `1ad2d3d0d336652f1f4ae4730018a7a51538eacd`.
