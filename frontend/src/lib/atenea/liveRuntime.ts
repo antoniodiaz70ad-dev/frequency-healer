@@ -4,7 +4,7 @@ import { accessTokenAuthenticator } from './liveAuth';
 import { RedisLiveStore } from './liveStore';
 import { OpenAILiveProvider } from './liveProvider';
 import type { LiveDependencies } from './liveTypes';
-import { RedisIdentitySessions, type AccessDependencies } from './stagingAccess';
+import { cookieLiveAccess, RedisIdentitySessions, type AccessDependencies } from './stagingAccess';
 
 /** Lazy: missing staging settings must never break builds or enable anonymous access. */
 function identityBindings() {
@@ -41,7 +41,7 @@ export function liveDependencies(): LiveDependencies | null {
   const bindings = identityBindings(); if (!bindings || !process.env.OPENAI_API_KEY) return null;
   return { origin: bindings.origin,
     enabled: process.env.ATENEA_STAGING_ENABLED === 'true' && process.env.ATENEA_LIVE_ENABLED === 'true' && process.env.ATENEA_LIVE_REVIEWED === 'true' && process.env.ATENEA_REAPER_READY === 'true' && (process.env.ATENEA_REAPER_TOKEN?.length ?? 0) >= 32,
-    authenticate: request => request.headers.has('authorization') ? bindings.verify(request) : bindings.sessions.lookup(request).then(identity => identity?.user ?? null),
+    ...cookieLiveAccess(bindings.sessions, bindings.store),
     store: bindings.store, provider: new OpenAILiveProvider(process.env.OPENAI_API_KEY),
   };
 }

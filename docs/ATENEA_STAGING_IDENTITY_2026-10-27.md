@@ -1,5 +1,7 @@
 # ATENEA — comprobación aislada de identidad de staging
 
+Actualización posterior de recursos y sesión: [ATENEA_SESSION_REVOCATION_2026-10-27.md](ATENEA_SESSION_REVOCATION_2026-10-27.md). El inventario de esta entrega refleja el momento anterior al aprovisionamiento; el probe sigue separado del acceso a voz.
+
 27 de octubre de 2026. Base: PR #36, `0fa20dcb49bd167d3c03f08ef3979e907acf4cbb`, dependiente de #34 y #33. Rama: `codex/atenea-staging-access-20261027`.
 
 **NO-GO para voz real.** Se prepara únicamente una comprobación de cuenta de prueba. No se crea infraestructura, no se contrata un proveedor, no se activan flags externos y no se fusiona ni despliega nada. El auto-deploy de esta rama está bloqueado en ambos `vercel.json`.

@@ -16,8 +16,8 @@ async function fixture() {
   const sessions: IdentitySessions = {
     verify,
     lookup: async req => { const value = accessCookie(req); const record = value ? records.get(value) : null; return record && record.expiresAt > Date.now() ? record : null; },
-    issue: async (user, expiresAt) => { records.set(cookie, { user, expiresAt }); return cookie; },
-    revoke: async req => { revocations++; const value = accessCookie(req); if (value && value !== cookie) records.delete(value); },
+    issue: async (user, expiresAt) => { records.set(cookie, { user, expiresAt }); return { cookie }; },
+    revoke: async req => { revocations++; const value = accessCookie(req); const record = value ? records.get(value) : null; if (value) records.delete(value); return record ?? null; },
   };
   const deps: AccessDependencies = { enabled: true, origin, sessions, closeForUser: async () => true };
   return { deps, sessions, records, token, identity: identity!, revocations: () => revocations, route: (req: Request) => accessRoute(req, deps, true, origin) };
@@ -52,19 +52,31 @@ test('changing identity requires logout; refresh does not silently abandon anoth
 });
 test('logout revokes access even when remote closure is unconfirmed; works after flags off', async () => {
   const f = await fixture(); f.records.set(cookie, { user: hash, expiresAt: Date.now() + 60000 });
-  f.sessions.revoke = async req => { const value = accessCookie(req); if (value) f.records.delete(value); };
-  f.deps.closeForUser = async user => { assert.equal(user, hash); return false; }; f.deps.enabled = false;
+  f.deps.closeForUser = async user => { assert.equal(user, hash); assert.equal(f.records.size, 0); return false; }; f.deps.enabled = false;
   const response = await accessRoute(request('DELETE', { cookie: `${ACCESS_COOKIE}=${cookie}` }), f.deps, false, origin);
-  assert.equal(response.status, 202); assert.deepEqual(await response.json(), { authenticated: false, remoteConfirmed: false });
+  assert.equal(response.status, 202); assert.deepEqual(await response.json(), { authenticated: false, revocationConfirmed: true, remoteConfirmed: false });
   assert.equal(f.records.size, 0); assert.ok(response.headers.get('set-cookie')!.includes('Max-Age=0'));
 });
-test('confirmed logout closes remote session; storage failures remain explicit and clear local cookie', async () => {
+test('confirmed logout closes remote session; failed revocation preserves the cookie for an authenticated retry', async () => {
   const f = await fixture(); f.records.set(cookie, { user: hash, expiresAt: Date.now() + 60000 });
   assert.equal((await f.route(request('DELETE', { cookie: `${ACCESS_COOKIE}=${cookie}` }))).status, 200);
   f.sessions.revoke = async () => { throw new Error('store down'); };
   const response = await f.route(request('DELETE', { cookie: `${ACCESS_COOKIE}=${cookie}` }));
   assert.equal(response.status, 503); assert.equal((await response.json()).revocationConfirmed, false);
-  assert.ok(response.headers.get('set-cookie')!.includes('Max-Age=0'));
+  assert.equal(response.headers.get('set-cookie'), null);
+});
+test('remote cleanup failure is not reported as confirmation after successful revocation', async () => {
+  const f = await fixture(); f.records.set(cookie, { user: hash, expiresAt: Date.now() + 60000 });
+  f.deps.closeForUser = async () => { throw new Error('provider unavailable'); };
+  const response = await f.route(request('DELETE', { cookie: `${ACCESS_COOKIE}=${cookie}` }));
+  assert.equal(response.status, 202);
+  assert.deepEqual(await response.json(), { authenticated: false, revocationConfirmed: true, remoteConfirmed: false });
+  assert.equal(f.records.size, 0); assert.ok(response.headers.get('set-cookie')!.includes('Max-Age=0'));
+});
+test('an expired or revoked cookie cannot be used as a fresh login during renewal', async () => {
+  const f = await fixture();
+  const response = await f.route(request('POST', { Authorization: `Bearer ${f.token}`, cookie: `${ACCESS_COOKIE}=${cookie}` }));
+  assert.equal(response.status, 409); assert.equal(f.records.size, 0);
 });
 test('duplicate, malformed or attacker-chosen cookie names cannot fix an application session', () => {
   assert.equal(accessCookie(request('GET', { cookie: `${ACCESS_COOKIE}=bad` })), null);
