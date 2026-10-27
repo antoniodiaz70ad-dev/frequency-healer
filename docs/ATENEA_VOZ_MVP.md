@@ -2,6 +2,8 @@
 
 Estado: **NO-GO para producción; sin API real ni despliegue**.
 
+La [auditoría posterior del PR #33](ATENEA_PR33_VALIDATION_AUDIT.md) corrige la interpretación del CI verde y clasifica los cuatro fallos históricos. Consultarla antes de afirmar que la suite UI completa está aprobada.
+
 Este documento describe la primera entrega simulada. La continuación del backend y transporte real, aún desactivados y sin llamadas al proveedor, está en [ATENEA_LIVE_BACKEND.md](ATENEA_LIVE_BACKEND.md). Sus límites y evidencias complementan y actualizan los pendientes de esta primera fase.
 
 Implementación independiente desde `main`, rama `codex/atenea-voz-mvp`.

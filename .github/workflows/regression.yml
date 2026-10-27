@@ -32,6 +32,7 @@ jobs:
       ATENEA_TEST_REDIS_PORT: '6379'
     defaults:
       run:
+        # Explicit bash enables -eo pipefail: tee must not hide failing checks.
         shell: bash
         working-directory: frontend
     steps:

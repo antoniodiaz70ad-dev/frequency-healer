@@ -1,0 +1,44 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 build
+> next build
+
+▲ Next.js 16.4.0 (Turbopack)
+✓ Running next.config.ts took 19ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 9.6s
+  Running TypeScript ...
+  Finished TypeScript in 6.0s ...
+  Collecting page data using 8 workers ...
+  Generating static pages using 8 workers (0/19) ...
+  Generating static pages using 8 workers (4/19) 
+  Generating static pages using 8 workers (9/19) 
+  Generating static pages using 8 workers (14/19) 
+✓ Generating static pages using 8 workers (19/19) in 414ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/atenea-voz/reap
+├ ƒ /api/atenea-voz/session
+├ ƒ /api/voice/interpret
+├ ƒ /api/voice/transcribe
+├ ƒ /atenea-voz
+├ ○ /biblioteca
+├ ○ /diario
+├ ○ /generador
+├ ○ /inicio
+├ ○ /laboratorio-armonico
+├ ○ /laboratorio-cimatico
+├ ○ /landing
+├ ○ /protocolos
+├ ○ /respiracion-atencion
+├ ○ /sesion-nueva
+└ ○ /voz
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

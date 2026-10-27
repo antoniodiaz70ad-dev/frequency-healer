@@ -7,6 +7,28 @@ before(async()=>{harness=await startHarness();},{timeout:60000});
 after(async()=>{await harness?.close();},{timeout:15000});
 async function fixture(t,options={}){const context=await harness.browser.newContext(options.viewport?{viewport:options.viewport}:undefined);t.after(()=>context.close());await context.addInitScript(observeBrowser);const page=await context.newPage();if(options.reducedMotion)await page.emulateMedia({reducedMotion:options.reducedMotion});page.setDefaultTimeout(8000);await page.goto(harness.origin+'/laboratorio-cimatico?frequency=432&waveform=sine&binaural=8');if(!options.simpleEntry)await page.getByText('Explorar a fondo',{exact:true}).click();return page;}
 
+test('cymatics navigation cancels every scheduled canvas animation frame', {timeout:45000}, async t=>{
+  const context=await harness.browser.newContext();t.after(()=>context.close());
+  await context.addInitScript(()=>{
+    const pending=new Set();
+    const request=window.requestAnimationFrame.bind(window),cancel=window.cancelAnimationFrame.bind(window);
+    window.requestAnimationFrame=callback=>{
+      const id=request(time=>{pending.delete(id);callback(time);});pending.add(id);return id;
+    };
+    window.cancelAnimationFrame=id=>{pending.delete(id);cancel(id);};
+    window.__pendingCanvasFrames=()=>pending.size;
+  });
+  const page=await context.newPage();
+  await page.goto(harness.origin+'/laboratorio-cimatico?frequency=432&waveform=sine&binaural=8');
+  await page.getByText('Explorar a fondo',{exact:true}).click();
+  // Trigger the resize path as well as the first animation frame.
+  await page.setViewportSize({width:1100,height:800});
+  await page.waitForFunction(()=>window.__pendingCanvasFrames()>0);
+  await page.getByRole('link',{name:'Inicio',exact:true}).click();
+  await page.waitForURL(harness.origin+'/inicio');
+  await page.waitForFunction(()=>window.__pendingCanvasFrames()===0,{},{timeout:5000});
+});
+
 test('cymatics route: generator parameters, independent binaural views and shared existing audio graph', {timeout:45000}, async t=>{
   const page=await fixture(t);assert.equal(await page.getByRole('spinbutton',{name:'Frecuencia cimática'}).inputValue(),'432');assert.equal(await page.getByRole('img',{name:'Canal izquierdo'}).count(),1);assert.equal(await page.getByRole('img',{name:'Canal derecho'}).count(),1);assert.match(await page.getByText(/Diferencia:/).first().innerText(),/8.0 Hz; no es un tono emitido/);
   await page.getByRole('button',{name:'Escuchar tono'}).click();let probe=await page.evaluate(()=>window.__fhUI.snapshot());assert.deepEqual(probe.contexts.flatMap(c=>c.oscillators.map(o=>o.frequencies[0])).slice(-2),[432,440]);await page.getByRole('button',{name:'Detener sonido'}).click();await eventually(async()=>{probe=await page.evaluate(()=>window.__fhUI.snapshot());assert.ok(probe.contexts[0].oscillators.every(o=>o.ended&&o.disconnected));});

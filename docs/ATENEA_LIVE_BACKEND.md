@@ -1,6 +1,7 @@
 # ATENEA — backend protegido y transporte GPT-Live
 
 **NO-GO. Código preparado y probado en laboratorio; sin credenciales, activación, fusión ni despliegue.**
+La [auditoría posterior del PR #33](ATENEA_PR33_VALIDATION_AUDIT.md) detectó que el estado verde del CI ocultaba fallos UI por el uso de `tee` sin `pipefail`. El resultado real del head `1ad2d3d` fue 118/121 en UI, aunque Quality sí pasó 306/306. No interpretar el verde histórico como regresión completa aprobada.
 Continuación del [MVP simulado](ATENEA_VOZ_MVP.md) en el mismo PR draft #33. La UI sigue usando exclusivamente mocks; el transporte real no se conecta a esa UI para evitar reutilizar su consentimiento local o confundir captions con órdenes finales.
 
 ## Qué se implementa

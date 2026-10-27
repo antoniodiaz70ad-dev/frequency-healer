@@ -1,0 +1,20 @@
+TAP version 13
+# Subtest: navigation during audio: closes native graph, never completed, never autosaved
+ok 1 - navigation during audio: closes native graph, never completed, never autosaved
+  ---
+  duration_ms: 1333.302465
+  ...
+# Subtest: 3B.2 unsaved navigation stops playback without persisting a completed record
+ok 2 - 3B.2 unsaved navigation stops playback without persisting a completed record
+  ---
+  duration_ms: 1032.270575
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2951.812193
