@@ -1,0 +1,30 @@
+TAP version 13
+# Subtest: server flag and API fail closed, including cross-origin requests
+ok 1 - server flag and API fail closed, including cross-origin requests
+  ---
+  duration_ms: 550.933844
+  ...
+# Subtest: staging identity page and probe remain closed without separate staging configuration
+ok 2 - staging identity page and probe remain closed without separate staging configuration
+  ---
+  duration_ms: 27.630213
+  ...
+# Subtest: local session, mic cleanup and privacy at 1280px
+ok 3 - local session, mic cleanup and privacy at 1280px # SKIP
+  ---
+  duration_ms: 0.250758
+  ...
+# Subtest: local session, mic cleanup and privacy at 390px
+ok 4 - local session, mic cleanup and privacy at 390px # SKIP
+  ---
+  duration_ms: 0.153551
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 984.015091

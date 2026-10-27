@@ -28,6 +28,12 @@ test('server flag and API fail closed, including cross-origin requests', async (
   }
 });
 
+test('staging identity page and probe remain closed without separate staging configuration', async () => {
+  assert.equal((await fetch(server.origin + '/atenea-acceso')).status, 404);
+  const response = await fetch(server.origin + '/api/atenea-voz/identity-check', { method: 'POST' });
+  assert.equal(response.status, 404); assert.equal(response.headers.get('cache-control'), 'no-store');
+});
+
 for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
   test(`local session, mic cleanup and privacy at ${viewport.width}px`, { skip: !enabled, timeout: 30000 }, async () => {
     const context = await browser.newContext({ viewport, permissions: ['microphone'] });

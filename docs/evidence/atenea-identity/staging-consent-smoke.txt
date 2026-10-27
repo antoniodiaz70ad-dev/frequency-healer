@@ -1,0 +1,1 @@
+Staging page smoke: PASS; no configured identity/provider, no microphone, no storage writes

@@ -115,3 +115,25 @@ test('HttpOnly app session mode sends same-origin credentials without reading or
   await connection.start('diario', f.stream, LIVE_CONSENT, new AbortController().signal);
   assert.equal(await connection.close(), true); assert.equal(creates, 1); assert.equal(closes, 1);
 });
+
+test('authenticated closure obtains a renewed identity token after the creation token ages', async () => {
+  const f = fixture(); let tokens = 0;
+  const connection = new LiveVoiceConnection(event => f.events.push(event), { ...f.deps,
+    token: async () => ++tokens === 1 ? 'synthetic-identity' : 'renewed-identity',
+    http: async (url, init) => {
+      if (init?.method !== 'DELETE') return f.deps.http(url, init);
+      assert.equal(new Headers(init.headers).get('authorization'), 'Bearer renewed-identity');
+      return Response.json({ confirmed: true });
+    },
+  });
+  await connection.start('diario', f.stream, LIVE_CONSENT, new AbortController().signal);
+  assert.equal(await connection.close(), true); assert.equal(tokens, 2); assert.equal(f.stopped(), 1);
+});
+test('failed refresh still attempts authenticated cleanup without delaying local microphone shutdown', async () => {
+  const f = fixture(); let tokens = 0;
+  const connection = new LiveVoiceConnection(event => f.events.push(event), { ...f.deps,
+    token: async () => { if (++tokens > 1) throw new Error('refresh unavailable'); return 'synthetic-identity'; },
+  });
+  await connection.start('diario', f.stream, LIVE_CONSENT, new AbortController().signal);
+  const closing = connection.close(); assert.equal(f.stopped(), 1); assert.equal(await closing, true);
+});

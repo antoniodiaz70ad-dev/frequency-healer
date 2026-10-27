@@ -9,7 +9,7 @@ interface BrowserDependencies {
   /** Host authentication supplies a short-lived, scoped access token; never an OpenAI key. */
   token?(): Promise<string>;
 }
-const defaults = { peer: () => new RTCPeerConnection(), audio: () => new Audio(), http: fetch };
+const defaults = { peer: () => new RTCPeerConnection(), audio: () => new Audio(), http: (input: RequestInfo | URL, init?: RequestInit) => fetch(input, init) };
 
 /** Dedicated Live transport. Intentionally not connected to the simulated domain/UI.
  * Live transcripts are fragments, not finalized turns: never reinterpret them as consent or commands. */
@@ -117,6 +117,18 @@ export class LiveVoiceConnection {
   private async remoteClose(requestId = this.requestId, accessToken = this.accessToken) {
     if (!requestId) return false;
     try {
+      // The creation token may have expired during the call. Keep the original
+      // credential as a best-effort fallback; only the server can confirm closure.
+      if (this.deps.token) {
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          const fresh = await Promise.race([this.deps.token(), new Promise<string>((_, reject) => {
+            timer = setTimeout(() => reject(new Error('Identity refresh timeout')), 5000);
+          })]);
+          if (fresh) accessToken = fresh;
+        } catch { /* fallback still needs authenticated ownership verification */ }
+        finally { if (timer) clearTimeout(timer); }
+      }
       const response = await this.deps.http('/api/atenea-voz/session', { method: 'DELETE', keepalive: true, credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         signal: AbortSignal.timeout(15000), body: JSON.stringify({ requestId }) });

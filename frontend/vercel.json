@@ -1,5 +1,12 @@
 {
-  "git": { "deploymentEnabled": { "codex/atenea-voz-mvp": false, "codex/atenea-next-security-20261027": false, "codex/atenea-staging-prep": false } },
+  "git": {
+    "deploymentEnabled": {
+      "codex/atenea-voz-mvp": false,
+      "codex/atenea-next-security-20261027": false,
+      "codex/atenea-staging-prep": false,
+      "codex/atenea-staging-access-20261027": false
+    }
+  },
   "env": {
     "NEXT_PUBLIC_VOICE_JOURNEY_ENABLED": "true",
     "NEXT_PUBLIC_HARMONIC_LAB_ENABLED": "true",

@@ -1,0 +1,26 @@
+{
+  "status": "NO-GO",
+  "flags": {
+    "ATENEA_VOICE_ENABLED": false,
+    "ATENEA_STAGING_ENABLED": false,
+    "ATENEA_LIVE_ENABLED": false,
+    "ATENEA_LIVE_REVIEWED": false,
+    "ATENEA_REAPER_READY": false
+  },
+  "configuration": {
+    "ATENEA_VOICE_ORIGIN": "missing",
+    "ATENEA_LOGIN_PATH": "missing",
+    "ATENEA_AUTH_ISSUER": "missing",
+    "ATENEA_AUTH_AUDIENCE": "missing",
+    "ATENEA_AUTH_JWKS": "missing",
+    "UPSTASH_REDIS_REST_URL": "missing",
+    "UPSTASH_REDIS_REST_TOKEN": "missing",
+    "ATENEA_REAPER_TOKEN": "missing",
+    "OPENAI_API_KEY": "missing"
+  },
+  "identityProviderVerified": false,
+  "redisVerifiedInStaging": false,
+  "schedulerVerifiedInStaging": false,
+  "remoteAudioVerified": false,
+  "note": "Configured does not mean usable or approved. No values are printed; nothing was changed."
+}
