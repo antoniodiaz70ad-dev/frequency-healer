@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { exportJWK, generateKeyPair, SignJWT } from 'jose';
+import { exportJWK, generateKeyPair, SignJWT, jwtVerify } from 'jose';
 import { accessTokenAuthenticator } from '../src/lib/atenea/liveAuth';
 import { RedisLiveStore } from '../src/lib/atenea/liveStore';
 import { liveSessionRoute } from '../src/lib/atenea/liveService';
@@ -9,6 +9,7 @@ import { reapLiveSessions } from '../src/lib/atenea/liveReaper';
 import { LIVE_CONSENT, type LiveDependencies } from '../src/lib/atenea/liveTypes';
 import { ACCESS_COOKIE, accessRoute, cookieLiveAccess, RedisIdentitySessions, type AccessDependencies } from '../src/lib/atenea/stagingAccess';
 import { redisTestClient } from './helpers/redisClient';
+import { stagingAuthenticator, stagingSubjectHash } from '../src/lib/atenea/stagingAuth';
 
 const redisOnly = { skip: !process.env.ATENEA_TEST_REDIS_PORT, timeout: 15000 };
 const origin = 'https://staging.test';
@@ -18,16 +19,25 @@ function deferred<T>() {
   const promise = new Promise<T>(done => { resolve = done; });
   return { resolve, promise };
 }
-async function fixture() {
+async function fixture(profile: 'host' | 'supabase' = 'host') {
   const { client, command } = redisTestClient();
   const { publicKey, privateKey } = await keypair;
-  const verify = accessTokenAuthenticator({ keys: [{ ...await exportJWK(publicKey), kid: 'fixture' }] }, 'https://issuer.test', 'atenea');
+  const subject = crypto.randomUUID(), otherSubject = crypto.randomUUID();
+  const config = { origin, url: 'https://abcdefghijklmnopqrst.supabase.co', publishableKey: 'sb_publishable_synthetic_123456789', allowedSubjects: [subject, otherSubject] };
+  const issuer = profile === 'supabase' ? config.url + '/auth/v1' : 'https://issuer.test';
+  const audience = profile === 'supabase' ? 'authenticated' : 'atenea';
+  const verify = profile === 'host' ? accessTokenAuthenticator({ keys: [{ ...await exportJWK(publicKey), kid: 'fixture' }] }, issuer, audience) :
+    stagingAuthenticator(config, async token => {
+      // Controlled getUser double verifies a signed token; this is not an external login.
+      const { payload } = await jwtVerify(token, publicKey, { issuer, audience });
+      return { id: payload.sub!, is_anonymous: false, email_confirmed_at: '2026-01-01' };
+    });
   const sessions = new RedisIdentitySessions(client, verify), store = new RedisLiveStore(client);
-  const subject = crypto.randomUUID();
-  const token = (sub = subject) => new SignJWT({ scope: 'atenea:voice' }).setProtectedHeader({ alg: 'RS256', kid: 'fixture' })
-    .setIssuer('https://issuer.test').setAudience('atenea').setSubject(sub).setJti(crypto.randomUUID()).setIssuedAt().setExpirationTime('5m').sign(privateKey);
+  const token = (sub = subject) => new SignJWT(profile === 'host' ? { scope: 'atenea:voice' } : { role: 'authenticated', is_anonymous: false, session_id: crypto.randomUUID() })
+    .setProtectedHeader({ alg: 'RS256', kid: 'fixture' }).setIssuer(issuer).setAudience(audience).setSubject(sub).setJti(crypto.randomUUID()).setIssuedAt().setExpirationTime('5m').sign(privateKey);
   let creates = 0, closes = 0;
-  const deps: LiveDependencies = { origin, enabled: true, store, ...cookieLiveAccess(sessions, store),
+  const permitted = (user: string) => profile === 'host' || config.allowedSubjects.some(subject => stagingSubjectHash(config, subject) === user);
+  const deps: LiveDependencies = { origin, enabled: true, store, ...cookieLiveAccess(sessions, store, permitted),
     provider: { create: async () => { creates++; return { id: 'live_test', sdp: 'v=0\r\nanswer' }; }, close: async () => { closes++; return true; } },
   };
   const access: AccessDependencies = { enabled: true, origin, sessions, closeForUser: async user => {
@@ -53,6 +63,7 @@ async function fixture() {
     headers: { origin, 'Content-Type': 'application/json', cookie: `${ACCESS_COOKIE}=${cookie}` }, body: JSON.stringify(payload) });
   const route = (request: Request) => liveSessionRoute(request, deps, true, origin);
   return { client, command, sessions, store, deps, access, req, exchange, logout, upstream, token, cookie, identity, id, payload, voice, route,
+    otherSubject, withdraw: () => { config.allowedSubjects = [otherSubject]; },
     creates: () => creates, closes: () => closes };
 }
 
@@ -150,4 +161,22 @@ test('a storage failure during the final authorization check still closes the cr
   const result = await f.route(f.voice());
   assert.equal(result.status, 401); assert.equal(f.creates(), 1); assert.equal(f.closes(), 1);
   assert.equal((await f.store.find(f.identity.user, f.id))!.closed, true);
+});
+
+test('Supabase profile uses real Redis rotation and revocation; a removed tester can close but cannot create', redisOnly, async () => {
+  const f = await fixture('supabase');
+  const other = await f.exchange(await f.token(f.otherSubject)); assert.equal(other.status, 200);
+  const otherCookie = other.headers.get('set-cookie')!.split(';')[0].split('=')[1];
+  const rotated = await f.exchange(f.upstream, f.cookie); assert.equal(rotated.status, 200);
+  const replacement = rotated.headers.get('set-cookie')!.split(';')[0].split('=')[1];
+  const post = f.req('POST', replacement), close = f.req('DELETE', replacement);
+  f.withdraw();
+  assert.equal(await f.deps.authenticate(post), null);
+  assert.equal(await f.deps.creationAuthorized(post, f.identity.user), false);
+  assert.equal(await f.deps.reserve(post, f.identity.user, f.id, Date.now()), 'unauthorized');
+  assert.equal(await f.deps.authenticate(close), f.identity.user);
+  assert.equal((await f.exchange(await f.token(), replacement)).status, 401);
+  assert.equal((await f.logout(f.cookie)).status, 200);
+  assert.equal(await f.sessions.lookup(f.req('GET', replacement)), null);
+  assert.ok(await f.sessions.lookup(f.req('GET', otherCookie))); assert.equal(f.creates(), 0);
 });

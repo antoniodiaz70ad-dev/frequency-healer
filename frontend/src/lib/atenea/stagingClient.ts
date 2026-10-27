@@ -32,13 +32,13 @@ export class StagingAccess {
       throw new Error('No se pudo autorizar esta cuenta de prueba.');
     } finally { this.signingIn = false; }
   }
-  async token() {
+  async token(minimumSeconds = 30) {
     if (this.disposed) throw new Error('Acceso cerrado.');
     let session = await this.auth.session();
     this.afterAuth();
-    if (session && (!session.expires_at || session.expires_at <= Date.now() / 1000 + 60)) session = await this.auth.refresh();
+    if (session && (!session.expires_at || session.expires_at <= Date.now() / 1000 + Math.max(60, minimumSeconds + 30))) session = await this.auth.refresh();
     this.afterAuth();
-    if (!session?.access_token || !session.expires_at || session.expires_at <= Date.now() / 1000 + 30) throw new Error('Vuelve a iniciar sesión.');
+    if (!session?.access_token || !session.expires_at || session.expires_at <= Date.now() / 1000 + minimumSeconds) throw new Error('Vuelve a iniciar sesión.');
     return session.access_token;
   }
   async check() {
@@ -49,11 +49,27 @@ export class StagingAccess {
     });
     if (!response.ok || (await response.json()).authorized !== true || this.disposed) throw new Error('Acceso de prueba no autorizado.');
   }
+  /** Exchange a verified provider identity for the server's HttpOnly app session. */
+  async establish(minimumSeconds = 60) {
+    const token = await this.token(minimumSeconds);
+    const response = await this.http('/api/atenea-voz/access', {
+      method: 'POST', credentials: 'same-origin', cache: 'no-store', redirect: 'error',
+      signal: AbortSignal.any([this.abort.signal, AbortSignal.timeout(15000)]),
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    this.afterAuth();
+    const result = await response.json();
+    if (!response.ok || result.authenticated !== true || !Number.isFinite(result.expiresAt) || result.expiresAt <= Date.now()) throw new Error('No se pudo establecer el acceso de aplicación.');
+    return result.expiresAt as number;
+  }
   async logout() { await this.auth.logout(); }
-  stop() {
+  cancelRequests() {
     if (this.disposed) return;
     this.disposed = true; this.abort.abort(); this.auth.stop();
-    void this.auth.logout().catch(() => {});
+  }
+  stop() {
+    if (this.disposed) return;
+    this.cancelRequests(); void this.auth.logout().catch(() => {});
   }
 }
 

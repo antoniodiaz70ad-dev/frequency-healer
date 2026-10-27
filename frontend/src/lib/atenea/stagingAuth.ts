@@ -7,6 +7,9 @@ import { readBounded } from '../voice/serverBoundary';
 interface VerifiedUser { id: string; is_anonymous?: boolean; email_confirmed_at?: string }
 export type LookupUser = (jwt: string) => Promise<VerifiedUser | null>;
 
+export const stagingSubjectHash = (config: StagingAuthConfig, subject: string) =>
+  createHash('sha256').update(`${config.url}/auth/v1\0${subject}`).digest('hex');
+
 /** Decoding only rejects unsuitable claims. Auth.getUser performs remote authentication. */
 export function stagingAuthenticator(config: StagingAuthConfig, lookup: LookupUser) {
   return async (request: Request): Promise<string | null> => {
@@ -22,7 +25,7 @@ export function stagingAuthenticator(config: StagingAuthConfig, lookup: LookupUs
           claims.is_anonymous === true) return null;
       const user = await lookup(token);
       if (!user || user.id !== claims.sub || user.is_anonymous !== false || !user.email_confirmed_at) return null;
-      return createHash('sha256').update(`${claims.iss}\0${user.id}`).digest('hex');
+      return stagingSubjectHash(config, user.id);
     } catch { return null; }
   };
 }

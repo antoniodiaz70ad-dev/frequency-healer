@@ -90,14 +90,15 @@ return 1`,
 }
 
 /** Provider tokens are accepted only by the verified exchange, never by voice creation. */
-export function cookieLiveAccess(sessions: RedisIdentitySessions, store: RedisLiveStore): Pick<LiveDependencies, 'authenticate' | 'reserve' | 'creationAuthorized'> {
+export function cookieLiveAccess(sessions: RedisIdentitySessions, store: RedisLiveStore, permitted: (user: string) => boolean = () => true): Pick<LiveDependencies, 'authenticate' | 'reserve' | 'creationAuthorized'> {
   return {
-    authenticate: request => sessions.lookup(request).then(identity => identity?.user ?? null),
+    authenticate: request => sessions.lookup(request).then(identity => identity && (request.method === 'DELETE' || permitted(identity.user)) ? identity.user : null),
     reserve: async (request, user, id, now) => {
+      if (!permitted(user)) return 'unauthorized';
       const authority = await sessions.authority(request);
       return authority ? store.reserveForSession(authority, user, id, now) : 'unauthorized';
     },
-    creationAuthorized: async (request, user) => (await sessions.lookup(request))?.user === user,
+    creationAuthorized: async (request, user) => permitted(user) && (await sessions.lookup(request))?.user === user,
   };
 }
 

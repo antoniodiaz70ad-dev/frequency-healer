@@ -9,9 +9,9 @@ const projectRef = /^[a-z0-9]{20}$/;
 export const subjectId = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 
 /** This is a separate, reviewed identity project, never a production fallback. */
-export function stagingAuthConfig(env: Record<string, string | undefined>): StagingAuthConfig | null {
-  if (env.ATENEA_STAGING_IDENTITY_PROVIDER !== 'supabase-staging' || env.ATENEA_STAGING_ACCESS_ENABLED !== 'true' ||
-      env.ATENEA_STAGING_AUTH_REVIEWED !== 'true') return null;
+export function stagingAuthConfig(env: Record<string, string | undefined>, cleanup = false): StagingAuthConfig | null {
+  if (env.ATENEA_STAGING_IDENTITY_PROVIDER !== 'supabase-staging' || !cleanup && (env.ATENEA_STAGING_ACCESS_ENABLED !== 'true' ||
+      env.ATENEA_STAGING_AUTH_REVIEWED !== 'true')) return null;
   const local = !env.VERCEL && !env.VERCEL_ENV && env.ATENEA_LOCAL_STAGING === 'true';
   if (env.VERCEL_ENV !== 'preview' && !local) return null;
   try {

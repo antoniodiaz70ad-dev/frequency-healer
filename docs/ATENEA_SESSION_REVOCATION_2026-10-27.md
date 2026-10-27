@@ -1,8 +1,10 @@
 # ATENEA — revocación concurrente y preparación de identidad
 
-27 de octubre de 2026. Base: PR #37, `40612c69398283bb184dda1009fc7e51a0b32841`. Rama: `codex/atenea-session-revocation-20261027`. Draft dependiente de #37; auto-deploy bloqueado en ambos `vercel.json`.
+27 de octubre de 2026. Base integrada: PR #38, `28cceb433e750c60f500674a6c7ecbc6c79d6a8f`, dependiente del #37. Rama: `codex/atenea-session-revocation-20261027`. Draft; auto-deploy bloqueado en ambos `vercel.json`.
 
-**NO-GO para voz real.** Este cambio corrige el contrato de sesión de aplicación antes de conectar un proveedor de login. La pantalla Supabase de #37 sigue siendo una comprobación aislada de identidad. No convierte el rol `authenticated` de Supabase en permiso `atenea:voice`, no cambia el verificador RS256 y no emite una cookie de voz desde ese probe.
+**NO-GO para voz real.** Este cambio corrige el contrato de sesión de aplicación y se integra con el login Supabase del #38. El probe aislado del #37 se conserva; la pantalla `/atenea-voz/pruebas` usa el perfil Supabase explícito y su allowlist para intercambiar y renovar la cookie opaca. No convierte el rol `authenticated` en un scope `atenea:voice` inventado. El perfil RS256 del host conserva su verificación. Ambos perfiles exigen cookie para crear voz y la revocación reforzada de este cambio.
+
+El login Supabase heredado usa tokens del proveedor en RAM de JavaScript, sin persistencia. Esto difiere del planteamiento inicial Auth0 exclusivamente servidor; la cookie ATENEA sí es opaca y HttpOnly. No se declara cumplida aquella arquitectura original ni probado un login externo. El gate `ATENEA_STAGING_SESSION_ENABLED` también permanece false.
 
 ## Problema y comportamiento corregido
 
@@ -31,12 +33,12 @@ Esta revocación corresponde a la cadena de cookies de aplicación. No sustituye
 - El PR #37 referencia `frequency-healer-atenea-staging`, proyecto `rayebpxdfatsnkbderot`, región `us-east-2`, activo. Es el proyecto canónico para preparar el acceso. La comprobación de solo lectura no encontró tablas públicas, usuarios Auth, sesiones Auth ni buckets.
 - También existe `atenea-staging`, proyecto `uxsagtoewrkveihwwkrw`, creado desde esta conversación. Está vacío y duplicado. El intento de pausa fue rechazado por Supabase porque el proyecto está en Pro. No se degrada la organización ni se elimina el proyecto sin resolver expresamente esa acción irreversible.
 - La configuración de preview se limita a esta rama: URL y clave publicable moderna existentes del proyecto canónico, referencia de producción Base 60 prohibida y gates OFF. El origen HTTPS y la lista de sujetos se mantienen pendientes; no se inventan IDs de probadores ni se exponen claves en el repositorio.
-- Faltan cuentas autorizadas, registro público deshabilitado y ajustes Auth comprobados, origen de preview protegido, adaptación del proveedor al contrato de sesión, Redis de staging, scheduler, alertas y presupuesto global. No se configura una clave de voz.
+- Faltan cuentas autorizadas, registro público deshabilitado y ajustes Auth comprobados, origen de preview protegido, validación externa de la integración de sesión, Redis de staging, scheduler, alertas y presupuesto global. No se configura una clave de voz.
 
 ## Evidencia
 
 Las nuevas pruebas ejecutan las rutas reales, JWT sintéticos firmados y scripts sobre Redis real de loopback. El proveedor de voz es controlado para detener la creación exactamente durante las carreras; no se llama a una API facturable.
 
-Se cubren cuerpo HTTP pendiente durante logout, resultado tardío del proveedor, cierre sin confirmar seguido de reaper con creación OFF, renovación antes y durante logout, rechazo de autoridad obsoleta, replay del JWT usado, aislamiento entre cuentas, expiración, bearer directo y caída de la comprobación posterior a crear. Esto no acredita un login Supabase real ni dispositivos físicos.
+Se cubren cuerpo HTTP pendiente durante logout, resultado tardío del proveedor, cierre sin confirmar seguido de reaper con creación OFF, renovación antes y durante logout, rechazo de autoridad obsoleta, replay del JWT usado, aislamiento entre cuentas, expiración, bearer directo y caída de la comprobación posterior a crear. El perfil Supabase se prueba con JWT firmado, un doble verificante de getUser y Redis real: rotación, logout y un piloto retirado que todavía puede cerrar pero no crear. Esto no acredita un login Supabase real ni dispositivos físicos.
 
 El CI guarda los logs completos de calidad y builds ON/OFF tanto en éxito como en fallo e incluye auditoría de todas las dependencias. El resultado local y el SHA de CI se registran en la descripción del PR. Un CI verde no autoriza fusionar, desplegar o activar flags.

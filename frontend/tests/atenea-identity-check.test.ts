@@ -131,3 +131,35 @@ test('closing during a session lookup cannot initiate late token renewal', async
   const pending = f.access.token(); const rejected = assert.rejects(pending);
   f.access.stop(); finish(); await rejected; assert.equal(f.counts().refreshed, 0);
 });
+
+test('cleanup configuration remains isolated after gates OFF, without authorizing new exchanges', () => {
+  const off = { ...env, ATENEA_STAGING_ACCESS_ENABLED: 'false', ATENEA_STAGING_AUTH_REVIEWED: 'false' };
+  assert.equal(stagingAuthConfig(off), null);
+  assert.ok(stagingAuthConfig(off, true));
+  assert.equal(stagingAuthConfig({ ...off, VERCEL_ENV: 'production', ATENEA_LOCAL_STAGING: 'true' }, true), null);
+  assert.equal(stagingAuthConfig({ ...off, ATENEA_STAGING_IDENTITY_PROVIDER: 'unknown' }, true), null);
+});
+test('SDK exchange uses same-origin HttpOnly transport, validates server expiry and never forwards credentials in a body', async () => {
+  const f = clientFixture(); let exchanges = 0;
+  const app = new StagingAccess(f.auth, async (input, init) => {
+    assert.equal(input, '/api/atenea-voz/access'); assert.equal(init?.method, 'POST');
+    assert.equal(init.credentials, 'same-origin'); assert.equal(init.cache, 'no-store'); assert.equal(init.redirect, 'error');
+    assert.equal(new Headers(init.headers).get('authorization'), 'Bearer original'); assert.equal('body' in init, false);
+    exchanges++; return Response.json({ authenticated: true, expiresAt: Date.now() + 60000 });
+  });
+  assert.ok(await app.establish()); assert.equal(exchanges, 1);
+  const failed = new StagingAccess(f.auth, async () => Response.json({ authenticated: true, expiresAt: Date.now() - 1 }));
+  await assert.rejects(failed.establish());
+});
+test('before audio the renewed provider token must cover 600 seconds plus closure margin', async () => {
+  const f = clientFixture(); let calls = 0;
+  const app = new StagingAccess(f.auth, async () => { calls++; return Response.json({ authenticated: true, expiresAt: Date.now() + 300000 }); });
+  // This SDK fixture can only obtain ten minutes: insufficient for the required 660 seconds.
+  await assert.rejects(app.establish(660)); assert.equal(calls, 0); assert.equal(f.counts().refreshed, 1);
+});
+test('leaving during the app exchange cannot authorize a late response', async () => {
+  const f = clientFixture(); let finish!: () => void;
+  const app = new StagingAccess(f.auth, () => new Promise(resolve => { finish = () => resolve(Response.json({ authenticated: true, expiresAt: Date.now() + 60000 })); }));
+  const pending = app.establish(); const rejected = assert.rejects(pending);
+  while (!finish) await Promise.resolve(); app.stop(); finish(); await rejected;
+});
