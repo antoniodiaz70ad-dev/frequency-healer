@@ -1,5 +1,5 @@
 {
-  "git": { "deploymentEnabled": { "codex/atenea-voz-mvp": false } },
+  "git": { "deploymentEnabled": { "codex/atenea-voz-mvp": false, "codex/next-security-16-4-3": false } },
   "env": {
     "NEXT_PUBLIC_VOICE_JOURNEY_ENABLED": "true",
     "NEXT_PUBLIC_HARMONIC_LAB_ENABLED": "true",
