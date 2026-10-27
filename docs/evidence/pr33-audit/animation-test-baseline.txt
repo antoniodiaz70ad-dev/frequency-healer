@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: cymatics navigation cancels every scheduled canvas animation frame
+not ok 1 - cymatics navigation cancels every scheduled canvas animation frame
+  ---
+  duration_ms: 9452.45612
+  location: '/tmp/fh-base/frontend/ui/cymatics-flow.test.mjs:10:1'
+  failureType: 'testCodeFailure'
+  error: 'page.waitForFunction: Timeout 5000ms exceeded.'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/tmp/fh-base/frontend/ui/cymatics-flow.test.mjs:29:14)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 9935.610129

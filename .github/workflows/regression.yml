@@ -18,8 +18,22 @@ jobs:
     name: Quality
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      ATENEA_TEST_REDIS_PORT: '6379'
     defaults:
       run:
+        # Explicit bash enables -eo pipefail: tee must not hide failing checks.
+        shell: bash
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +46,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: mkdir -p artifacts
+      - name: Install Redis test client
+        run: sudo apt-get update -qq && sudo apt-get install -y redis-tools
       - name: Unit and integration tests
         run: npm test 2>&1 | tee artifacts/tests.log
       - name: TypeScript
@@ -64,11 +80,13 @@ jobs:
       NEXT_PUBLIC_VOICE_JOURNEY_ENABLED: ${{ matrix.enabled }}
       NEXT_PUBLIC_HARMONIC_LAB_ENABLED: ${{ matrix.enabled }}
       VOICE_AI_ENABLED: 'false'
+      ATENEA_VOICE_ENABLED: ${{ matrix.enabled }}
       NEXT_TELEMETRY_DISABLED: '1'
       FH_UI_BROWSER: chromium
       FH_UI_ARTIFACTS_DIR: artifacts/ui
     defaults:
       run:
+        shell: bash
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
@@ -94,6 +112,16 @@ jobs:
         if: matrix.state == 'ON'
         timeout-minutes: 6
         run: npm run test:ui 2>&1 | tee artifacts/ui.log
+      - name: ATENEA disabled route and endpoint
+        if: matrix.state == 'OFF'
+        run: node --test ui/atenea-flow.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atenea-${{ matrix.state }}
+          path: frontend/artifacts/ui/atenea-*.png
+          retention-days: 7
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

@@ -1,0 +1,2 @@
+entry { pending: 8, calls: 122 }
+unmounted { pending: 4, calls: 314 }

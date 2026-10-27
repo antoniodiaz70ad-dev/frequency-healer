@@ -1,0 +1,11 @@
+✔ server flag and API fail closed, including cross-origin requests (733.570149ms)
+✔ local session, mic cleanup and privacy at 1280px (986.78671ms)
+✔ local session, mic cleanup and privacy at 390px (805.91629ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2940.63712

@@ -1,0 +1,64 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 test:ui
+> node --test --test-concurrency=1 ui/*.test.mjs
+
+TAP version 13
+# Subtest: server flag and API fail closed, including cross-origin requests
+ok 1 - server flag and API fail closed, including cross-origin requests
+  ---
+  duration_ms: 556.914215
+  ...
+# Subtest: local session, mic cleanup and privacy at 1280px
+ok 2 - local session, mic cleanup and privacy at 1280px
+  ---
+  duration_ms: 508.421732
+  ...
+# Subtest: local session, mic cleanup and privacy at 390px
+ok 3 - local session, mic cleanup and privacy at 390px
+  ---
+  duration_ms: 551.442468
+  ...
+# Subtest: Bentov complete entry is keyboard/mobile usable and starts no audio
+not ok 4 - Bentov complete entry is keyboard/mobile usable and starts no audio
+  ---
+  duration_ms: 31314.874918
+  location: '/workspace/scratch/50e0f753190b/frequency-healer/frontend/ui/bentov-flow.test.mjs:3:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    locator.waitFor: Timeout 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByText('10:00') to be visible[22m
+    
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/50e0f753190b/frequency-healer/frontend/ui/bentov-flow.test.mjs:3:1743)
+  ...
+# Subtest: cymatics navigation cancels every scheduled canvas animation frame
+not ok 5 - cymatics navigation cancels every scheduled canvas animation frame
+  ---
+  duration_ms: 8811.440103
+  location: '/workspace/scratch/50e0f753190b/frequency-healer/frontend/ui/cymatics-flow.test.mjs:10:1'
+  failureType: 'testCodeFailure'
+  error: 'page.waitForFunction: Timeout 5000ms exceeded.'
+  code: 'ERR_TEST_FAILURE'
+  name: 'TimeoutError'
+  stack: |-
+    TestContext.<anonymous> (/workspace/scratch/50e0f753190b/frequency-healer/frontend/ui/cymatics-flow.test.mjs:29:14)
+  ...
+# Subtest: cymatics route: generator parameters, independent binaural views and shared existing audio graph
+ok 6 - cymatics route: generator parameters, independent binaural views and shared existing audio graph
+  ---
+  duration_ms: 4363.206319
+  ...
+# Subtest: cymatics route: surface switch, A/B, explicit gallery save and reload
+ok 7 - cymatics route: surface switch, A/B, explicit gallery save and reload
+  ---
+  duration_ms: 19110.057759
+  ...
+# Subtest: cymatics resonance demo exposes three computed patterns, does not autoplay and preserves binaural separation
+ok 8 - cymatics resonance demo exposes three computed patterns, does not autoplay and preserves binaural separation
+  ---
+  duration_ms: 22261.095148
+  ...

@@ -1,0 +1,1547 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> frontend@0.1.0 test
+> tsc -p tsconfig.test.json && node --test .test-build/tests/*.test.js
+
+TAP version 13
+# Subtest: Adaptive zero evidence A/B/C: deterministic original order, absent summaries and no invented best
+ok 1 - Adaptive zero evidence A/B/C: deterministic original order, absent summaries and no invented best
+  ---
+  duration_ms: 66.670691
+  ...
+# Subtest: Adaptive 12,2,4: floor/imbalance precede promising mean
+ok 2 - Adaptive 12,2,4: floor/imbalance precede promising mean
+  ---
+  duration_ms: 29.915516
+  ...
+# Subtest: Adaptive 15,5,10: floor/imbalance precede promising mean
+ok 3 - Adaptive 15,5,10: floor/imbalance precede promising mean
+  ---
+  duration_ms: 29.249169
+  ...
+# Subtest: Adaptive 10,3: floor/imbalance precede promising mean
+ok 4 - Adaptive 10,3: floor/imbalance precede promising mean
+  ---
+  duration_ms: 12.821744
+  ...
+# Subtest: Balanced signal confirms Phase 2D best without changing its ranking; high variability can suggest another candidate
+ok 5 - Balanced signal confirms Phase 2D best without changing its ranking; high variability can suggest another candidate
+  ---
+  duration_ms: 35.551664
+  ...
+# Subtest: Variable current signal is explicitly confirmed; differing expectations receive uncertainty wording
+ok 6 - Variable current signal is explicitly confirmed; differing expectations receive uncertainty wording
+  ---
+  duration_ms: 35.446785
+  ...
+# Subtest: Missing pairs, explicit zero, cancellation/interruption and context mismatches stay separate
+ok 7 - Missing pairs, explicit zero, cancellation/interruption and context mismatches stay separate
+  ---
+  duration_ms: 15.480312
+  ...
+# Subtest: Invalid candidate, unsupported playback, medical framing and tampered policy cannot be suggested
+ok 8 - Invalid candidate, unsupported playback, medical framing and tampered policy cannot be suggested
+  ---
+  duration_ms: 36.859198
+  ...
+# Subtest: Active fixed plan and original assignment order never change; only completed eligible snapshots enter suggestion
+ok 9 - Active fixed plan and original assignment order never change; only completed eligible snapshots enter suggestion
+  ---
+  duration_ms: 29.20968
+  ...
+# Subtest: HIP/HCI is coverage only: high-HCI candidate never jumps original no-evidence priority; snapshots survive deletion
+ok 10 - HIP/HCI is coverage only: high-HCI candidate never jumps original no-evidence priority; snapshots survive deletion
+  ---
+  duration_ms: 61.652902
+  ...
+# Subtest: Accept or override: exact audit, export/reload, zero, no legacy writes and no compliance weighting
+ok 11 - Accept or override: exact audit, export/reload, zero, no legacy writes and no compliance weighting
+  ---
+  duration_ms: 111.305325
+  ...
+# Subtest: Additional results must match exact basis; duplicates and active records rejected; cancelled follow-ups do not increase N
+ok 12 - Additional results must match exact basis; duplicates and active records rejected; cancelled follow-ups do not increase N
+  ---
+  duration_ms: 34.10893
+  ...
+# Subtest: Corrupt audits, conflicting IDs, quota and concurrent mutation do not overwrite saved data
+ok 13 - Corrupt audits, conflicting IDs, quota and concurrent mutation do not overwrite saved data
+  ---
+  duration_ms: 54.229077
+  ...
+# Subtest: WebRTC listener order, SDP exchange, startup confirmation and restricted pause commands
+ok 14 - WebRTC listener order, SDP exchange, startup confirmation and restricted pause commands
+  ---
+  duration_ms: 33.281777
+  ...
+# Subtest: close stops microphone immediately and waits for remote confirmation before releasing peer
+ok 15 - close stops microphone immediately and waits for remote confirmation before releasing peer
+  ---
+  duration_ms: 2.204207
+  ...
+# Subtest: transcript fragments remain captions, never become final commands or consent
+ok 16 - transcript fragments remain captions, never become final commands or consent
+  ---
+  duration_ms: 5.274322
+  ...
+# Subtest: no consent or aborted startup cannot create a remote session
+ok 17 - no consent or aborted startup cannot create a remote session
+  ---
+  duration_ms: 0.584001
+  ...
+# Subtest: lost channel and failed backend closure report unconfirmed rather than successful finalization
+ok 18 - lost channel and failed backend closure report unconfirmed rather than successful finalization
+  ---
+  duration_ms: 1.793507
+  ...
+# Subtest: late successful create after cancellation is closed using the original reservation and identity
+ok 19 - late successful create after cancellation is closed using the original reservation and identity
+  ---
+  duration_ms: 2.831905
+  ...
+# Subtest: closing during ICE gathering cancels startup immediately without creating a billable session
+ok 20 - closing during ICE gathering cancels startup immediately without creating a billable session
+  ---
+  duration_ms: 1.127271
+  ...
+# Subtest: a channel closing during send still falls back to authenticated remote closure and frees resources
+ok 21 - a channel closing during send still falls back to authenticated remote closure and frees resources
+  ---
+  duration_ms: 0.907831
+  ...
+# Subtest: blocked remote playback closes the microphone and billable session instead of listening inaudibly
+ok 22 - blocked remote playback closes the microphone and billable session instead of listening inaudibly
+  ---
+  duration_ms: 1.05339
+  ...
+# Subtest: Redis Lua reservations serialize concurrent workers, reject replays, enforce owner and budget, retain unresolved close
+ok 23 - Redis Lua reservations serialize concurrent workers, reject replays, enforce owner and budget, retain unresolved close # SKIP
+  ---
+  duration_ms: 0.890263
+  ...
+# Subtest: real endpoint rejects disabled configuration, foreign origin, missing identity and oversized inputs without provider spend
+ok 24 - real endpoint rejects disabled configuration, foreign origin, missing identity and oversized inputs without provider spend
+  ---
+  duration_ms: 25.787365
+  ...
+# Subtest: input cannot choose model, URL, hosted delegation or reuse local simulation consent
+ok 25 - input cannot choose model, URL, hosted delegation or reuse local simulation consent
+  ---
+  duration_ms: 2.15971
+  ...
+# Subtest: concurrent creates and replay reserve exactly one billable session
+ok 26 - concurrent creates and replay reserve exactly one billable session
+  ---
+  duration_ms: 2.11976
+  ...
+# Subtest: ownership, confirmed close, idempotent close and daily reservation cap
+ok 27 - ownership, confirmed close, idempotent close and daily reservation cap
+  ---
+  duration_ms: 3.699184
+  ...
+# Subtest: ambiguous create and unconfirmed close keep persistent reservation, block new spending
+ok 28 - ambiguous create and unconfirmed close keep persistent reservation, block new spending
+  ---
+  duration_ms: 1.509919
+  ...
+# Subtest: durable store failure prevents provider creation; bind failure attempts remote cleanup
+ok 29 - durable store failure prevents provider creation; bind failure attempts remote cleanup
+  ---
+  duration_ms: 7.25434
+  ...
+# Subtest: cancel during quota reservation prevents provider spend; cancel during create closes a late session
+ok 30 - cancel during quota reservation prevents provider spend; cancel during create closes a late session
+  ---
+  duration_ms: 5.671661
+  ...
+# Subtest: emergency flag stops creation but does not prevent authenticated cleanup
+ok 31 - emergency flag stops creation but does not prevent authenticated cleanup
+  ---
+  duration_ms: 0.844295
+  ...
+# Subtest: watchdog requires its own credential and retries only sessions without confirmed close
+ok 32 - watchdog requires its own credential and retries only sessions without confirmed close
+  ---
+  duration_ms: 1.738744
+  ...
+# Subtest: provider request uses documented Live shape, restricts browser commands and strips response extras
+ok 33 - provider request uses documented Live shape, restricts browser commands and strips response extras
+  ---
+  duration_ms: 1.408086
+  ...
+# Subtest: signed identity enforces issuer, audience, expiry, scope, signature and pseudonymous subject
+ok 34 - signed identity enforces issuer, audience, expiry, scope, signature and pseudonymous subject
+  ---
+  duration_ms: 233.478394
+  ...
+# Subtest: server sideband closes only after session.closed, never treats socket loss as confirmation
+ok 35 - server sideband closes only after session.closed, never treats socket loss as confirmation
+  ---
+  duration_ms: 0.852787
+  ...
+# (node:34) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: no consent means no permission, connection or persistence
+ok 36 - no consent means no permission, connection or persistence
+  ---
+  duration_ms: 4.323416
+  ...
+# Subtest: all three modes start without microphone and close cleanly
+ok 37 - all three modes start without microphone and close cleanly
+  ---
+  duration_ms: 3.324158
+  ...
+# Subtest: double start does not request a second microphone
+ok 38 - double start does not request a second microphone
+  ---
+  duration_ms: 0.449539
+  ...
+# Subtest: late microphone permission after stop closes returned tracks
+ok 39 - late microphone permission after stop closes returned tracks
+  ---
+  duration_ms: 0.36422
+  ...
+# Subtest: microphone rejection is recoverable without microphone
+ok 40 - microphone rejection is recoverable without microphone
+  ---
+  duration_ms: 0.557431
+  ...
+# Subtest: pause mutes input, continue restores it, verbal end closes hardware
+ok 41 - pause mutes input, continue restores it, verbal end closes hardware
+  ---
+  duration_ms: 1.379953
+  ...
+# Subtest: explicit restart after ending while paused resets the adapter and consent
+ok 42 - explicit restart after ending while paused resets the adapter and consent
+  ---
+  duration_ms: 0.509409
+  ...
+# Subtest: 60 seconds of silence does not speak, disconnect or grant consent
+ok 43 - 60 seconds of silence does not speak, disconnect or grant consent
+  ---
+  duration_ms: 0.926228
+  ...
+# Subtest: speech immediately interrupts output; partial recognition never terminates
+ok 44 - speech immediately interrupts output; partial recognition never terminates
+  ---
+  duration_ms: 0.670883
+  ...
+# Subtest: disconnect and hardware loss close resources, require explicit restart
+ok 45 - disconnect and hardware loss close resources, require explicit restart
+  ---
+  duration_ms: 0.487185
+  ...
+# Subtest: pro requires explicit confirmation; per-session analysis budget is capped
+ok 46 - pro requires explicit confirmation; per-session analysis budget is capped
+  ---
+  duration_ms: 1.337388
+  ...
+# Subtest: late analysis cannot speak after termination
+ok 47 - late analysis cannot speak after termination
+  ---
+  duration_ms: 0.272632
+  ...
+# Subtest: silence cancels pending analysis rather than filling the pause with an answer
+ok 48 - silence cancels pending analysis rather than filling the pause with an answer
+  ---
+  duration_ms: 0.407435
+  ...
+# Subtest: only edited approved summary can be exported, no transcript; revoke clears it
+ok 49 - only edited approved summary can be exported, no transcript; revoke clears it
+  ---
+  duration_ms: 0.245501
+  ...
+# Subtest: hard duration cap closes mic without automatic reconnection
+ok 50 - hard duration cap closes mic without automatic reconnection
+  ---
+  duration_ms: 0.45044
+  ...
+# Subtest: late adapter events are ignored after close
+ok 51 - late adapter events are ignored after close
+  ---
+  duration_ms: 0.292201
+  ...
+# Subtest: server gate rejects flag off, foreign/missing origins, missing auth binding and anonymous users
+ok 52 - server gate rejects flag off, foreign/missing origins, missing auth binding and anonymous users
+  ---
+  duration_ms: 24.650859
+  ...
+# Subtest: browser context uses webkit fallback when standard AudioContext is unavailable
+ok 53 - browser context uses webkit fallback when standard AudioContext is unavailable
+  ---
+  duration_ms: 1.007561
+  ...
+# Subtest: resume cancellation cannot create a late graph
+ok 54 - resume cancellation cannot create a late graph
+  ---
+  duration_ms: 1.065028
+  ...
+# Subtest: audio clock schedule, stop cancels future nodes, callback A cannot finish B
+ok 55 - audio clock schedule, stop cancels future nodes, callback A cannot finish B
+  ---
+  duration_ms: 1.312141
+  ...
+# Subtest: duck is a separate factor, cancellation resolves wait and cannot restore audio
+ok 56 - duck is a separate factor, cancellation resolves wait and cannot restore audio
+  ---
+  duration_ms: 1.586124
+  ...
+# Subtest: normal completion disconnects/ closes context once, including previously ended steps
+ok 57 - normal completion disconnects/ closes context once, including previously ended steps
+  ---
+  duration_ms: 0.469328
+  ...
+# Subtest: resume rejection is recoverable
+ok 58 - resume rejection is recoverable
+  ---
+  duration_ms: 0.762551
+  ...
+# Subtest: suspended context that cannot become running is rejected instead of reporting playback
+ok 59 - suspended context that cannot become running is rejected instead of reporting playback
+  ---
+  duration_ms: 0.256567
+  ...
+# Subtest: 5+5 guide completes six full cycles per minute without retention
+ok 60 - 5+5 guide completes six full cycles per minute without retention
+  ---
+  duration_ms: 1.062503
+  ...
+# Subtest: protocol phases total ten active minutes and natural mode has no paced label
+ok 61 - protocol phases total ten active minutes and natural mode has no paced label
+  ---
+  duration_ms: 0.316378
+  ...
+# Subtest: 14 day schedule is fixed 4/3 then 3/4 and persists unchanged
+ok 62 - 14 day schedule is fixed 4/3 then 3/4 and persists unchanged
+  ---
+  duration_ms: 7.690999
+  ...
+# Subtest: zero is retained, null is excluded, and session save is idempotent
+ok 63 - zero is retained, null is excluded, and session save is idempotent
+  ---
+  duration_ms: 1.292441
+  ...
+# Subtest: stopped/interrupted and changed sessions remain visible but not comparable
+ok 64 - stopped/interrupted and changed sessions remain visible but not comparable
+  ---
+  duration_ms: 0.375516
+  ...
+# Subtest: corrupt payload is preserved and never overwritten
+ok 65 - corrupt payload is preserved and never overwritten
+  ---
+  duration_ms: 0.444701
+  ...
+# Subtest: capture never requests microphone at construction; one stream; release stops every track
+ok 66 - capture never requests microphone at construction; one stream; release stops every track
+  ---
+  duration_ms: 7.588774
+  ...
+# Subtest: late permission after cancellation closes stream and cannot start recorder
+ok 67 - late permission after cancellation closes stream and cannot start recorder
+  ---
+  duration_ms: 0.961041
+  ...
+# Subtest: cancel/error ends tracks, drops buffers and releases capture for another run
+ok 68 - cancel/error ends tracks, drops buffers and releases capture for another run
+  ---
+  duration_ms: 1.870053
+  ...
+# Subtest: mime, size and per-kind duration limits reject invalid audio
+ok 69 - mime, size and per-kind duration limits reject invalid audio
+  ---
+  duration_ms: 3.448375
+  ...
+# Subtest: denied permission and unavailable APIs are recoverable without recording
+ok 70 - denied permission and unavailable APIs are recoverable without recording
+  ---
+  duration_ms: 0.638274
+  ...
+# Subtest: all 41 historical frequency IDs and numeric values remain unchanged and classified
+ok 71 - all 41 historical frequency IDs and numeric values remain unchanged and classified
+  ---
+  duration_ms: 1.856923
+  ...
+# Subtest: all 15 historical protocols remain addressable with exact playback configurations and dispositions
+ok 72 - all 15 historical protocols remain addressable with exact playback configurations and dispositions
+  ---
+  duration_ms: 0.482068
+  ...
+# Subtest: deprecated legacy entries cannot resolve as core guided recommendations
+ok 73 - deprecated legacy entries cannot resolve as core guided recommendations
+  ---
+  duration_ms: 3.43191
+  ...
+# Subtest: commands are closed whole utterances; ambiguous phrases cannot reconfigure
+ok 74 - commands are closed whole utterances; ambiguous phrases cannot reconfigure
+  ---
+  duration_ms: 2.854389
+  ...
+# Subtest: visible volume adjustments clamp during active guided playback
+ok 75 - visible volume adjustments clamp during active guided playback
+  ---
+  duration_ms: 11.167497
+  ...
+# Subtest: orchestrator requires proposal and confirmation; commands record monotonic snapshots
+ok 76 - orchestrator requires proposal and confirmation; commands record monotonic snapshots
+  ---
+  duration_ms: 2.844313
+  ...
+# Subtest: experimental consent cannot be bypassed by a proposal boolean
+ok 77 - experimental consent cannot be bypassed by a proposal boolean
+  ---
+  duration_ms: 1.733626
+  ...
+# Subtest: confirmation rejects a stale evidence/provenance preview before audio
+ok 78 - confirmation rejects a stale evidence/provenance preview before audio
+  ---
+  duration_ms: 0.637192
+  ...
+# Subtest: builder: pure member add/remove/reorder, exact frequencies, multiplicity and signature semantics
+ok 79 - builder: pure member add/remove/reorder, exact frequencies, multiplicity and signature semantics
+  ---
+  duration_ms: 15.834622
+  ...
+# Subtest: builder: compiler rejects invalid seed, duplicate IDs, invalid octave/derived member and overlong name
+ok 80 - builder: compiler rejects invalid seed, duplicate IDs, invalid octave/derived member and overlong name
+  ---
+  duration_ms: 15.653053
+  ...
+# Subtest: builder: exact structural compatibility uses V1 adapter without approximating octave or unsupported ratios
+ok 81 - builder: exact structural compatibility uses V1 adapter without approximating octave or unsupported ratios
+  ---
+  duration_ms: 21.443337
+  ...
+# Subtest: constellation storage: explicit create/load roundtrip; duplicate IDs never replace; legacy keys untouched
+ok 82 - constellation storage: explicit create/load roundtrip; duplicate IDs never replace; legacy keys untouched
+  ---
+  duration_ms: 4.747958
+  ...
+# Subtest: constellation storage: invalid data, bad signatures, duplicate persisted IDs and races preserve original bytes
+ok 83 - constellation storage: invalid data, bad signatures, duplicate persisted IDs and races preserve original bytes
+  ---
+  duration_ms: 6.436596
+  ...
+# Subtest: builder: validation/status never access browser audio, storage or create experiments
+ok 84 - builder: validation/status never access browser audio, storage or create experiments
+  ---
+  duration_ms: 2.328595
+  ...
+# Subtest: constellation storage: serialized concurrent creates append; quota failure does not erase data
+ok 85 - constellation storage: serialized concurrent creates append; quota failure does not erase data
+  ---
+  duration_ms: 6.334742
+  ...
+# Subtest: constellation playback sequence: exact order/multiplicity and immutable V1 snapshot
+ok 86 - constellation playback sequence: exact order/multiplicity and immutable V1 snapshot
+  ---
+  duration_ms: 15.83023
+  ...
+# Subtest: constellation playback simultaneous: exact order/multiplicity and immutable V1 snapshot
+ok 87 - constellation playback simultaneous: exact order/multiplicity and immutable V1 snapshot
+  ---
+  duration_ms: 3.923587
+  ...
+# Subtest: constellation playback: all exact V1 ratios accepted; nine voices preserved
+ok 88 - constellation playback: all exact V1 ratios accepted; nine voices preserved
+  ---
+  duration_ms: 1.862381
+  ...
+# Subtest: constellation playback: no approximations, drops, malformed input or unsafe timing
+ok 89 - constellation playback: no approximations, drops, malformed input or unsafe timing
+  ---
+  duration_ms: 9.955937
+  ...
+# Subtest: V1 canonical feature and explanation labels remain present
+ok 90 - V1 canonical feature and explanation labels remain present
+  ---
+  duration_ms: 1.486834
+  ...
+# Subtest: V1 evidence taxonomy is closed and OBE framing remains exploratory
+ok 91 - V1 evidence taxonomy is closed and OBE framing remains exploratory
+  ---
+  duration_ms: 1.024106
+  ...
+# Subtest: HCI and legacy classification limitations remain intact
+ok 92 - HCI and legacy classification limitations remain intact
+  ---
+  duration_ms: 0.419493
+  ...
+# Subtest: active safety UI contains no guaranteed binaural or literal OBE mechanism
+ok 93 - active safety UI contains no guaranteed binaural or literal OBE mechanism
+  ---
+  duration_ms: 1.770372
+  ...
+# Subtest: pitch detector resolves 110 Hz within one percent
+ok 94 - pitch detector resolves 110 Hz within one percent
+  ---
+  duration_ms: 20.23925
+  ...
+# Subtest: pitch detector resolves 220 Hz within one percent
+ok 95 - pitch detector resolves 220 Hz within one percent
+  ---
+  duration_ms: 5.141782
+  ...
+# Subtest: pitch detector resolves 440 Hz within one percent
+ok 96 - pitch detector resolves 440 Hz within one percent
+  ---
+  duration_ms: 6.243103
+  ...
+# Subtest: pitch detector resolves 880 Hz within one percent
+ok 97 - pitch detector resolves 880 Hz within one percent
+  ---
+  duration_ms: 6.676908
+  ...
+# Subtest: pitch detector rejects silence and uncorrelated noise
+ok 98 - pitch detector rejects silence and uncorrelated noise
+  ---
+  duration_ms: 5.468695
+  ...
+# Subtest: guided cymatics timeline is exactly ten minutes and crosses steps deterministically
+ok 99 - guided cymatics timeline is exactly ten minutes and crosses steps deterministically
+  ---
+  duration_ms: 1.03962
+  ...
+# Subtest: guided cymatics pause, resume, skip and terminate are explicit
+ok 100 - guided cymatics pause, resume, skip and terminate are explicit
+  ---
+  duration_ms: 0.728219
+  ...
+# Subtest: radix-2 FFT rejects unsafe input and resolves a bin-centred tone in dBFS
+ok 101 - radix-2 FFT rejects unsafe input and resolves a bin-centred tone in dBFS
+  ---
+  duration_ms: 11.524786
+  ...
+# Subtest: spectrogram history is bounded and detached from source frames
+ok 102 - spectrogram history is bounded and detached from source frames
+  ---
+  duration_ms: 1.183246
+  ...
+# Subtest: square plate frequency follows formula and scaling
+ok 103 - square plate frequency follows formula and scaling
+  ---
+  duration_ms: 3.153861
+  ...
+# Subtest: default experiment uses the computed plate (2,2) resonance and a local RMS maximum
+ok 104 - default experiment uses the computed plate (2,2) resonance and a local RMS maximum
+  ---
+  duration_ms: 29.393628
+  ...
+# Subtest: verified Bessel roots are nodal and membrane scales with radius, tension and density
+ok 105 - verified Bessel roots are nodal and membrane scales with radius, tension and density
+  ---
+  duration_ms: 3.23271
+  ...
+# Subtest: membrane modal mass integrates the unnormalised Bessel mode over the physical disk
+ok 106 - membrane modal mass integrates the unnormalised Bessel mode over the physical disk
+  ---
+  duration_ms: 0.38474
+  ...
+# Subtest: membrane RMS uses only samples inside the physical circular domain
+ok 107 - membrane RMS uses only samples inside the physical circular domain
+  ---
+  duration_ms: 421.82887
+  ...
+# Subtest: degenerate membrane orientations, displaced excitation and finite damped field
+ok 108 - degenerate membrane orientations, displaced excitation and finite damped field
+  ---
+  duration_ms: 54.060191
+  ...
+# Subtest: complex field retains finite phase components whose magnitude equals displayed amplitude
+ok 109 - complex field retains finite phase components whose magnitude equals displayed amplitude
+  ---
+  duration_ms: 2.017806
+  ...
+# Subtest: field is deterministic, surface-dependent and invalid frequencies are rejected
+ok 110 - field is deterministic, surface-dependent and invalid frequencies are rejected
+  ---
+  duration_ms: 31.213014
+  ...
+# Subtest: three resonance demonstrations use exact computed modes with useful coupling and distinct fields
+ok 111 - three resonance demonstrations use exact computed modes with useful coupling and distinct fields
+  ---
+  duration_ms: 122.603109
+  ...
+# Subtest: particle integration is deterministic, finite, bounded and descends toward low amplitude in four illustrative seconds
+ok 112 - particle integration is deterministic, finite, bounded and descends toward low amplitude in four illustrative seconds
+  ---
+  duration_ms: 591.78417
+  ...
+# Subtest: sand kick threshold freezes grains and resonance settles at least sixty percent
+ok 113 - sand kick threshold freezes grains and resonance settles at least sixty percent
+  ---
+  duration_ms: 104.868293
+  ...
+# Subtest: sand remains deterministic and keeps positions when the field changes
+ok 114 - sand remains deterministic and keeps positions when the field changes
+  ---
+  duration_ms: 30.356431
+  ...
+# Subtest: scientific protocols are versioned, unique and separate controlled from measured variables
+ok 115 - scientific protocols are versioned, unique and separate controlled from measured variables
+  ---
+  duration_ms: 0.212381
+  ...
+# Subtest: V2 experiment stores immutable config and bounded spectral summary without raw audio
+ok 116 - V2 experiment stores immutable config and bounded spectral summary without raw audio
+  ---
+  duration_ms: 1.173281
+  ...
+# Subtest: V2 experiment storage appends explicitly and preserves corrupt bytes and V1 gallery namespace
+ok 117 - V2 experiment storage appends explicitly and preserves corrupt bytes and V1 gallery namespace
+  ---
+  duration_ms: 1.027431
+  ...
+# Subtest: gallery validates, roundtrips, preserves corrupt storage and rejects incompatible models
+ok 118 - gallery validates, roundtrips, preserves corrupt storage and rejects incompatible models
+  ---
+  duration_ms: 0.679776
+  ...
+# Subtest: journal remains optional, rejects invalid records without modifying gallery and CSV preserves punctuation
+ok 119 - journal remains optional, rejects invalid records without modifying gallery and CSV preserves punctuation
+  ---
+  duration_ms: 1.280393
+  ...
+# Subtest: cymatics validation rejects incomplete physics, inconsistent channels and unknown imported fields
+ok 120 - cymatics validation rejects incomplete physics, inconsistent channels and unknown imported fields
+  ---
+  duration_ms: 0.580246
+  ...
+# Subtest: response curve uses the same forced-response model and exposes a computed modal peak
+ok 121 - response curve uses the same forced-response model and exposes a computed modal peak
+  ---
+  duration_ms: 104.059852
+  ...
+# Subtest: ideal circular modes obey Bessel boundary, nodal counts, rotation invariance and physical scaling
+ok 122 - ideal circular modes obey Bessel boundary, nodal counts, rotation invariance and physical scaling
+  ---
+  duration_ms: 70.733429
+  ...
+# Subtest: ideal zero contours are empty for (0,1) and trace the diameters plus interior circle of (3,2)
+ok 123 - ideal zero contours are empty for (0,1) and trace the diameters plus interior circle of (3,2)
+  ---
+  duration_ms: 71.431053
+  ...
+# Subtest: nearest resonance ignores modes the excitation point barely drives and agrees with the response peak
+ok 124 - nearest resonance ignores modes the excitation point barely drives and agrees with the response peak
+  ---
+  duration_ms: 204.747646
+  ...
+# Subtest: mode map lists driven resonances in order, groups degenerate pairs and skips nearly nodal modes
+ok 125 - mode map lists driven resonances in order, groups degenerate pairs and skips nearly nodal modes
+  ---
+  duration_ms: 1.76275
+  ...
+# Subtest: explicit allowlist exports every owned namespace and never reads arbitrary storage
+ok 126 - explicit allowlist exports every owned namespace and never reads arbitrary storage
+  ---
+  duration_ms: 7.965324
+  ...
+# Subtest: valid voice-rules-v2 export retains mandatory Seed Selection provenance
+ok 127 - valid voice-rules-v2 export retains mandatory Seed Selection provenance
+  ---
+  duration_ms: 10.354669
+  ...
+# Subtest: corrupt owned payload is preserved byte-for-byte and marked invalid
+ok 128 - corrupt owned payload is preserved byte-for-byte and marked invalid
+  ---
+  duration_ms: 4.982862
+  ...
+# Subtest: verifier rejects content, declared validation, allowlist and provenance tampering
+ok 129 - verifier rejects content, declared validation, allowlist and provenance tampering
+  ---
+  duration_ms: 1.70284
+  ...
+# Subtest: generation and verification are read-only and export has no import surface
+ok 130 - generation and verification are read-only and export has no import surface
+  ---
+  duration_ms: 3.715453
+  ...
+# Subtest: legacy V1 export still verifies with its historical allowlist
+ok 131 - legacy V1 export still verifies with its historical allowlist
+  ---
+  duration_ms: 6.869309
+  ...
+# Subtest: Discovery creates validated immutable plans; seed/ratio/mode/order metadata preserved
+ok 132 - Discovery creates validated immutable plans; seed/ratio/mode/order metadata preserved
+  ---
+  duration_ms: 16.22401
+  ...
+# Subtest: Discovery rejects invalid candidates, confounds, duplicate architecture, metadata and order tampering
+ok 133 - Discovery rejects invalid candidates, confounds, duplicate architecture, metadata and order tampering
+  ---
+  duration_ms: 25.316124
+  ...
+# Subtest: Randomized balanced assignment is reproducible and balanced per block
+ok 134 - Randomized balanced assignment is reproducible and balanced per block
+  ---
+  duration_ms: 0.577923
+  ...
+# Subtest: Skip remains skipped, reserve before play, stale preview rejected and interruption never completed
+ok 135 - Skip remains skipped, reserve before play, stale preview rejected and interruption never completed
+  ---
+  duration_ms: 32.283791
+  ...
+# Subtest: Descriptive comparison N=3, exact context/pre/post/expectation and V2 identity
+ok 136 - Descriptive comparison N=3, exact context/pre/post/expectation and V2 identity
+  ---
+  duration_ms: 187.108646
+  ...
+# Subtest: Descriptive comparison N=5, exact context/pre/post/expectation and V2 identity
+ok 137 - Descriptive comparison N=5, exact context/pre/post/expectation and V2 identity
+  ---
+  duration_ms: 267.932782
+  ...
+# Subtest: Descriptive comparison N=10, exact context/pre/post/expectation and V2 identity
+ok 138 - Descriptive comparison N=10, exact context/pre/post/expectation and V2 identity
+  ---
+  duration_ms: 700.674653
+  ...
+# Subtest: Missing observations never become zero; cancelled excluded; mixed contexts are not pooled
+ok 139 - Missing observations never become zero; cancelled excluded; mixed contexts are not pooled
+  ---
+  duration_ms: 26.507296
+  ...
+# Subtest: Source rename/deletion does not rewrite saved plan; signatures/configuration tampering rejected
+ok 140 - Source rename/deletion does not rewrite saved plan; signatures/configuration tampering rejected
+  ---
+  duration_ms: 7.276803
+  ...
+# Subtest: Corrupted storage, duplicate IDs and concurrent stale writes preserve original bytes/legacy keys
+ok 141 - Corrupted storage, duplicate IDs and concurrent stale writes preserve original bytes/legacy keys
+  ---
+  duration_ms: 20.591933
+  ...
+# Subtest: Assignment result identity, lifecycle and config cannot be substituted
+ok 142 - Assignment result identity, lifecycle and config cannot be substituted
+  ---
+  duration_ms: 12.979646
+  ...
+# Subtest: Expectation association needs ten varying paired observations; never changes candidate order
+ok 143 - Expectation association needs ten varying paired observations; never changes candidate order
+  ---
+  duration_ms: 152.431534
+  ...
+# Subtest: Four paired observations remain exploratory; quotas and raw-storage races never overwrite
+ok 144 - Four paired observations remain exploratory; quotas and raw-storage races never overwrite
+  ---
+  duration_ms: 52.679376
+  ...
+# Subtest: V1 remains V1, loads unchanged and never mixes with V2 namespace
+ok 145 - V1 remains V1, loads unchanged and never mixes with V2 namespace
+  ---
+  duration_ms: 25.892358
+  ...
+# Subtest: V2 retains detached immutable identity, definition and exact acoustic snapshot before awaits
+ok 146 - V2 retains detached immutable identity, definition and exact acoustic snapshot before awaits
+  ---
+  duration_ms: 12.419151
+  ...
+# Subtest: V2 remains auditable if source is renamed, replaced or removed; export/reload exact
+ok 147 - V2 remains auditable if source is renamed, replaced or removed; export/reload exact
+  ---
+  duration_ms: 12.159104
+  ...
+# Subtest: V2 rejects corrupted identity, signature, definition, acoustic config and unknown fields
+ok 148 - V2 rejects corrupted identity, signature, definition, acoustic config and unknown fields
+  ---
+  duration_ms: 12.020924
+  ...
+# Subtest: V2 lifecycle reuses V1 rules; cancelled/interrupted never become completed
+ok 149 - V2 lifecycle reuses V1 rules; cancelled/interrupted never become completed
+  ---
+  duration_ms: 14.725788
+  ...
+# Subtest: V2 storage corruption and duplicate IDs never overwrite bytes; wrong version rejected
+ok 150 - V2 storage corruption and duplicate IDs never overwrite bytes; wrong version rejected
+  ---
+  duration_ms: 21.093008
+  ...
+# Subtest: V2 optional link stays absent; locked concurrent appends and quota failure preserve data
+ok 151 - V2 optional link stays absent; locked concurrent appends and quota failure preserve data
+  ---
+  duration_ms: 15.023813
+  ...
+# Subtest: experiment: exact detached frozen snapshot; missing ratings remain missing and zero survives
+ok 152 - experiment: exact detached frozen snapshot; missing ratings remain missing and zero survives
+  ---
+  duration_ms: 2.857474
+  ...
+# Subtest: experiment: strict runtime contract rejects malformed versions, nested values and impossible lifecycle
+ok 153 - experiment: strict runtime contract rejects malformed versions, nested values and impossible lifecycle
+  ---
+  duration_ms: 2.216906
+  ...
+# Subtest: experiment: completion, manual stop and lifecycle interruption remain distinct; late completion cannot relabel a terminal record
+ok 154 - experiment: completion, manual stop and lifecycle interruption remain distinct; late completion cannot relabel a terminal record
+  ---
+  duration_ms: 0.438763
+  ...
+# Subtest: experiment storage: explicit save only, reload/export roundtrip and append-only snapshot identity
+ok 155 - experiment storage: explicit save only, reload/export roundtrip and append-only snapshot identity
+  ---
+  duration_ms: 2.844314
+  ...
+# Subtest: experiment storage: corrupt/unknown payloads are preserved byte-for-byte, including foreign fields
+ok 156 - experiment storage: corrupt/unknown payloads are preserved byte-for-byte, including foreign fields
+  ---
+  duration_ms: 0.842321
+  ...
+# Subtest: experiment storage: quota, denied access and unavailable locks never pretend a save succeeded
+ok 157 - experiment storage: quota, denied access and unavailable locks never pretend a save succeeded
+  ---
+  duration_ms: 0.428016
+  ...
+# Subtest: experiment storage: concurrent saves preserve both records and racing payload changes are rejected
+ok 158 - experiment storage: concurrent saves preserve both records and racing payload changes are rejected
+  ---
+  duration_ms: 0.34416
+  ...
+# Subtest: experiment storage: actual legacy voice and OBE loaders return unchanged records and every legacy key is untouched
+ok 159 - experiment storage: actual legacy voice and OBE loaders return unchanged records and every legacy key is untouched
+  ---
+  duration_ms: 3.653305
+  ...
+# Subtest: experiment/audio: logging does not alter programmed tones/times; stop closes all nodes and pending duck timer
+ok 160 - experiment/audio: logging does not alter programmed tones/times; stop closes all nodes and pending duck timer
+  ---
+  duration_ms: 1.826957
+  ...
+# Subtest: experiment/audio: stop while resume is pending keeps the draft prepared and creates no late oscillators
+ok 161 - experiment/audio: stop while resume is pending keeps the draft prepared and creates no late oscillators
+  ---
+  duration_ms: 0.460245
+  ...
+# Subtest: experiment/audio: only natural engine completion assigns completedAt
+ok 162 - experiment/audio: only natural engine completion assigns completedAt
+  ---
+  duration_ms: 0.442268
+  ...
+# Subtest: guided intent: Quiero calma
+ok 163 - guided intent: Quiero calma
+  ---
+  duration_ms: 11.311254
+  ...
+# Subtest: guided intent: Necesito concentrarme
+ok 164 - guided intent: Necesito concentrarme
+  ---
+  duration_ms: 2.706225
+  ...
+# Subtest: guided intent: Quiero dormir mejor
+ok 165 - guided intent: Quiero dormir mejor
+  ---
+  duration_ms: 2.528727
+  ...
+# Subtest: guided intent: Quiero recuperarme después de una reunión
+ok 166 - guided intent: Quiero recuperarme después de una reunión
+  ---
+  duration_ms: 7.498479
+  ...
+# Subtest: guided intent: Quiero sentirme más centrado
+ok 167 - guided intent: Quiero sentirme más centrado
+  ---
+  duration_ms: 2.581577
+  ...
+# Subtest: guided intent: Quiero creatividad
+ok 168 - guided intent: Quiero creatividad
+  ---
+  duration_ms: 4.340352
+  ...
+# Subtest: guided intent: Quiero meditar
+ok 169 - guided intent: Quiero meditar
+  ---
+  duration_ms: 2.573704
+  ...
+# Subtest: guided intent: quiero evitar drenaje energético
+ok 170 - guided intent: quiero evitar drenaje energético
+  ---
+  duration_ms: 3.901338
+  ...
+# Subtest: guided intent: Me siento disperso
+ok 171 - guided intent: Me siento disperso
+  ---
+  duration_ms: 6.044333
+  ...
+# Subtest: guided intent: Estoy muy tenso
+ok 172 - guided intent: Estoy muy tenso
+  ---
+  duration_ms: 5.478069
+  ...
+# Subtest: guided evidence N=0
+ok 173 - guided evidence N=0
+  ---
+  duration_ms: 0.852377
+  ...
+# Subtest: guided evidence N=4
+ok 174 - guided evidence N=4
+  ---
+  duration_ms: 8.328701
+  ...
+# Subtest: guided evidence N=5
+ok 175 - guided evidence N=5
+  ---
+  duration_ms: 3.732415
+  ...
+# Subtest: guided evidence N=9
+ok 176 - guided evidence N=9
+  ---
+  duration_ms: 5.426331
+  ...
+# Subtest: guided evidence N=10
+ok 177 - guided evidence N=10
+  ---
+  duration_ms: 5.552391
+  ...
+# Subtest: guided evidence N=12
+ok 178 - guided evidence N=12
+  ---
+  duration_ms: 8.310794
+  ...
+# Subtest: guided comparability: exact config, complete outcomes, completion, commands and corruption
+ok 179 - guided comparability: exact config, complete outcomes, completion, commands and corruption
+  ---
+  duration_ms: 2.816121
+  ...
+# Subtest: guided correction, boundaries and confirmation reject injected executable output
+ok 180 - guided correction, boundaries and confirmation reject injected executable output
+  ---
+  duration_ms: 5.451659
+  ...
+# Subtest: canonical intent parser maps recovery and energy-drain phrases consistently across /voz and guided flow
+ok 181 - canonical intent parser maps recovery and energy-drain phrases consistently across /voz and guided flow
+  ---
+  duration_ms: 0.39767
+  ...
+# Subtest: unknown guided intent stays custom and requires review instead of silent focus or creative mapping
+ok 182 - unknown guided intent stays custom and requires review instead of silent focus or creative mapping
+  ---
+  duration_ms: 0.113892
+  ...
+# Subtest: new guided proposals use voice-rules-v2 while legacy v1 records remain valid
+ok 183 - new guided proposals use voice-rules-v2 while legacy v1 records remain valid
+  ---
+  duration_ms: 0.391301
+  ...
+# Subtest: new session creation path does not import or call buildLegacyProposal
+ok 184 - new session creation path does not import or call buildLegacyProposal
+  ---
+  duration_ms: 0.254114
+  ...
+# Subtest: adapter: all named intervals, modes and V1 boundary settings retain exact frequencies and schedule
+ok 185 - adapter: all named intervals, modes and V1 boundary settings retain exact frequencies and schedule
+  ---
+  duration_ms: 373.380851
+  ...
+# Subtest: adapter: explicit progression order, omitted seed and repeated voices are never reinterpreted
+ok 186 - adapter: explicit progression order, omitted seed and repeated voices are never reinterpreted
+  ---
+  duration_ms: 11.326046
+  ...
+# Subtest: adapter: deterministic snapshot cannot be changed by input mutation while SHA-256 runs
+ok 187 - adapter: deterministic snapshot cannot be changed by input mutation while SHA-256 runs
+  ---
+  duration_ms: 3.151978
+  ...
+# Subtest: adapter: constellation signature is not a playback fingerprint; timing and gain remain separate
+ok 188 - adapter: constellation signature is not a playback fingerprint; timing and gain remain separate
+  ---
+  duration_ms: 0.791434
+  ...
+# Subtest: adapter: valid cascades explicitly unsupported in every mode/direction; never approximated
+ok 189 - adapter: valid cascades explicitly unsupported in every mode/direction; never approximated
+  ---
+  duration_ms: 0.487666
+  ...
+# Subtest: adapter: invalid and unknown fields are rejected without coercion or partial conversion
+ok 190 - adapter: invalid and unknown fields are rejected without coercion or partial conversion
+  ---
+  duration_ms: 0.853518
+  ...
+# Subtest: adapter: no browser storage or audio capability is read or written
+ok 191 - adapter: no browser storage or audio capability is read or written
+  ---
+  duration_ms: 0.84172
+  ...
+# Subtest: inverse: exact full-config roundtrip for all five intervals, both modes and preserved session fields
+ok 192 - inverse: exact full-config roundtrip for all five intervals, both modes and preserved session fields
+  ---
+  duration_ms: 347.040055
+  ...
+# Subtest: apply: every authorized relationship changes only ratioId; select never mutates input
+ok 193 - apply: every authorized relationship changes only ratioId; select never mutates input
+  ---
+  duration_ms: 16.798136
+  ...
+# Subtest: inverse: explicit existing progression roundtrips but may not be replaced, reordered or extended
+ok 194 - inverse: explicit existing progression roundtrips but may not be replaced, reordered or extended
+  ---
+  duration_ms: 12.721042
+  ...
+# Subtest: inverse: never applies arbitrary/custom constellations, octaves, renamed IDs, extra members, seed or mode changes
+ok 195 - inverse: never applies arbitrary/custom constellations, octaves, renamed IDs, extra members, seed or mode changes
+  ---
+  duration_ms: 3.248123
+  ...
+# Subtest: apply: unsupported relationships and cascade context are explicit; no approximations or inferred defaults
+ok 196 - apply: unsupported relationships and cascade context are explicit; no approximations or inferred defaults
+  ---
+  duration_ms: 5.726764
+  ...
+# Subtest: inverse: snapshots both inputs before async validation, preserving explicit context instead of guessing from signature
+ok 197 - inverse: snapshots both inputs before async validation, preserving explicit context instead of guessing from signature
+  ---
+  duration_ms: 2.013038
+  ...
+# Subtest: apply → ordinary Phase 1A confirmation snapshot → explicit save preserves the applied config without schema changes
+ok 198 - apply → ordinary Phase 1A confirmation snapshot → explicit save preserves the applied config without schema changes
+  ---
+  duration_ms: 2.245059
+  ...
+# Subtest: inverse: altered valid seed/mode and new voices cannot escape the supplied context
+ok 199 - inverse: altered valid seed/mode and new voices cannot escape the supplied context
+  ---
+  duration_ms: 1.181834
+  ...
+# Subtest: apply: pure bridge never reads browser storage or constructs audio
+ok 200 - apply: pure bridge never reads browser storage or constructs audio
+  ---
+  duration_ms: 1.469188
+  ...
+# Subtest: octaves: exact 432 Hz examples, integer offsets and authoritative bounds without folding
+ok 201 - octaves: exact 432 Hz examples, integer offsets and authoritative bounds without folding
+  ---
+  duration_ms: 2.316727
+  ...
+# Subtest: ratios: exact examples and unchanged named V1 frequencies across seeds
+ok 202 - ratios: exact examples and unchanged named V1 frequencies across seeds
+  ---
+  duration_ms: 0.83454
+  ...
+# Subtest: ratio canonicalization: exact equivalence, without approximating decimals to familiar ratios
+ok 203 - ratio canonicalization: exact equivalence, without approximating decimals to familiar ratios
+  ---
+  duration_ms: 0.558643
+  ...
+# Subtest: compiler: reproducible frozen data only, with explicit ordered member IDs
+ok 204 - compiler: reproducible frozen data only, with explicit ordered member IDs
+  ---
+  duration_ms: 13.375089
+  ...
+# Subtest: signature: names, ratio labels and user IDs are not mathematical identity
+ok 205 - signature: names, ratio labels and user IDs are not mathematical identity
+  ---
+  duration_ms: 2.253712
+  ...
+# Subtest: signature: equivalent ratio fractions and root/octave/ratio representations share identity
+ok 206 - signature: equivalent ratio fractions and root/octave/ratio representations share identity
+  ---
+  duration_ms: 7.083733
+  ...
+# Subtest: signature: seed, ratio, octave, mode and sequential order affect identity
+ok 207 - signature: seed, ratio, octave, mode and sequential order affect identity
+  ---
+  duration_ms: 4.720154
+  ...
+# Subtest: signature: conventional SHA-256 of documented canonical tuple
+ok 208 - signature: conventional SHA-256 of documented canonical tuple
+  ---
+  duration_ms: 1.729591
+  ...
+# Subtest: duplicates: IDs must be unique, mathematical repetitions are retained and affect signature
+ok 209 - duplicates: IDs must be unique, mathematical repetitions are retained and affect signature
+  ---
+  duration_ms: 1.68336
+  ...
+# Subtest: compiler runtime rejects malformed, ambiguous and out-of-range inputs without coercion
+ok 210 - compiler runtime rejects malformed, ambiguous and out-of-range inputs without coercion
+  ---
+  duration_ms: 2.979548
+  ...
+# Subtest: snapshot validation recomputes frequencies/signature/order; unknown generation cannot be reinterpreted
+ok 211 - snapshot validation recomputes frequencies/signature/order; unknown generation cannot be reinterpreted
+  ---
+  duration_ms: 2.134362
+  ...
+# Subtest: harmonic transfer preserves exact identity, order, multiplicity and frequencies
+ok 212 - harmonic transfer preserves exact identity, order, multiplicity and frequencies
+  ---
+  duration_ms: 9.331946
+  ...
+# Subtest: transfer validates the constellation instead of accepting altered derived data
+ok 213 - transfer validates the constellation instead of accepting altered derived data
+  ---
+  duration_ms: 2.138277
+  ...
+# Subtest: member selection is explicit, ordered and limited to A/B
+ok 214 - member selection is explicit, ordered and limited to A/B
+  ---
+  duration_ms: 2.247513
+  ...
+# Subtest: explorer: exact 432 Hz octaves and read-only ratio set
+ok 215 - explorer: exact 432 Hz octaves and read-only ratio set
+  ---
+  duration_ms: 2.097867
+  ...
+# Subtest: explorer: boundary seeds omit out-of-range values and preserve unrounded results
+ok 216 - explorer: boundary seeds omit out-of-range values and preserve unrounded results
+  ---
+  duration_ms: 5.218747
+  ...
+# Subtest: explorer: invalid seeds fail without clamping or invented zero values
+ok 217 - explorer: invalid seeds fail without clamping or invented zero values
+  ---
+  duration_ms: 0.317269
+  ...
+# Subtest: HIP single tone and HCI zero; explicit version, no invented octave relationships
+ok 218 - HIP single tone and HCI zero; explicit version, no invented octave relationships
+  ---
+  duration_ms: 12.623581
+  ...
+# Subtest: HIP examples A/B/C: exact members, ratio diversity, explicit octave, bounded explainable HCI
+ok 219 - HIP examples A/B/C: exact members, ratio diversity, explicit octave, bounded explainable HCI
+  ---
+  duration_ms: 6.122492
+  ...
+# Subtest: HIP duplicate occurrences preserved; exact relationship equivalents do not inflate diversity
+ok 220 - HIP duplicate occurrences preserved; exact relationship equivalents do not inflate diversity
+  ---
+  duration_ms: 2.70933
+  ...
+# Subtest: Explicit octaves and ratio powers agree in HCI without relabeling stored member types
+ok 221 - Explicit octaves and ratio powers agree in HCI without relabeling stored member types
+  ---
+  duration_ms: 1.273832
+  ...
+# Subtest: Sequence adjacency affects HCI deliberately; simultaneous permutations and names never do
+ok 222 - Sequence adjacency affects HCI deliberately; simultaneous permutations and names never do
+  ---
+  duration_ms: 8.108909
+  ...
+# Subtest: Legacy progression/cascade use exact schedule occurrences, including return repeats
+ok 223 - Legacy progression/cascade use exact schedule occurrences, including return repeats
+  ---
+  duration_ms: 1.529028
+  ...
+# Subtest: HCI is deterministic and outcome-independent; duration/volume/name are not score inputs; source bytes unchanged
+ok 224 - HCI is deterministic and outcome-independent; duration/volume/name are not score inputs; source bytes unchanged
+  ---
+  duration_ms: 2.488266
+  ...
+# Subtest: Structural N=0: same eligible population, guarded association, seed strata and unchanged ranking
+ok 225 - Structural N=0: same eligible population, guarded association, seed strata and unchanged ranking
+  ---
+  duration_ms: 40.404063
+  ...
+# Subtest: Structural N=4: same eligible population, guarded association, seed strata and unchanged ranking
+ok 226 - Structural N=4: same eligible population, guarded association, seed strata and unchanged ranking
+  ---
+  duration_ms: 26.439003
+  ...
+# Subtest: Structural N=5: same eligible population, guarded association, seed strata and unchanged ranking
+ok 227 - Structural N=5: same eligible population, guarded association, seed strata and unchanged ranking
+  ---
+  duration_ms: 29.394666
+  ...
+# Subtest: Structural N=9: same eligible population, guarded association, seed strata and unchanged ranking
+ok 228 - Structural N=9: same eligible population, guarded association, seed strata and unchanged ranking
+  ---
+  duration_ms: 22.301723
+  ...
+# Subtest: Structural N=10: same eligible population, guarded association, seed strata and unchanged ranking
+ok 229 - Structural N=10: same eligible population, guarded association, seed strata and unchanged ranking
+  ---
+  duration_ms: 29.518516
+  ...
+# Subtest: Structural N=20: same eligible population, guarded association, seed strata and unchanged ranking
+ok 230 - Structural N=20: same eligible population, guarded association, seed strata and unchanged ranking
+  ---
+  duration_ms: 47.22584
+  ...
+# Subtest: Structural missing/zero/cancelled/interrupted/context exclusions match Phase 2D exactly
+ok 231 - Structural missing/zero/cancelled/interrupted/context exclusions match Phase 2D exactly
+  ---
+  duration_ms: 19.187132
+  ...
+# Subtest: Matched seed structural groups retain confounders, exact profiles and observation provenance
+ok 232 - Matched seed structural groups retain confounders, exact profiles and observation provenance
+  ---
+  duration_ms: 322.797612
+  ...
+# Subtest: exact rational intervals and cascade precision / counts
+ok 233 - exact rational intervals and cascade precision / counts
+  ---
+  duration_ms: 1.122684
+  ...
+# Subtest: reject out of range, invalid modes, counts and non-finite values without clamping
+ok 234 - reject out of range, invalid modes, counts and non-finite values without clamping
+  ---
+  duration_ms: 0.70863
+  ...
+# Subtest: schedule accounts for exact total duration and voice normalization
+ok 235 - schedule accounts for exact total duration and voice normalization
+  ---
+  duration_ms: 0.882763
+  ...
+# Subtest: legacy API regression: tone, 432, binaural, coils, chords, noise and destroy
+ok 236 - legacy API regression: tone, 432, binaural, coils, chords, noise and destroy
+  ---
+  duration_ms: 4.032426
+  ...
+# Subtest: atlas-style stop ramps gain to zero before oscillator shutdown
+ok 237 - atlas-style stop ramps gain to zero before oscillator shutdown
+  ---
+  duration_ms: 21.708368
+  ...
+# Subtest: legacy engine unlocks suspended WebKit audio before playback
+ok 238 - legacy engine unlocks suspended WebKit audio before playback
+  ---
+  duration_ms: 0.640086
+  ...
+# Subtest: detects iOS-like browsers without marking Android as iOS
+ok 239 - detects iOS-like browsers without marking Android as iOS
+  ---
+  duration_ms: 1.016685
+  ...
+# Subtest: renders guided harmonic config to a WAV blob from the existing schedule
+ok 240 - renders guided harmonic config to a WAV blob from the existing schedule
+  ---
+  duration_ms: 24.442424
+  ...
+# Subtest: rejects iPhone media rendering above the V1 background duration limit
+ok 241 - rejects iPhone media rendering above the V1 background duration limit
+  ---
+  duration_ms: 0.47693
+  ...
+# Subtest: renders iPhone cymatics audio as stereo WAV with distinct binaural channels
+ok 242 - renders iPhone cymatics audio as stereo WAV with distinct binaural channels
+  ---
+  duration_ms: 71.200154
+  ...
+# Subtest: iPhone cymatics stop cannot be undone by a pending media play promise
+ok 243 - iPhone cymatics stop cannot be undone by a pending media play promise
+  ---
+  duration_ms: 49.918719
+  ...
+# Subtest: native speech support detects webkitSpeechRecognition and returns transcript
+ok 244 - native speech support detects webkitSpeechRecognition and returns transcript
+  ---
+  duration_ms: 2.26599
+  ...
+# Subtest: native speech abort is recoverable and empty speech is rejected
+ok 245 - native speech abort is recoverable and empty speech is rejected
+  ---
+  duration_ms: 1.146651
+  ...
+# Subtest: OBE card identity, ordering, commands and phase sequence remain frozen
+ok 246 - OBE card identity, ordering, commands and phase sequence remain frozen
+  ---
+  duration_ms: 1.463699
+  ...
+# Subtest: OBE operational timing remains present while unsupported mechanisms are not asserted
+ok 247 - OBE operational timing remains present while unsupported mechanisms are not asserted
+  ---
+  duration_ms: 0.358782
+  ...
+# Subtest: every OBE card states an action, a use moment and a neutral purpose
+ok 248 - every OBE card states an action, a use moment and a neutral purpose
+  ---
+  duration_ms: 0.25202
+  ...
+# Subtest: OBE routes and subjective-purpose presentation remain available
+ok 249 - OBE routes and subjective-purpose presentation remain available
+  ---
+  duration_ms: 1.420404
+  ...
+# Subtest: legacy OBE diary records remain readable without schema mutation
+ok 250 - legacy OBE diary records remain readable without schema mutation
+  ---
+  duration_ms: 0.365191
+  ...
+# Subtest: OBE acoustic preset values remain frozen
+ok 251 - OBE acoustic preset values remain frozen
+  ---
+  duration_ms: 0.219101
+  ...
+# Subtest: octave apply: every explorer offset is exact, including boundaries and fractional seeds
+ok 252 - octave apply: every explorer offset is exact, including boundaries and fractional seeds
+  ---
+  duration_ms: 5.657734
+  ...
+# Subtest: octave apply: rejects invalid offsets, inputs, bounds and whole-session derived overflow without correcting
+ok 253 - octave apply: rejects invalid offsets, inputs, bounds and whole-session derived overflow without correcting
+  ---
+  duration_ms: 0.626786
+  ...
+# Subtest: octave apply: preserves every other field, progression and exact cascade semantics in both modes
+ok 254 - octave apply: preserves every other field, progression and exact cascade semantics in both modes
+  ---
+  duration_ms: 1.024036
+  ...
+# Subtest: octave and Phase 1D ratio apply commute for all supported ratios and modes where both are valid
+ok 255 - octave and Phase 1D ratio apply commute for all supported ratios and modes where both are valid
+  ---
+  duration_ms: 159.47878
+  ...
+# Subtest: octave apply: no storage/audio effects; existing experiment snapshot and explicit save use only existing namespace
+ok 256 - octave apply: no storage/audio effects; existing experiment snapshot and explicit save use only existing namespace
+  ---
+  duration_ms: 2.732395
+  ...
+# Subtest: Personalization N=0: deterministic thresholds, provenance, no mutation
+ok 257 - Personalization N=0: deterministic thresholds, provenance, no mutation
+  ---
+  duration_ms: 43.606252
+  ...
+# Subtest: Personalization N=4: deterministic thresholds, provenance, no mutation
+ok 258 - Personalization N=4: deterministic thresholds, provenance, no mutation
+  ---
+  duration_ms: 26.545138
+  ...
+# Subtest: Personalization N=5: deterministic thresholds, provenance, no mutation
+ok 259 - Personalization N=5: deterministic thresholds, provenance, no mutation
+  ---
+  duration_ms: 21.143145
+  ...
+# Subtest: Personalization N=9: deterministic thresholds, provenance, no mutation
+ok 260 - Personalization N=9: deterministic thresholds, provenance, no mutation
+  ---
+  duration_ms: 26.973145
+  ...
+# Subtest: Personalization N=10: deterministic thresholds, provenance, no mutation
+ok 261 - Personalization N=10: deterministic thresholds, provenance, no mutation
+  ---
+  duration_ms: 21.45134
+  ...
+# Subtest: Personalization N=20: deterministic thresholds, provenance, no mutation
+ok 262 - Personalization N=20: deterministic thresholds, provenance, no mutation
+  ---
+  duration_ms: 30.5407
+  ...
+# Subtest: Missing/zero/cancelled/interrupted/context exclusions never broaden comparability
+ok 263 - Missing/zero/cancelled/interrupted/context exclusions never broaden comparability
+  ---
+  duration_ms: 24.839754
+  ...
+# Subtest: Expectation gap is surfaced and prevents ordering, never enters score
+ok 264 - Expectation gap is surfaced and prevents ordering, never enters score
+  ---
+  duration_ms: 16.163553
+  ...
+# Subtest: Median and consistency stop an extreme session dominating repeated positive responses
+ok 265 - Median and consistency stop an extreme session dominating repeated positive responses
+  ---
+  duration_ms: 16.080973
+  ...
+# Subtest: Tension is inverse; primary metric alone determines score, negative outcomes get no positive priority
+ok 266 - Tension is inverse; primary metric alone determines score, negative outcomes get no positive priority
+  ---
+  duration_ms: 23.495867
+  ...
+# Subtest: Changed comparable evidence produces explained order change; ties keep original order
+ok 267 - Changed comparable evidence produces explained order change; ties keep original order
+  ---
+  duration_ms: 26.236683
+  ...
+# Subtest: Invalid candidate/evidence/score rejected; active or different intent/set not pooled; no duplicate N
+ok 268 - Invalid candidate/evidence/score rejected; active or different intent/set not pooled; no duplicate N
+  ---
+  duration_ms: 46.662009
+  ...
+# Subtest: Constellation identity survives absent source; either choice saves auditable V2 without legacy writes
+ok 269 - Constellation identity survives absent source; either choice saves auditable V2 without legacy writes
+  ---
+  duration_ms: 213.669684
+  ...
+# Subtest: Corrupt personalized history preserved; conflicting IDs and quota errors never overwrite
+ok 270 - Corrupt personalized history preserved; conflicting IDs and quota errors never overwrite
+  ---
+  duration_ms: 32.04774
+  ...
+# Subtest: Focus ranking uses focus alone; secondary energy cannot redefine the reviewed metric
+ok 271 - Focus ranking uses focus alone; secondary energy cannot redefine the reviewed metric
+  ---
+  duration_ms: 9.119184
+  ...
+# Subtest: playback wake lock detection is explicit and safe when unsupported
+ok 272 - playback wake lock detection is explicit and safe when unsupported
+  ---
+  duration_ms: 0.948762
+  ...
+# Subtest: playback wake lock requests only screen locks and returns the sentinel
+ok 273 - playback wake lock requests only screen locks and returns the sentinel
+  ---
+  duration_ms: 0.845456
+  ...
+# Subtest: mobile playback surfaces no longer stop sessions merely because document becomes hidden
+ok 274 - mobile playback surfaces no longer stop sessions merely because document becomes hidden
+  ---
+  duration_ms: 1.883653
+  ...
+# Subtest: canonical library has unique IDs, valid taxonomy and documented seed/evidence bases
+ok 275 - canonical library has unique IDs, valid taxonomy and documented seed/evidence bases
+  ---
+  duration_ms: 0.760278
+  ...
+# Subtest: every current voice rule resolves to one canonical protocol without changing proposals
+ok 276 - every current voice rule resolves to one canonical protocol without changing proposals
+  ---
+  duration_ms: 12.528691
+  ...
+# Subtest: active protocols only reference executable current rule IDs and exploratory rules stay labeled
+ok 277 - active protocols only reference executable current rule IDs and exploratory rules stay labeled
+  ---
+  duration_ms: 3.277457
+  ...
+# Subtest: legacy protocol IDs remain readable and are not duplicated by the canonical guided registry
+ok 278 - legacy protocol IDs remain readable and are not duplicated by the canonical guided registry
+  ---
+  duration_ms: 0.413844
+  ...
+# Subtest: 2B explanation comes from exact existing rule: Quiero calma
+ok 279 - 2B explanation comes from exact existing rule: Quiero calma
+  ---
+  duration_ms: 8.011753
+  ...
+# Subtest: 2B explanation comes from exact existing rule: Necesito concentrarme
+ok 280 - 2B explanation comes from exact existing rule: Necesito concentrarme
+  ---
+  duration_ms: 2.548167
+  ...
+# Subtest: 2B explanation comes from exact existing rule: Quiero dormir
+ok 281 - 2B explanation comes from exact existing rule: Quiero dormir
+  ---
+  duration_ms: 1.579354
+  ...
+# Subtest: 2B explanation comes from exact existing rule: Necesito recuperarme
+ok 282 - 2B explanation comes from exact existing rule: Necesito recuperarme
+  ---
+  duration_ms: 1.928832
+  ...
+# Subtest: 2B explanation comes from exact existing rule: Quiero sentirme centrado
+ok 283 - 2B explanation comes from exact existing rule: Quiero sentirme centrado
+  ---
+  duration_ms: 2.37799
+  ...
+# Subtest: 2B explanation comes from exact existing rule: Quiero creatividad
+ok 284 - 2B explanation comes from exact existing rule: Quiero creatividad
+  ---
+  duration_ms: 2.561396
+  ...
+# Subtest: 2B explanation comes from exact existing rule: Quiero meditar
+ok 285 - 2B explanation comes from exact existing rule: Quiero meditar
+  ---
+  duration_ms: 2.061392
+  ...
+# Subtest: 2B explanation comes from exact existing rule: Quiero evitar drenaje energético
+ok 286 - 2B explanation comes from exact existing rule: Quiero evitar drenaje energético
+  ---
+  duration_ms: 1.867629
+  ...
+# Subtest: 2B exact custom Voice rationale preserves config and multiplicity, with no invented scientific attribution
+ok 287 - 2B exact custom Voice rationale preserves config and multiplicity, with no invented scientific attribution
+  ---
+  duration_ms: 1.211178
+  ...
+# Subtest: 2B explanation/rule/schedule tampering rejected before confirmation
+ok 288 - 2B explanation/rule/schedule tampering rejected before confirmation
+  ---
+  duration_ms: 3.671913
+  ...
+# Subtest: 2B V2 saved constellation path remains independently auditable; legacy guide never fabricates a link
+ok 289 - 2B V2 saved constellation path remains independently auditable; legacy guide never fabricates a link
+  ---
+  duration_ms: 18.591353
+  ...
+# Subtest: registry V1 is exact, independent and every seed supports all current goal/intensity schedules
+ok 290 - registry V1 is exact, independent and every seed supports all current goal/intensity schedules
+  ---
+  duration_ms: 17.145831
+  ...
+# Subtest: all guided goal/intensity selections are pinned and progression-specific
+ok 291 - all guided goal/intensity selections are pinned and progression-specific
+  ---
+  duration_ms: 8.325997
+  ...
+# Subtest: 0.10-octave structural tier gates evidence; preliminary displays only and descriptive can reorder within tier
+ok 292 - 0.10-octave structural tier gates evidence; preliminary displays only and descriptive can reorder within tier
+  ---
+  duration_ms: 7.104824
+  ...
+# Subtest: full schedule gates custom lower/upper/cascade failures without clamp and preserves simultaneous limits
+ok 293 - full schedule gates custom lower/upper/cascade failures without clamp and preserves simultaneous limits
+  ---
+  duration_ms: 0.638604
+  ...
+# Subtest: V2 identity includes policy versions even for same seed; tampering rejected; V1 remains readable
+ok 294 - V2 identity includes policy versions even for same seed; tampering rejected; V1 remains readable
+  ---
+  duration_ms: 1.256537
+  ...
+# Subtest: historical folklore values never enter the registry or ranking inputs
+ok 295 - historical folklore values never enter the registry or ranking inputs
+  ---
+  duration_ms: 0.532063
+  ...
+# Subtest: origin uses routed Host behind Next proxy and rejects unrelated/missing/unsafe origins
+ok 296 - origin uses routed Host behind Next proxy and rejects unrelated/missing/unsafe origins
+  ---
+  duration_ms: 27.745221
+  ...
+# Subtest: streaming body limits enforce byte ceiling even without Content-Length
+ok 297 - streaming body limits enforce byte ceiling even without Content-Length
+  ---
+  duration_ms: 3.260942
+  ...
+# Subtest: save/read/delete/clear preserve protected keys byte for byte; no audio persisted
+ok 298 - save/read/delete/clear preserve protected keys byte for byte; no audio persisted
+  ---
+  duration_ms: 9.030361
+  ...
+# Subtest: corrupt JSON / version / nested payload cannot be overwritten, quota remains explicit
+ok 299 - corrupt JSON / version / nested payload cannot be overwritten, quota remains explicit
+  ---
+  duration_ms: 2.892285
+  ...
+# Subtest: limit 100 without eviction; read latest under serialized lock across tabs
+ok 300 - limit 100 without eviction; read latest under serialized lock across tabs
+  ---
+  duration_ms: 60.307111
+  ...
+# Subtest: N=1 thresholds, exact mean/median, duration/architecture separation, missing pairs
+ok 301 - N=1 thresholds, exact mean/median, duration/architecture separation, missing pairs
+  ---
+  duration_ms: 1.757854
+  ...
+# Subtest: runtime schema rejects mismatched schedules and invalid marker offsets
+ok 302 - runtime schema rejects mismatched schedules and invalid marker offsets
+  ---
+  duration_ms: 0.939048
+  ...
+# Subtest: local extraction ES/EN, transparent defaults, ambiguity and limits
+ok 303 - local extraction ES/EN, transparent defaults, ambiguity and limits
+  ---
+  duration_ms: 3.37851
+  ...
+# Subtest: untrusted JSON cannot add frequencies or actions, invalid JSON is rejected
+ok 304 - untrusted JSON cannot add frequencies or actions, invalid JSON is rejected
+  ---
+  duration_ms: 1.156776
+  ...
+# Subtest: deterministic proposals require review, exact duration and extra experimental consent
+ok 305 - deterministic proposals require review, exact duration and extra experimental consent
+  ---
+  duration_ms: 3.822119
+  ...
+# Subtest: state table happy path, invalid transitions, error recovery and cancellation
+ok 306 - state table happy path, invalid transitions, error recovery and cancellation
+  ---
+  duration_ms: 0.374786
+  ...
+1..306
+# tests 306
+# suites 0
+# pass 305
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 2148.429674

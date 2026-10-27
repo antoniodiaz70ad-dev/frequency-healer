@@ -1,0 +1,40 @@
+# Logs CI consultados
+
+## head
+
+2026-10-27T01:59:22.6176623Z # Subtest: Bentov complete entry is keyboard/mobile usable and starts no audio
+2026-10-27T01:59:22.6179797Z ok 4 - Bentov complete entry is keyboard/mobile usable and starts no audio
+2026-10-27T02:02:26.0012031Z not ok 18 - guided cymatics session requires start, supports skipping every step and opens the journal
+2026-10-27T02:02:26.0019625Z     locator.click: Timeout 8000ms exceeded.
+2026-10-27T02:02:55.2796121Z not ok 35 - navigation during audio: closes native graph, never completed, never autosaved
+2026-10-27T02:02:55.2813856Z     waiting for navigation to "http://127.0.0.1:36179/" until "load"
+2026-10-27T02:02:55.2814523Z       navigated to "http://127.0.0.1:36179/inicio"
+2026-10-27T02:04:34.5428354Z not ok 117 - 3B.2 unsaved navigation stops playback without persisting a completed record
+2026-10-27T02:04:34.5449756Z     waiting for navigation to "http://127.0.0.1:36179/" until "load"
+2026-10-27T02:04:34.5450183Z       navigated to "http://127.0.0.1:36179/inicio"
+2026-10-27T02:04:40.7784723Z # tests 121
+2026-10-27T02:04:40.7785443Z # pass 118
+2026-10-27T02:04:40.7785820Z # fail 3
+2026-10-27T02:04:40.7787360Z # skipped 0
+
+## baseline
+
+2026-10-24T17:44:48.6305374Z # Subtest: Bentov complete entry is keyboard/mobile usable and starts no audio
+2026-10-24T17:44:48.6306043Z ok 1 - Bentov complete entry is keyboard/mobile usable and starts no audio
+2026-10-24T17:47:52.2396244Z not ok 32 - navigation during audio: closes native graph, never completed, never autosaved
+2026-10-24T17:47:52.2400644Z     waiting for navigation to "http://127.0.0.1:32971/" until "load"
+2026-10-24T17:47:52.2401168Z       navigated to "http://127.0.0.1:32971/inicio"
+2026-10-24T17:49:10.9512623Z not ok 114 - 3B.2 unsaved navigation stops playback without persisting a completed record
+2026-10-24T17:49:10.9521756Z     waiting for navigation to "http://127.0.0.1:32971/" until "load"
+2026-10-24T17:49:10.9522118Z       navigated to "http://127.0.0.1:32971/inicio"
+2026-10-24T17:49:15.8218288Z # tests 118
+2026-10-24T17:49:15.8218645Z # pass 116
+2026-10-24T17:49:15.8218784Z # fail 2
+2026-10-24T17:49:15.8219034Z # skipped 0
+
+## quality
+
+2026-10-27T01:58:57.8334635Z # tests 306
+2026-10-27T01:58:57.8335031Z # pass 306
+2026-10-27T01:58:57.8335217Z # fail 0
+2026-10-27T01:58:57.8335609Z # skipped 0
