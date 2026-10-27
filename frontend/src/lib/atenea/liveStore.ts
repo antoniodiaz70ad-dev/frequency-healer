@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis';
 import { LIVE_DAILY_SECONDS, LIVE_MAX_SECONDS, type LiveRecord, type LiveStore } from './liveTypes';
+import type { SessionAuthority } from './stagingAccess';
 
 // All keys share a hash tag so the atomic scripts also work on a clustered Redis.
 const root = 'fh:{atenea-live}:';
@@ -15,6 +16,12 @@ redis.call('INCRBY', KEYS[3], ARGV[2]); redis.call('EXPIRE', KEYS[3], ARGV[4])
 redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[4])
 redis.call('SET', KEYS[2], ARGV[5], 'EX', ARGV[4])
 return 1`;
+const authorizedReserveScript = `
+local raw = redis.call('GET', KEYS[4]); if not raw then return -1 end
+local identity = cjson.decode(raw)
+if identity.rotated or identity.user ~= ARGV[6] or identity.accessId ~= ARGV[8]
+    or identity.expiresAt <= tonumber(ARGV[7]) or redis.call('GET', KEYS[5]) ~= ARGV[6] then return -1 end
+` + reserveScript;
 const bindScript = `
 local raw = redis.call('GET', KEYS[1]); if not raw then return 0 end
 local r = cjson.decode(raw); if r.closed or r.providerId then return 0 end
@@ -36,6 +43,14 @@ export class RedisLiveStore implements LiveStore {
     return await this.redis.eval(reserveScript,
       [recordKey(user, requestId), activeKey(user), `${root}seconds:${user}:${day}`],
       [JSON.stringify(record), LIVE_MAX_SECONDS, LIVE_DAILY_SECONDS, retention, requestId]) === 1;
+  }
+  async reserveForSession(authority: SessionAuthority, user: string, requestId: string, now: number): Promise<'reserved' | 'unauthorized' | 'limited'> {
+    const day = new Date(now).toISOString().slice(0, 10);
+    const record: LiveRecord = { user, requestId, deadline: now + LIVE_MAX_SECONDS * 1000, closed: false };
+    const result = await this.redis.eval(authorizedReserveScript,
+      [recordKey(user, requestId), activeKey(user), `${root}seconds:${user}:${day}`, authority.identityKey, authority.familyKey],
+      [JSON.stringify(record), LIVE_MAX_SECONDS, LIVE_DAILY_SECONDS, retention, requestId, user, now, authority.accessId]);
+    return result === 1 ? 'reserved' : result === -1 ? 'unauthorized' : 'limited';
   }
   async bind(user: string, requestId: string, providerId: string) {
     const bound = await this.redis.eval(bindScript, [recordKey(user, requestId), dueKey], [providerId, retention]);

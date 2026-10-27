@@ -6,7 +6,7 @@ import { OpenAILiveProvider } from './liveProvider';
 import type { LiveDependencies } from './liveTypes';
 import { stagingAuthConfig } from './stagingConfig';
 import { stagingSubjectHash, supabaseStagingAuthenticator } from './stagingAuth';
-import { RedisIdentitySessions, type AccessDependencies } from './stagingAccess';
+import { cookieLiveAccess, RedisIdentitySessions, type AccessDependencies } from './stagingAccess';
 
 /** Lazy: missing staging settings must never break builds or enable anonymous access. */
 function identityBindings() {
@@ -57,11 +57,7 @@ export function liveDependencies(): LiveDependencies | null {
   const bindings = identityBindings(); if (!bindings || !process.env.OPENAI_API_KEY) return null;
   return { origin: bindings.origin,
     enabled: (!process.env.ATENEA_STAGING_IDENTITY_PROVIDER || process.env.ATENEA_STAGING_SESSION_ENABLED === 'true' && Boolean(stagingAuthConfig(process.env))) && process.env.ATENEA_STAGING_ENABLED === 'true' && process.env.ATENEA_LIVE_ENABLED === 'true' && process.env.ATENEA_LIVE_REVIEWED === 'true' && process.env.ATENEA_REAPER_READY === 'true' && (process.env.ATENEA_REAPER_TOKEN?.length ?? 0) >= 32,
-    authenticate: async request => {
-      if (request.headers.has('authorization')) return bindings.verify(request);
-      const identity = await bindings.sessions.lookup(request);
-      return identity && (request.method === 'DELETE' || bindings.permitted(identity.user)) ? identity.user : null;
-    },
+    ...cookieLiveAccess(bindings.sessions, bindings.store, bindings.permitted),
     store: bindings.store, provider: new OpenAILiveProvider(process.env.OPENAI_API_KEY),
   };
 }

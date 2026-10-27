@@ -15,6 +15,8 @@ export interface LiveProvider {
 export interface LiveDependencies {
   origin: string; enabled: boolean;
   authenticate(request: Request): Promise<string | null>;
+  reserve(request: Request, user: string, requestId: string, now: number): Promise<'reserved' | 'unauthorized' | 'limited'>;
+  creationAuthorized(request: Request, user: string): Promise<boolean>;
   store: LiveStore; provider: LiveProvider;
 }
 export const LIVE_MAX_SECONDS = 600;

@@ -32,6 +32,8 @@ function fixture() {
   const store = new TestStore(); let creates = 0, closes = 0;
   const deps: LiveDependencies = { origin, enabled: true, store,
     authenticate: async req => req.headers.get('authorization') === 'Bearer user-a' ? 'a' : req.headers.get('authorization') === 'Bearer user-b' ? 'b' : null,
+    reserve: async (_req, user, id, now) => await store.reserve(user, id, now) ? 'reserved' : 'limited',
+    creationAuthorized: async () => true,
     provider: { create: async () => { creates++; return { id: 'live_opaque_123', sdp: 'v=0\r\nanswer' }; }, close: async () => { closes++; return true; } } };
   const route = (req: Request) => liveSessionRoute(req, deps, true, origin);
   return { store, deps, route, creates: () => creates, closes: () => closes };

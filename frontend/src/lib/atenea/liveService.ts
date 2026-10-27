@@ -33,17 +33,30 @@ export async function liveSessionRoute(request: Request, deps: LiveDependencies 
         input.consent !== LIVE_CONSENT || !['observador', 'decision', 'diario'].includes(input.mode) ||
         typeof input.sdp !== 'string' || !input.sdp.startsWith('v=0') || input.sdp.length > 60000) return liveReply(400, { error: 'invalid_input' });
     if (request.signal.aborted) return liveReply(408, { error: 'cancelled' });
-    if (!await deps.store.reserve(user, id, Date.now())) return liveReply(429, { error: 'quota_or_session_limit' });
-    if (request.signal.aborted) return liveReply(408, { error: 'cancelled' });
+    const reservation = await deps.reserve(request, user, id, Date.now());
+    if (reservation === 'unauthorized') return liveReply(401, { error: 'unauthorized' });
+    if (reservation !== 'reserved') return liveReply(429, { error: 'quota_or_session_limit' });
+    // Logout and reservation serialize in Redis. Recheck before external work as well;
+    // an already admitted creation remains unconfirmed until its late result is closed.
+    if (request.signal.aborted || !await deps.creationAuthorized(request, user)) {
+      await deps.store.finish(user, id);
+      return liveReply(request.signal.aborted ? 408 : 401, { error: request.signal.aborted ? 'cancelled' : 'unauthorized' });
+    }
     // The full 600-second reservation is charged even on ambiguous provider failure. No replay/retry.
     let created;
     try { created = await deps.provider.create(input.sdp, input.mode as Mode, user); }
     catch { return liveReply(502, { error: 'creation_unconfirmed' }); }
     try { await deps.store.bind(user, id, created.id); }
     catch { await deps.provider.close(created.id); return liveReply(503, { error: 'storage_unavailable' }); }
-    if (request.signal.aborted) {
-      if (await deps.provider.close(created.id)) await deps.store.finish(user, id);
-      return liveReply(408, { error: 'cancelled' });
+    let authorized = false;
+    try { authorized = await deps.creationAuthorized(request, user); }
+    catch { /* A failed recheck must still attempt to close the late provider session. */ }
+    if (request.signal.aborted || !authorized) {
+      const confirmed = await deps.provider.close(created.id);
+      if (confirmed) await deps.store.finish(user, id);
+      return liveReply(request.signal.aborted ? 408 : 401, {
+        error: request.signal.aborted ? 'cancelled' : 'unauthorized', remoteConfirmed: confirmed,
+      });
     }
     return liveReply(201, { session: { id: created.id }, transport: { type: 'webrtc', sdp: created.sdp }, maxSeconds: 600 });
   } catch { return liveReply(503, { error: 'service_unavailable' }); }

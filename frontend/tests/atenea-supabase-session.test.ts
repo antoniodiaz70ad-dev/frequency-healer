@@ -23,8 +23,8 @@ async function fixture() {
   const deps: AccessDependencies = { enabled: true, origin, closeForUser: async () => true, sessions: {
     verify,
     lookup: async request => { const cookie = accessCookie(request), value = cookie ? records.get(cookie) : null; return value && value.expiresAt > Date.now() ? value : null; },
-    issue: async (user, expiresAt) => { const cookie = randomBytes(32).toString('hex'); records.set(cookie, { user, expiresAt }); return cookie; },
-    revoke: async request => { const cookie = accessCookie(request); if (cookie) records.delete(cookie); },
+    issue: async (user, expiresAt, previous) => { const cookie = randomBytes(32).toString('hex'); if (previous) records.delete(previous); records.set(cookie, { user, expiresAt }); return { cookie }; },
+    revoke: async request => { const cookie = accessCookie(request); const record = cookie ? records.get(cookie) : null; if (cookie) records.delete(cookie); return record ?? null; },
   } };
   const request = (method: string, jwt?: string, cookie?: string) => new Request(origin + '/api/atenea-voz/access', { method,
     headers: { origin, ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}), ...(cookie ? { cookie: `${ACCESS_COOKIE}=${cookie}` } : {}) } });
