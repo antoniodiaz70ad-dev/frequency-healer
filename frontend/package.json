@@ -12,15 +12,19 @@
     "test:ui": "node --test --test-concurrency=1 ui/*.test.mjs"
   },
   "dependencies": {
+    "@upstash/redis": "1.40.0",
+    "jose": "6.2.13",
     "next": "16.4.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "ws": "8.22.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/ws": "8.18.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "playwright-core": "1.63.0",

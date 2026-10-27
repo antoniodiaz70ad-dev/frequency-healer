@@ -18,6 +18,18 @@ jobs:
     name: Quality
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      ATENEA_TEST_REDIS_PORT: '6379'
     defaults:
       run:
         working-directory: frontend
@@ -32,6 +44,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: mkdir -p artifacts
+      - name: Install Redis test client
+        run: sudo apt-get update -qq && sudo apt-get install -y redis-tools
       - name: Unit and integration tests
         run: npm test 2>&1 | tee artifacts/tests.log
       - name: TypeScript

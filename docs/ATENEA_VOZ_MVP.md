@@ -2,6 +2,8 @@
 
 Estado: **NO-GO para producción; sin API real ni despliegue**.
 
+Este documento describe la primera entrega simulada. La continuación del backend y transporte real, aún desactivados y sin llamadas al proveedor, está en [ATENEA_LIVE_BACKEND.md](ATENEA_LIVE_BACKEND.md). Sus límites y evidencias complementan y actualizan los pendientes de esta primera fase.
+
 Implementación independiente desde `main`, rama `codex/atenea-voz-mvp`.
 Referencia de diseño: [PR #31](https://github.com/antoniodiaz70ad-dev/frequency-healer/pull/31),
 `docs/ATENEA_VOZ_V1_SPEC.md` en la rama `codex/atenea-voz-architecture-v1`.

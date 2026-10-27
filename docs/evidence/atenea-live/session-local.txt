@@ -1,0 +1,25 @@
+✔ no consent means no permission, connection or persistence (1.410637ms)
+✔ all three modes start without microphone and close cleanly (2.136556ms)
+✔ double start does not request a second microphone (0.356615ms)
+✔ late microphone permission after stop closes returned tracks (0.231578ms)
+✔ microphone rejection is recoverable without microphone (0.338989ms)
+✔ pause mutes input, continue restores it, verbal end closes hardware (0.446901ms)
+✔ explicit restart after ending while paused resets the adapter and consent (0.250216ms)
+✔ 60 seconds of silence does not speak, disconnect or grant consent (0.789355ms)
+✔ speech immediately interrupts output; partial recognition never terminates (0.343105ms)
+✔ disconnect and hardware loss close resources, require explicit restart (0.458118ms)
+✔ pro requires explicit confirmation; per-session analysis budget is capped (1.05298ms)
+✔ late analysis cannot speak after termination (0.257707ms)
+✔ silence cancels pending analysis rather than filling the pause with an answer (0.360952ms)
+✔ only edited approved summary can be exported, no transcript; revoke clears it (0.244657ms)
+✔ hard duration cap closes mic without automatic reconnection (1.053051ms)
+✔ late adapter events are ignored after close (0.185078ms)
+✔ server gate rejects flag off, foreign/missing origins, missing auth binding and anonymous users (23.973229ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41.663843
