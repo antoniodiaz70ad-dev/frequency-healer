@@ -1,0 +1,15 @@
+✔ identity gate remains closed without flag/config and rejects cross-site exchange (62.300532ms)
+✔ verified JWT exchange returns opaque secure cookie, no JWT or identity in response (32.976043ms)
+✔ lookup reports expired/revoked session as signed out and does not reveal its owner (72.41683ms)
+✔ changing identity requires logout; refresh does not silently abandon another user audio (80.339729ms)
+✔ logout revokes access even when remote closure is unconfirmed; works after flags off (35.254327ms)
+✔ confirmed logout closes remote session; storage failures remain explicit and clear local cookie (74.45183ms)
+✔ duplicate, malformed or attacker-chosen cookie names cannot fix an application session (0.410235ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 365.239754

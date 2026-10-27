@@ -17,6 +17,9 @@ after(async () => { try { await browser?.close(); } finally { await server?.clos
 test('server flag and API fail closed, including cross-origin requests', async () => {
   const page = await fetch(server.origin + '/atenea-voz');
   assert.equal(page.status, enabled ? 200 : 404);
+  // Staging has a separate, absent-by-default gate even when the local simulator is enabled.
+  assert.equal((await fetch(server.origin + '/atenea-voz/pruebas')).status, 404);
+  assert.equal((await fetch(server.origin + '/api/atenea-voz/access')).status, enabled ? 503 : 404);
   for (const origin of [server.origin, 'https://untrusted.test', null]) {
     const response = await fetch(server.origin + '/api/atenea-voz/session', { method: 'POST', headers: origin ? { origin } : {} });
     assert.equal(response.status, !enabled ? 404 : origin === server.origin ? 503 : 403);

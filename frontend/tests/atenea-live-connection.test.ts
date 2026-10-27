@@ -104,3 +104,14 @@ test('blocked remote playback closes the microphone and billable session instead
   await Promise.resolve(); assert.equal(f.stopped(), 1);
   assert.equal(await f.connection.close(), true);
 });
+test('HttpOnly app session mode sends same-origin credentials without reading or forwarding a JWT', async () => {
+  const f = fixture(); let creates = 0, closes = 0;
+  const http: typeof fetch = async (_url, init) => {
+    assert.equal(init?.credentials, 'same-origin'); assert.equal(new Headers(init?.headers).has('authorization'), false);
+    if (init?.method === 'POST') { creates++; return Response.json({ session: { id: 'live_cookie' }, transport: { type: 'webrtc', sdp: 'v=0\r\nanswer' } }); }
+    closes++; return Response.json({ confirmed: true });
+  };
+  const connection = new LiveVoiceConnection(() => {}, { peer: f.deps.peer, audio: f.deps.audio, http });
+  await connection.start('diario', f.stream, LIVE_CONSENT, new AbortController().signal);
+  assert.equal(await connection.close(), true); assert.equal(creates, 1); assert.equal(closes, 1);
+});

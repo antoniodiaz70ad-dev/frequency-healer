@@ -7,7 +7,7 @@ interface BrowserDependencies {
   audio(): HTMLAudioElement;
   http: typeof fetch;
   /** Host authentication supplies a short-lived, scoped access token; never an OpenAI key. */
-  token(): Promise<string>;
+  token?(): Promise<string>;
 }
 const defaults = { peer: () => new RTCPeerConnection(), audio: () => new Audio(), http: fetch };
 
@@ -29,7 +29,7 @@ export class LiveVoiceConnection {
   private unbindTracks: (() => void) | null = null;
   private startupAbort = new AbortController();
   private deps: BrowserDependencies;
-  constructor(private emit: (event: Event) => void, dependencies: Pick<BrowserDependencies, 'token'> & Partial<BrowserDependencies>) {
+  constructor(private emit: (event: Event) => void, dependencies: Partial<BrowserDependencies> = {}) {
     this.deps = { ...defaults, ...dependencies };
   }
   async start(mode: Mode, stream: MediaStream, consent: string, signal: AbortSignal) {
@@ -44,7 +44,7 @@ export class LiveVoiceConnection {
     signal.addEventListener('abort', abort, { once: true });
     this.cancelStart = () => signal.removeEventListener('abort', abort);
     try {
-      const accessToken = await this.deps.token();
+      const accessToken = await this.deps.token?.() ?? '';
       if (startupSignal.aborted || this.closePromise) throw new Error('Cancelled');
       this.accessToken = accessToken;
       const peer = this.deps.peer(); this.peer = peer;
@@ -77,7 +77,7 @@ export class LiveVoiceConnection {
       await this.gather(peer, startupSignal);
       if (this.closePromise || startupSignal.aborted) throw new Error('Cancelled');
       const response = await this.deps.http('/api/atenea-voz/session', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.accessToken}` },
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', ...(this.accessToken ? { Authorization: `Bearer ${this.accessToken}` } : {}) },
         // Do not abort a possibly successful create: receive its ID, then close if cancelled.
         signal: AbortSignal.timeout(25000), body: JSON.stringify({ requestId, mode, consent, sdp: peer.localDescription?.sdp }),
       });
@@ -115,10 +115,10 @@ export class LiveVoiceConnection {
     }
   }
   private async remoteClose(requestId = this.requestId, accessToken = this.accessToken) {
-    if (!requestId || !accessToken) return false;
+    if (!requestId) return false;
     try {
-      const response = await this.deps.http('/api/atenea-voz/session', { method: 'DELETE', keepalive: true,
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+      const response = await this.deps.http('/api/atenea-voz/session', { method: 'DELETE', keepalive: true, credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}) },
         signal: AbortSignal.timeout(15000), body: JSON.stringify({ requestId }) });
       return response.ok && (await response.json()).confirmed === true;
     } catch { return false; }
