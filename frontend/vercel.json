@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "codex/atenea-invitations-20261028": false,
       "codex/atenea-voz-mvp": false,
       "codex/atenea-next-security-20261027": false,
       "codex/atenea-staging-prep": false,

@@ -9,7 +9,7 @@ const projectRef = /^[a-z0-9]{20}$/;
 export const subjectId = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 
 /** This is a separate, reviewed identity project, never a production fallback. */
-export function stagingAuthConfig(env: Record<string, string | undefined>, cleanup = false): StagingAuthConfig | null {
+function stagingProviderConfig(env: Record<string, string | undefined>, cleanup = false): Omit<StagingAuthConfig, 'allowedSubjects'> | null {
   if (env.ATENEA_STAGING_IDENTITY_PROVIDER !== 'supabase-staging' || !cleanup && (env.ATENEA_STAGING_ACCESS_ENABLED !== 'true' ||
       env.ATENEA_STAGING_AUTH_REVIEWED !== 'true')) return null;
   const local = !env.VERCEL && !env.VERCEL_ENV && env.ATENEA_LOCAL_STAGING === 'true';
@@ -28,8 +28,19 @@ export function stagingAuthConfig(env: Record<string, string | undefined>, clean
     const site = new URL(origin);
     const loopback = ['localhost', '127.0.0.1', '[::1]'].includes(site.hostname);
     if (site.origin !== origin || site.protocol !== 'https:' && !(local && loopback && site.protocol === 'http:')) return null;
-    const allowedSubjects = (env.ATENEA_STAGING_ALLOWED_SUBJECTS ?? '').split(',').map(value => value.trim());
-    if (!allowedSubjects.length || allowedSubjects.length > 5 || allowedSubjects.some(value => !subjectId.test(value))) return null;
-    return { url, publishableKey, origin, allowedSubjects: [...new Set(allowedSubjects)] };
+    return { url, publishableKey, origin };
   } catch { return null; }
+}
+
+export function stagingAuthConfig(env: Record<string, string | undefined>, cleanup = false): StagingAuthConfig | null {
+  const provider = stagingProviderConfig(env, cleanup);
+  if (!provider) return null;
+  const allowedSubjects = (env.ATENEA_STAGING_ALLOWED_SUBJECTS ?? '').split(',').map(value => value.trim());
+  if (!allowedSubjects.length || allowedSubjects.length > 5 || allowedSubjects.some(value => !subjectId.test(value))) return null;
+  return { ...provider, allowedSubjects: [...new Set(allowedSubjects)] };
+}
+
+/** Invitations establish provider credentials only. App access still requires the UUID allowlist. */
+export function stagingInvitationConfig(env: Record<string, string | undefined>) {
+  return env.ATENEA_STAGING_INVITATION_ENABLED === 'true' ? stagingProviderConfig(env) : null;
 }
