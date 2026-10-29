@@ -2,9 +2,10 @@ import { createHash, randomBytes } from 'node:crypto';
 import { decodeJwt } from 'jose';
 import type { Redis } from '@upstash/redis';
 import { liveReply } from './liveService';
+import type { LiveIdentity } from './liveTypes';
 
 export const ACCESS_COOKIE = '__Host-atenea-session';
-export interface AppIdentity { user: string; expiresAt: number }
+export type AppIdentity = LiveIdentity;
 export interface IdentitySessions {
   verify(request: Request): Promise<string | null>;
   lookup(request: Request): Promise<AppIdentity | null>;
@@ -27,7 +28,7 @@ export class RedisIdentitySessions implements IdentitySessions {
     const value = accessCookie(request); if (!value) return null;
     const record = await this.redis.get<AppIdentity>(key(value));
     if (!record || !/^[a-f0-9]{64}$/.test(record.user) || !Number.isFinite(record.expiresAt) || record.expiresAt <= this.now()) return null;
-    return record;
+    return { ...record, sessionId: digest(value) };
   }
   async issue(user: string, expiresAt: number) {
     const now = this.now();
@@ -42,12 +43,36 @@ redis.call('SET', KEYS[2], ARGV[1], 'EX', ARGV[2]); return 1`,
       [`fh:{atenea-live}:login:${user}:${minute}`, key(token)], [JSON.stringify({ user, expiresAt }), seconds]);
     return accepted === 1 ? token : null;
   }
-  async revoke(request: Request) { const value = accessCookie(request); if (value) await this.redis.del(key(value)); }
+  async revoke(request: Request) {
+    const value = accessCookie(request); if (!value) return;
+    const record = await this.redis.get<AppIdentity>(key(value));
+    if (!record) return;
+    if (!/^[a-f0-9]{64}$/.test(record.user)) throw new Error('Invalid session owner');
+    const result = await this.redis.eval(`
+local identity = redis.call('GET', KEYS[1]); if not identity then return 0 end
+local owner = cjson.decode(identity); if owner.user ~= ARGV[1] then return -1 end
+local requestId = redis.call('GET', KEYS[2])
+local recordKey = requestId and (ARGV[3] .. requestId) or nil
+local raw = recordKey and redis.call('GET', recordKey) or nil
+redis.call('DEL', KEYS[1])
+if requestId and not raw then return -1 end
+if raw then
+  local r = cjson.decode(raw)
+  if not r.closed and r.sessionId == ARGV[2] then
+    r.cancelled = true; r.deadline = 0
+    redis.call('SET', recordKey, cjson.encode(r))
+    redis.call('ZADD', KEYS[3], 0, recordKey)
+  end
+end
+return 1`, [key(value), `fh:{atenea-live}:active:${record.user}`, 'fh:{atenea-live}:due'],
+    [record.user, digest(value), `fh:{atenea-live}:record:${record.user}:`]);
+    if (result === -1) throw new Error('Session cleanup metadata unavailable');
+  }
 }
 
 export interface AccessDependencies {
   enabled: boolean; origin: string; sessions: IdentitySessions;
-  closeForUser(user: string): Promise<boolean>;
+  closeForUser(user: string, sessionId: string): Promise<boolean>;
 }
 export async function accessRoute(request: Request, deps: AccessDependencies | null, visible: boolean, origin: string) {
   if (!visible && request.method !== 'DELETE') return liveReply(404, { error: 'not_found' });
@@ -62,10 +87,15 @@ export async function accessRoute(request: Request, deps: AccessDependencies | n
     }
     if (request.method === 'DELETE') {
       const identity = await deps.sessions.lookup(request);
-      // Revoke the app session even when remote cleanup fails. The independent reaper retains ownership.
+      // The Lua revocation fences reservations BEFORE examining remote work.
+      // A request authenticated before logout cannot reserve after this point.
+      await deps.sessions.revoke(request);
       let confirmed = false;
-      try { if (identity) confirmed = await deps.closeForUser(identity.user); }
-      finally { await deps.sessions.revoke(request); }
+      try { if (identity) confirmed = await deps.closeForUser(identity.user, identity.sessionId); }
+      catch {
+        const reply = liveReply(202, { authenticated: false, revocationConfirmed: true, remoteConfirmed: false });
+        reply.headers.set('Set-Cookie', cookieHeader('', 0)); return reply;
+      }
       const reply = liveReply(confirmed ? 200 : 202, { authenticated: false, remoteConfirmed: confirmed });
       reply.headers.set('Set-Cookie', cookieHeader('', 0)); return reply;
     }

@@ -10,13 +10,13 @@ const request = (method: string, headers: Record<string, string> = {}) => new Re
 async function fixture() {
   const { publicKey, privateKey } = await generateKeyPair('RS256');
   const verify = accessTokenAuthenticator({ keys: [{ ...await exportJWK(publicKey), kid: 'test' }] }, 'https://issuer.test', 'atenea');
-  const token = await new SignJWT({ scope: 'atenea:voice' }).setProtectedHeader({ alg: 'RS256', kid: 'test' }).setIssuer('https://issuer.test').setAudience('atenea').setSubject('user').setIssuedAt().setExpirationTime('5m').sign(privateKey);
+  const token = await new SignJWT({ permissions: ['atenea:voice'], scope: 'atenea:voice' }).setProtectedHeader({ alg: 'RS256', kid: 'test' }).setIssuer('https://issuer.test').setAudience('atenea').setSubject('user').setIssuedAt().setExpirationTime('5m').sign(privateKey);
   const identity = await verify(request('POST', { Authorization: `Bearer ${token}` }));
   const records = new Map<string, AppIdentity>(); let revocations = 0;
   const sessions: IdentitySessions = {
     verify,
     lookup: async req => { const value = accessCookie(req); const record = value ? records.get(value) : null; return record && record.expiresAt > Date.now() ? record : null; },
-    issue: async (user, expiresAt) => { records.set(cookie, { user, expiresAt }); return cookie; },
+    issue: async (user, expiresAt) => { records.set(cookie, { user, expiresAt, sessionId: cookie }); return cookie; },
     revoke: async req => { revocations++; const value = accessCookie(req); if (value && value !== cookie) records.delete(value); },
   };
   const deps: AccessDependencies = { enabled: true, origin, sessions, closeForUser: async () => true };
@@ -40,18 +40,18 @@ test('verified JWT exchange returns opaque secure cookie, no JWT or identity in 
   assert.ok(f.records.get(cookie)!.expiresAt <= Date.now() + 300000);
 });
 test('lookup reports expired/revoked session as signed out and does not reveal its owner', async () => {
-  const f = await fixture(); f.records.set(cookie, { user: hash, expiresAt: Date.now() - 1 });
+  const f = await fixture(); f.records.set(cookie, { sessionId: cookie, user: hash, expiresAt: Date.now() - 1 });
   const expired = await f.route(request('GET', { cookie: `${ACCESS_COOKIE}=${cookie}` })); assert.deepEqual(await expired.json(), { authenticated: false });
-  f.records.set(cookie, { user: hash, expiresAt: Date.now() + 60000 });
+  f.records.set(cookie, { sessionId: cookie, user: hash, expiresAt: Date.now() + 60000 });
   const status = await (await f.route(request('GET', { cookie: `${ACCESS_COOKIE}=${cookie}` }))).json(); assert.equal(status.authenticated, true); assert.equal('user' in status, false);
 });
 test('changing identity requires logout; refresh does not silently abandon another user audio', async () => {
-  const f = await fixture(); f.records.set(cookie, { user: 'other-user', expiresAt: Date.now() + 60000 });
+  const f = await fixture(); f.records.set(cookie, { sessionId: cookie, user: 'other-user', expiresAt: Date.now() + 60000 });
   assert.equal((await f.route(request('POST', { Authorization: `Bearer ${f.token}`, cookie: `${ACCESS_COOKIE}=${cookie}` }))).status, 409);
   assert.equal(f.revocations(), 0);
 });
 test('logout revokes access even when remote closure is unconfirmed; works after flags off', async () => {
-  const f = await fixture(); f.records.set(cookie, { user: hash, expiresAt: Date.now() + 60000 });
+  const f = await fixture(); f.records.set(cookie, { sessionId: cookie, user: hash, expiresAt: Date.now() + 60000 });
   f.sessions.revoke = async req => { const value = accessCookie(req); if (value) f.records.delete(value); };
   f.deps.closeForUser = async user => { assert.equal(user, hash); return false; }; f.deps.enabled = false;
   const response = await accessRoute(request('DELETE', { cookie: `${ACCESS_COOKIE}=${cookie}` }), f.deps, false, origin);
@@ -59,7 +59,7 @@ test('logout revokes access even when remote closure is unconfirmed; works after
   assert.equal(f.records.size, 0); assert.ok(response.headers.get('set-cookie')!.includes('Max-Age=0'));
 });
 test('confirmed logout closes remote session; storage failures remain explicit and clear local cookie', async () => {
-  const f = await fixture(); f.records.set(cookie, { user: hash, expiresAt: Date.now() + 60000 });
+  const f = await fixture(); f.records.set(cookie, { sessionId: cookie, user: hash, expiresAt: Date.now() + 60000 });
   assert.equal((await f.route(request('DELETE', { cookie: `${ACCESS_COOKIE}=${cookie}` }))).status, 200);
   f.sessions.revoke = async () => { throw new Error('store down'); };
   const response = await f.route(request('DELETE', { cookie: `${ACCESS_COOKIE}=${cookie}` }));

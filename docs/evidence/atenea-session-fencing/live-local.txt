@@ -1,0 +1,23 @@
+✔ logout 200 fences a previously authenticated create before its reservation (18.682154ms)
+✔ logout during provider create stays unconfirmed and fences the late result, retaining failed closure (2.251579ms)
+✔ real endpoint rejects disabled configuration, foreign origin, missing identity and oversized inputs without provider spend (1.628118ms)
+✔ input cannot choose model, URL, hosted delegation or reuse local simulation consent (1.003776ms)
+✔ concurrent creates and replay reserve exactly one billable session (1.385431ms)
+✔ ownership, confirmed close, idempotent close and daily reservation cap (1.993159ms)
+✔ ambiguous create and unconfirmed close keep persistent reservation, block new spending (1.213652ms)
+✔ durable store failure prevents provider creation; bind failure attempts remote cleanup (0.492313ms)
+✔ cancel during quota reservation prevents provider spend; cancel during create closes a late session (3.946628ms)
+✔ emergency flag stops creation but does not prevent authenticated cleanup (0.691594ms)
+✔ watchdog requires its own credential and retries only sessions without confirmed close (1.190848ms)
+✔ provider request uses documented Live shape, restricts browser commands and strips response extras (0.818766ms)
+✔ signed identity enforces issuer, audience, expiry, scope, signature and pseudonymous subject (40.405038ms)
+✔ static JWKS rotation requires explicit overlap and retirement; removed keys fail closed (113.258291ms)
+✔ server sideband closes only after session.closed, never treats socket loss as confirmation (0.703742ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 194.383572

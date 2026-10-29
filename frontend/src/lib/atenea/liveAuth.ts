@@ -15,7 +15,8 @@ export function accessTokenAuthenticator(jwks: JSONWebKeySet, issuer: string, au
       });
       if (typeof payload.sub !== 'string' || !payload.sub || payload.sub.length > 256 ||
           typeof payload.exp !== 'number' || payload.exp > Date.now() / 1000 + 3605 ||
-          typeof payload.scope !== 'string' || !payload.scope.split(' ').includes('atenea:voice')) return null;
+          typeof payload.scope !== 'string' || !payload.scope.split(' ').includes('atenea:voice') ||
+          !Array.isArray(payload.permissions) || !payload.permissions.includes('atenea:voice')) return null;
       // Persist only a pseudonymous per-issuer identifier; no email, JWT, transcript or audio.
       return createHash('sha256').update(`${issuer}\0${payload.sub}`).digest('hex');
     } catch { return null; }
