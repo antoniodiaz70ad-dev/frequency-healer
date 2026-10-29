@@ -89,7 +89,7 @@ function clientFixture() {
     logout: async () => { signedOut++; session = null; }, stop: () => { stopped++; },
   };
   const http: typeof fetch = async (input, init) => {
-    calls++; assert.equal(input, '/api/atenea-voz/identity-check'); assert.equal(init?.method, 'POST'); assert.equal(init.credentials, 'omit');
+    calls++; assert.equal(input, '/api/atenea-voz/identity-check'); assert.equal(init?.method, 'POST'); assert.equal(init.credentials, 'same-origin'); assert.equal(init.redirect, 'error');
     assert.equal('body' in init, false); return Response.json({ authorized: true });
   };
   return { auth, http, access: new StagingAccess(auth, http), expire: () => { session!.expires_at = Date.now() / 1000 + 10; },
