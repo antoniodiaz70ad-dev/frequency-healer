@@ -7,6 +7,7 @@ import { accessTokenAuthenticator } from '../src/lib/atenea/liveAuth';
 import { liveSessionRoute } from '../src/lib/atenea/liveService';
 import { OpenAILiveProvider } from '../src/lib/atenea/liveProvider';
 import { reapLiveSessions } from '../src/lib/atenea/liveReaper';
+import { accessRoute, type AccessDependencies } from '../src/lib/atenea/stagingAccess';
 import { LIVE_CONSENT, type LiveDependencies, type LiveRecord, type LiveStore } from '../src/lib/atenea/liveTypes';
 
 const origin = 'https://staging.example.test';
@@ -17,25 +18,74 @@ const request = (data: unknown = payload, method = 'POST', headers: Record<strin
 
 /** Test-only atomic store, deliberately not a runtime fallback. */
 class TestStore implements LiveStore {
+  revoked = new Set<string>();
+  retryAt = new Map<string, number>();
   records = new Map<string, LiveRecord>(); used = new Map<string, number>();
-  async reserve(user: string, id: string, now: number) {
+  async reserve(user: string, id: string, now: number, sessionId: string) {
+    if (this.revoked.has(sessionId)) return false;
     if (this.records.has(user + id) || [...this.records.values()].some(record => record.user === user && !record.closed) || (this.used.get(user) ?? 0) >= 1800) return false;
     this.used.set(user, (this.used.get(user) ?? 0) + 600);
-    this.records.set(user + id, { user, requestId: id, closed: false, deadline: now + 600000 }); return true;
+    this.records.set(user + id, { user, sessionId, requestId: id, closed: false, deadline: now + 600000 }); return true;
   }
-  async bind(user: string, id: string, providerId: string) { this.records.get(user + id)!.providerId = providerId; }
+  async bind(user: string, id: string, providerId: string) { const record = this.records.get(user + id)!; record.providerId = providerId; return !this.revoked.has(record.sessionId!); }
   async find(user: string, id: string) { return this.records.get(user + id) ?? null; }
   async finish(user: string, id: string) { this.records.get(user + id)!.closed = true; }
-  async due(now: number) { return [...this.records.values()].filter(record => record.deadline <= now && !record.closed); }
+  async defer(user: string, id: string, notBefore: number) { if (!this.records.get(user + id)?.closed) this.retryAt.set(user + id, notBefore); }
+  async due(now: number) {
+    const score = (record: LiveRecord) => this.retryAt.get(record.user + record.requestId) ?? record.deadline;
+    return [...this.records.values()].filter(record => score(record) <= now && !record.closed).sort((a, b) => score(a) - score(b)).slice(0, 25);
+  }
 }
 function fixture() {
   const store = new TestStore(); let creates = 0, closes = 0;
   const deps: LiveDependencies = { origin, enabled: true, store,
-    authenticate: async req => req.headers.get('authorization') === 'Bearer user-a' ? 'a' : req.headers.get('authorization') === 'Bearer user-b' ? 'b' : null,
+    authenticate: async req => { const user = req.headers.get('authorization') === 'Bearer user-a' ? 'a' : req.headers.get('authorization') === 'Bearer user-b' ? 'b' : null; return user ? { user, sessionId: user.repeat(64), expiresAt: Date.now() + 300000 } : null; },
     provider: { create: async () => { creates++; return { id: 'live_opaque_123', sdp: 'v=0\r\nanswer' }; }, close: async () => { closes++; return true; } } };
   const route = (req: Request) => liveSessionRoute(req, deps, true, origin);
   return { store, deps, route, creates: () => creates, closes: () => closes };
 }
+
+test('logout 200 fences a previously authenticated create before its reservation', async () => {
+  const f = fixture();
+  let resume!: () => void, authenticated!: () => void;
+  const waiting = new Promise<void>(resolve => { resume = resolve; });
+  const captured = new Promise<void>(resolve => { authenticated = resolve; });
+  const identity = { user: 'a', sessionId: 'a'.repeat(64), expiresAt: Date.now() + 300000 };
+  f.deps.authenticate = async () => { authenticated(); await waiting; return identity; };
+  const creation = f.route(request()); await captured;
+  const access: AccessDependencies = { origin, enabled: false,
+    sessions: { verify: async () => null, lookup: async () => identity, issue: async () => null,
+      revoke: async () => { f.store.revoked.add(identity.sessionId); } },
+    closeForUser: async () => ![...f.store.records.values()].some(record => !record.closed),
+  };
+  const logout = await accessRoute(new Request(origin, { method: 'DELETE', headers: { origin } }), access, false, origin);
+  assert.equal(logout.status, 200); assert.equal((await logout.json()).remoteConfirmed, true);
+  resume(); assert.equal((await creation).status, 429); assert.equal(f.creates(), 0);
+});
+
+test('logout during provider create stays unconfirmed and fences the late result, retaining failed closure', async () => {
+  for (const closeSucceeds of [true, false]) {
+    const f = fixture();
+    let resume!: () => void, entered!: () => void;
+    const waiting = new Promise<void>(resolve => { resume = resolve; });
+    const creating = new Promise<void>(resolve => { entered = resolve; });
+    f.deps.provider.create = async () => { entered(); await waiting; return { id: 'live_late_logout', sdp: 'v=0' }; };
+    f.deps.provider.close = async () => closeSucceeds;
+    const creation = f.route(request()); await creating;
+    const identity = { user: 'a', sessionId: 'a'.repeat(64), expiresAt: Date.now() + 300000 };
+    const access: AccessDependencies = { origin, enabled: false,
+      sessions: { verify: async () => null, lookup: async () => identity, issue: async () => null,
+        revoke: async () => { f.store.revoked.add(identity.sessionId); } },
+      closeForUser: async () => ![...f.store.records.values()].some(record => !record.closed),
+    };
+    const logout = await accessRoute(new Request(origin, { method: 'DELETE', headers: { origin } }), access, false, origin);
+    assert.equal(logout.status, 202); assert.equal((await logout.json()).remoteConfirmed, false);
+    resume(); const response = await creation;
+    assert.equal(response.status, 409); assert.equal((await response.json()).confirmed, closeSucceeds);
+    const record = await f.store.find('a', requestId); assert.equal(record!.closed, closeSucceeds);
+    assert.equal(record!.providerId, 'live_late_logout');
+  }
+});
 
 test('real endpoint rejects disabled configuration, foreign origin, missing identity and oversized inputs without provider spend', async () => {
   const f = fixture();
@@ -109,8 +159,26 @@ test('watchdog requires its own credential and retries only sessions without con
   const secret = 'synthetic-reaper-test-only-credential';
   assert.equal((await reapLiveSessions(request(), f.deps, secret)).status, 401);
   const cleanup = () => reapLiveSessions(request({}, 'POST', { Authorization: `Bearer ${secret}` }), f.deps, secret);
-  f.deps.provider.close = async () => false; await cleanup(); assert.equal((await f.store.due(Date.now())).length, 1);
+  f.deps.provider.close = async () => false; await cleanup();
+  assert.equal((await f.store.find('a', requestId))!.closed, false);
+  assert.equal((await f.store.due(Date.now())).length, 0);
+  assert.equal((await f.store.due(Date.now() + 60001)).length, 1);
+  f.store.retryAt.clear(); // Next scheduler tick, without sleeping.
   f.deps.provider.close = async () => true; await cleanup(); assert.equal((await f.store.due(Date.now())).length, 0);
+});
+test('unresolved first batch is retained but cannot starve a later closable session', async () => {
+  const f = fixture();
+  for (let i = 0; i < 26; i++) f.store.records.set('user' + i, {
+    user: 'user', requestId: String(i), closed: false, deadline: i,
+    ...(i === 25 ? { providerId: 'live_after_25_unknown' } : {}),
+  });
+  const cleanup = () => reapLiveSessions(request({}, 'POST', { Authorization: 'Bearer synthetic-reaper-test-only-credential' }), f.deps, 'synthetic-reaper-test-only-credential');
+  const first = await cleanup(); assert.equal(first.status, 200);
+  assert.deepEqual(await first.json(), { processed: 25, confirmed: 0 });
+  const second = await cleanup(); assert.equal(second.status, 200);
+  assert.deepEqual(await second.json(), { processed: 1, confirmed: 1 });
+  assert.equal(f.closes(), 1); assert.equal(f.store.records.size, 26);
+  assert.equal([...f.store.records.values()].filter(record => !record.closed).length, 25);
 });
 test('provider request uses documented Live shape, restricts browser commands and strips response extras', async () => {
   let calls = 0;
@@ -130,16 +198,36 @@ test('signed identity enforces issuer, audience, expiry, scope, signature and ps
   const { publicKey, privateKey } = await generateKeyPair('RS256');
   const jwk = { ...await exportJWK(publicKey), kid: 'test' };
   const authenticate = accessTokenAuthenticator({ keys: [jwk] }, 'https://issuer.test', 'atenea-staging');
-  const token = (claims: Record<string, unknown> = {}) => new SignJWT({ scope: 'atenea:voice', ...claims }).setProtectedHeader({ alg: 'RS256', kid: 'test' }).setIssuer('https://issuer.test').setAudience('atenea-staging').setSubject('private-user').setIssuedAt().setExpirationTime('5m').sign(privateKey);
+  const token = (claims: Record<string, unknown> = {}) => new SignJWT({ permissions: ['atenea:voice'], scope: 'atenea:voice', ...claims }).setProtectedHeader({ alg: 'RS256', kid: 'test' }).setIssuer('https://issuer.test').setAudience('atenea-staging').setSubject('private-user').setIssuedAt().setExpirationTime('5m').sign(privateKey);
   const valid = await token(); const user = await authenticate(request({}, 'POST', { Authorization: `Bearer ${valid}` }));
   assert.match(user!, /^[a-f0-9]{64}$/); assert.notEqual(user, 'private-user');
   assert.equal(await authenticate(request({}, 'POST', { Authorization: `Bearer ${valid.slice(0, -12)}invalid` })), null);
   const noScope = await token({ scope: 'other' }); assert.equal(await authenticate(request({}, 'POST', { Authorization: `Bearer ${noScope}` })), null);
+  const noPermission = await token({ permissions: [] });
+  assert.equal(await authenticate(request({}, 'POST', { Authorization: `Bearer ${noPermission}` })), null,
+    'An authenticated subject requesting the scope is not necessarily an authorized tester');
   for (const kind of ['issuer', 'audience', 'expiry']) {
-    const builder = new SignJWT({ scope: 'atenea:voice' }).setProtectedHeader({ alg: 'RS256', kid: 'test' }).setSubject('private-user').setIssuedAt()
+    const builder = new SignJWT({ permissions: ['atenea:voice'], scope: 'atenea:voice' }).setProtectedHeader({ alg: 'RS256', kid: 'test' }).setSubject('private-user').setIssuedAt()
       .setIssuer(kind === 'issuer' ? 'https://evil.test' : 'https://issuer.test').setAudience(kind === 'audience' ? 'other' : 'atenea-staging').setExpirationTime(kind === 'expiry' ? Math.floor(Date.now() / 1000) - 30 : '5m');
     assert.equal(await authenticate(request({}, 'POST', { Authorization: `Bearer ${await builder.sign(privateKey)}` })), null);
   }
+});
+test('static JWKS rotation requires explicit overlap and retirement; removed keys fail closed', async () => {
+  const old = await generateKeyPair('RS256'), next = await generateKeyPair('RS256');
+  const oldJwk = { ...await exportJWK(old.publicKey), kid: 'old' };
+  const nextJwk = { ...await exportJWK(next.publicKey), kid: 'next' };
+  const issue = (pair: typeof old, kid: string) => new SignJWT({ scope: 'atenea:voice', permissions: ['atenea:voice'] })
+    .setProtectedHeader({ alg: 'RS256', kid }).setIssuer('https://issuer.test').setAudience('atenea-staging')
+    .setSubject('tester').setIssuedAt().setExpirationTime('5m').sign(pair.privateKey);
+  const oldToken = await issue(old, 'old'), nextToken = await issue(next, 'next');
+  const validate = (keys: typeof oldJwk[]) => accessTokenAuthenticator({ keys }, 'https://issuer.test', 'atenea-staging');
+  const check = (token: string) => request({}, 'POST', { Authorization: `Bearer ${token}` });
+  assert.ok(await validate([oldJwk])(check(oldToken)));
+  assert.equal(await validate([oldJwk])(check(nextToken)), null);
+  assert.ok(await validate([oldJwk, nextJwk])(check(oldToken)));
+  assert.ok(await validate([oldJwk, nextJwk])(check(nextToken)));
+  assert.equal(await validate([nextJwk])(check(oldToken)), null);
+  assert.ok(await validate([nextJwk])(check(nextToken)));
 });
 test('server sideband closes only after session.closed, never treats socket loss as confirmation', async () => {
   for (const success of [true, false]) {

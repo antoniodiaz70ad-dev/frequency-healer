@@ -1,11 +1,13 @@
 import type { Mode } from './contracts';
 
-export interface LiveRecord { user: string; requestId: string; providerId?: string; deadline: number; closed: boolean }
+export interface LiveIdentity { user: string; sessionId: string; expiresAt: number }
+export interface LiveRecord { user: string; requestId: string; sessionId?: string; cancelled?: boolean; providerId?: string; deadline: number; closed: boolean }
 export interface LiveStore {
-  reserve(user: string, requestId: string, now: number): Promise<boolean>;
-  bind(user: string, requestId: string, providerId: string): Promise<void>;
+  reserve(user: string, requestId: string, now: number, sessionId: string): Promise<boolean>;
+  bind(user: string, requestId: string, providerId: string): Promise<boolean>;
   find(user: string, requestId: string): Promise<LiveRecord | null>;
   finish(user: string, requestId: string): Promise<void>;
+  defer(user: string, requestId: string, notBefore: number): Promise<void>;
   due(now: number): Promise<LiveRecord[]>;
 }
 export interface LiveProvider {
@@ -14,7 +16,7 @@ export interface LiveProvider {
 }
 export interface LiveDependencies {
   origin: string; enabled: boolean;
-  authenticate(request: Request): Promise<string | null>;
+  authenticate(request: Request): Promise<LiveIdentity | null>;
   store: LiveStore; provider: LiveProvider;
 }
 export const LIVE_MAX_SECONDS = 600;

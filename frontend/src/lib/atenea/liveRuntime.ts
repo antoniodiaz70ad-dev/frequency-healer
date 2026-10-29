@@ -26,9 +26,10 @@ function identityBindings() {
 export function accessDependencies(): AccessDependencies | null {
   const bindings = identityBindings(); if (!bindings) return null;
   return { origin: bindings.origin, enabled: process.env.ATENEA_STAGING_ENABLED === 'true', sessions: bindings.sessions,
-    closeForUser: async user => {
+    closeForUser: async (user, sessionId) => {
       const active = await bindings.store.active(user);
       if (!active || active.closed) return true;
+      if (active.sessionId !== sessionId) return false;
       if (!active.providerId || !process.env.OPENAI_API_KEY) return false;
       const confirmed = await new OpenAILiveProvider(process.env.OPENAI_API_KEY).close(active.providerId);
       if (confirmed) await bindings.store.finish(user, active.requestId);
@@ -41,7 +42,9 @@ export function liveDependencies(): LiveDependencies | null {
   const bindings = identityBindings(); if (!bindings || !process.env.OPENAI_API_KEY) return null;
   return { origin: bindings.origin,
     enabled: process.env.ATENEA_STAGING_ENABLED === 'true' && process.env.ATENEA_LIVE_ENABLED === 'true' && process.env.ATENEA_LIVE_REVIEWED === 'true' && process.env.ATENEA_REAPER_READY === 'true' && (process.env.ATENEA_REAPER_TOKEN?.length ?? 0) >= 32,
-    authenticate: request => request.headers.has('authorization') ? bindings.verify(request) : bindings.sessions.lookup(request).then(identity => identity?.user ?? null),
+    // Voice requires a revocable app-session version. A bearer JWT alone cannot
+    // bypass Redis revocation; exchange it at /access before starting voice.
+    authenticate: request => bindings.sessions.lookup(request),
     store: bindings.store, provider: new OpenAILiveProvider(process.env.OPENAI_API_KEY),
   };
 }

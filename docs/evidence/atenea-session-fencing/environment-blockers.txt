@@ -1,0 +1,5 @@
+npm view @auth0/nextjs-auth0: FAILED, connect EPERM to configured proxy.
+npm audit --json: FAILED, connect EPERM to /security/advisories/bulk. No audit result.
+redis-cli/redis-server: not installed. Docker socket: connect operation not permitted.
+next build: FAILED in Turbopack CSS worker, binding to a port: Operation not permitted (os error 1).
+No SDK installation, resolved version, advisory verification or Auth0 OIDC tests completed.
