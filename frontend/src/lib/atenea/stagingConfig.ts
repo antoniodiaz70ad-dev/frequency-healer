@@ -44,3 +44,15 @@ export function stagingAuthConfig(env: Record<string, string | undefined>, clean
 export function stagingInvitationConfig(env: Record<string, string | undefined>) {
   return env.ATENEA_STAGING_INVITATION_ENABLED === 'true' ? stagingProviderConfig(env) : null;
 }
+
+/** Dedicated Vercel integration credentials; never fall back to a shared/production Redis. */
+export function stagingRedisConfig(env: Record<string, string | undefined>) {
+  if (env.ATENEA_STAGING_IDENTITY_PROVIDER !== 'supabase-staging' || env.VERCEL_ENV !== 'preview') return null;
+  const url = env.ATENEA_KV_REST_API_URL?.trim(), token = env.ATENEA_KV_REST_API_TOKEN?.trim();
+  if (!url || !token) return null;
+  try {
+    const endpoint = new URL(url);
+    if (endpoint.protocol !== 'https:' || endpoint.origin !== url || endpoint.username || endpoint.password) return null;
+    return { url, token };
+  } catch { return null; }
+}
