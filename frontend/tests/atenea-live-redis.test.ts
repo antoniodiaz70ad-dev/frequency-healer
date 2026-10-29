@@ -7,6 +7,7 @@ import { RedisLiveStore } from '../src/lib/atenea/liveStore';
 import { createHash } from 'node:crypto';
 import { accessRoute } from '../src/lib/atenea/stagingAccess';
 import { liveSessionRoute } from '../src/lib/atenea/liveService';
+import { reapLiveSessions } from '../src/lib/atenea/liveReaper';
 import { LIVE_CONSENT, type LiveDependencies } from '../src/lib/atenea/liveTypes';
 import { ACCESS_COOKIE, RedisIdentitySessions } from '../src/lib/atenea/stagingAccess';
 
@@ -93,4 +94,27 @@ test('Redis Lua reservations serialize concurrent workers, reject replays, enfor
   const secondLogout = await accessRoute(secondRequest, { origin, enabled: false, sessions: access, closeForUser: async () => true }, false, origin);
   assert.equal(secondLogout.status, 200);
   assert.equal(await store.reserve(secondUser, crypto.randomUUID(), Date.now(), snapshot.sessionId), false);
+  // Real Redis queue fairness: 25 ambiguous creates must not hide later known IDs.
+  const batch = [];
+  for (let i = 0; i < 26; i++) {
+    const owner = createHash('sha256').update(crypto.randomUUID()).digest('hex');
+    const record = { user: owner, requestId: crypto.randomUUID(), closed: false, deadline: i,
+      ...(i === 25 ? { providerId: 'live_after_unknown_batch' } : {}) };
+    const recordKey = `fh:{atenea-live}:record:${owner}:${record.requestId}`;
+    await command('SET', recordKey, JSON.stringify(record));
+    await command('ZADD', 'fh:{atenea-live}:due', i, recordKey); batch.push(record);
+  }
+  const secret = 'synthetic-redis-scheduler-test-only';
+  const sweep = () => reapLiveSessions(new Request(origin, { headers: { authorization: `Bearer ${secret}` } }), deps, secret);
+  assert.deepEqual(await (await sweep()).json(), { processed: 25, confirmed: 0 });
+  assert.deepEqual(await (await sweep()).json(), { processed: 1, confirmed: 1 });
+  assert.equal(closes, 2);
+  const last = batch[25]; assert.equal((await store.find(last.user, last.requestId))!.closed, true);
+  // A deferred retry after another worker finished must not resurrect the sorted-set entry.
+  await store.defer(last.user, last.requestId, 0);
+  assert.equal(await command('ZSCORE', 'fh:{atenea-live}:due', `fh:{atenea-live}:record:${last.user}:${last.requestId}`), null);
+  for (const pending of batch.slice(0, 25)) {
+    assert.equal((await store.find(pending.user, pending.requestId))!.closed, false);
+    assert.equal(await command('TTL', `fh:{atenea-live}:record:${pending.user}:${pending.requestId}`), -1);
+  }
 });

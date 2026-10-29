@@ -7,6 +7,7 @@ export interface LiveStore {
   bind(user: string, requestId: string, providerId: string): Promise<boolean>;
   find(user: string, requestId: string): Promise<LiveRecord | null>;
   finish(user: string, requestId: string): Promise<void>;
+  defer(user: string, requestId: string, notBefore: number): Promise<void>;
   due(now: number): Promise<LiveRecord[]>;
 }
 export interface LiveProvider {

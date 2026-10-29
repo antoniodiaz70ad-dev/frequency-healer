@@ -19,6 +19,7 @@ const request = (data: unknown = payload, method = 'POST', headers: Record<strin
 /** Test-only atomic store, deliberately not a runtime fallback. */
 class TestStore implements LiveStore {
   revoked = new Set<string>();
+  retryAt = new Map<string, number>();
   records = new Map<string, LiveRecord>(); used = new Map<string, number>();
   async reserve(user: string, id: string, now: number, sessionId: string) {
     if (this.revoked.has(sessionId)) return false;
@@ -29,7 +30,11 @@ class TestStore implements LiveStore {
   async bind(user: string, id: string, providerId: string) { const record = this.records.get(user + id)!; record.providerId = providerId; return !this.revoked.has(record.sessionId!); }
   async find(user: string, id: string) { return this.records.get(user + id) ?? null; }
   async finish(user: string, id: string) { this.records.get(user + id)!.closed = true; }
-  async due(now: number) { return [...this.records.values()].filter(record => record.deadline <= now && !record.closed); }
+  async defer(user: string, id: string, notBefore: number) { if (!this.records.get(user + id)?.closed) this.retryAt.set(user + id, notBefore); }
+  async due(now: number) {
+    const score = (record: LiveRecord) => this.retryAt.get(record.user + record.requestId) ?? record.deadline;
+    return [...this.records.values()].filter(record => score(record) <= now && !record.closed).sort((a, b) => score(a) - score(b)).slice(0, 25);
+  }
 }
 function fixture() {
   const store = new TestStore(); let creates = 0, closes = 0;
@@ -154,8 +159,26 @@ test('watchdog requires its own credential and retries only sessions without con
   const secret = 'synthetic-reaper-test-only-credential';
   assert.equal((await reapLiveSessions(request(), f.deps, secret)).status, 401);
   const cleanup = () => reapLiveSessions(request({}, 'POST', { Authorization: `Bearer ${secret}` }), f.deps, secret);
-  f.deps.provider.close = async () => false; await cleanup(); assert.equal((await f.store.due(Date.now())).length, 1);
+  f.deps.provider.close = async () => false; await cleanup();
+  assert.equal((await f.store.find('a', requestId))!.closed, false);
+  assert.equal((await f.store.due(Date.now())).length, 0);
+  assert.equal((await f.store.due(Date.now() + 60001)).length, 1);
+  f.store.retryAt.clear(); // Next scheduler tick, without sleeping.
   f.deps.provider.close = async () => true; await cleanup(); assert.equal((await f.store.due(Date.now())).length, 0);
+});
+test('unresolved first batch is retained but cannot starve a later closable session', async () => {
+  const f = fixture();
+  for (let i = 0; i < 26; i++) f.store.records.set('user' + i, {
+    user: 'user', requestId: String(i), closed: false, deadline: i,
+    ...(i === 25 ? { providerId: 'live_after_25_unknown' } : {}),
+  });
+  const cleanup = () => reapLiveSessions(request({}, 'POST', { Authorization: 'Bearer synthetic-reaper-test-only-credential' }), f.deps, 'synthetic-reaper-test-only-credential');
+  const first = await cleanup(); assert.equal(first.status, 200);
+  assert.deepEqual(await first.json(), { processed: 25, confirmed: 0 });
+  const second = await cleanup(); assert.equal(second.status, 200);
+  assert.deepEqual(await second.json(), { processed: 1, confirmed: 1 });
+  assert.equal(f.closes(), 1); assert.equal(f.store.records.size, 26);
+  assert.equal([...f.store.records.values()].filter(record => !record.closed).length, 25);
 });
 test('provider request uses documented Live shape, restricts browser commands and strips response extras', async () => {
   let calls = 0;

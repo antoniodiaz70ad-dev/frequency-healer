@@ -12,7 +12,7 @@ Ahora la identidad de voz incluye una versión de sesión: el hash de la cookie 
 - Logout revoca **la sesión actual**, compartida por las pestañas que tengan esa cookie; no revoca todas las sesiones del sujeto. Un script Lua elimina el acceso y marca cancelada cualquier creación de esa versión antes de inspeccionar o cerrar la voz. Otras sesiones válidas del usuario no pierden su acceso.
 - Si la reserva sucede primero, logout encuentra la operación pendiente y no confirma cierre. Si la revocación sucede primero, la reserva es rechazada aunque la autenticación HTTP hubiera finalizado antes.
 - Al llegar el resultado del proveedor, bind vuelve a comprobar la versión. Siempre registra el ID recibido; si la versión fue revocada o expiró, adelanta el reaper y el handler intenta cerrar inmediatamente. Nunca devuelve 201 para ese resultado revocado. El fracaso de cierre mantiene el registro y el bloqueo, sin devolver confirmación.
-- Las operaciones ambiguas sin ID también cuentan en `processed` del reaper. No se finge que han sido cerradas ni se quitan del índice. Los registros y bloqueos sin resolver ya no caducan por TTL; requieren confirmación o conciliación operativa verificable. Esto exige alertas y gestión de backlog antes de activar tráfico. Los registros cerrados conservan TTL de dos días.
+- Las operaciones ambiguas sin ID también cuentan en `processed` del reaper. No se finge que han sido cerradas ni se quitan del índice. Los registros y bloqueos sin resolver ya no caducan por TTL; requieren confirmación o conciliación operativa verificable. Esto exige alertas y gestión de backlog antes de activar tráfico. Los registros cerrados conservan TTL de dos días. Los fallos de cierre y pendientes sin ID se reprograman para dentro de un minuto sin borrarlos: así un lote inicial de 25 desconocidos no oculta indefinidamente otros cierres vencidos. La reprogramación Lua comprueba que el registro siga abierto para no resucitar una tarea cerrada concurrentemente. Un fallo de procesamiento o reprogramación devuelve 503 con contadores.
 - Cerrar por requestId exige la misma versión de sesión, además del propietario. Logout con gates de creación apagados continúa permitido.
 
 Un 200 de logout solo acredita ausencia o cierre de la voz de la sesión examinada; no acredita logout de Auth0 (todavía no implementado), ni revocación global de usuario. Sin cookie válida no se afirma cierre remoto.
@@ -24,6 +24,8 @@ Regresiones deterministas con barreras, sin sleeps ni aumento de timeout:
 1. Autenticación capturada; logout 200; reanudar petición: reserva rechazada, cero llamadas al proveedor.
 2. Proveedor detenido después de reservar; logout 202; liberar resultado: 409, cierre intentado; comprobar tanto cierre confirmado como fallo conservando ID/bloqueo.
 3. Prueba Redis real en `atenea-live-redis.test.ts`: las mismas intercalaciones HTTP/Lua, reserva revocada, seguimiento del pendiente y cierre tardío.
+
+4. Cola con 25 pendientes sin ID y una sesión cerrable detrás: el segundo barrido cierra la sesión conocida, conserva los 25 pendientes y no reintroduce registros cerrados. Cubierto con dependencias controladas y Redis real.
 
 Los casos 1 y 2 usan almacén y proveedor controlados; no prueban Lua ni audio. El caso 3 requiere Redis real y se ejecuta en Quality de CI; localmente se omite porque no hay redis-cli/server y Docker devuelve EPERM. No atribuir al CI del SHA base resultados de esta corrección. El resultado del commit publicado se registra en su PR.
 

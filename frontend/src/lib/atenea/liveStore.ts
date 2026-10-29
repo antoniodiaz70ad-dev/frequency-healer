@@ -69,6 +69,14 @@ export class RedisLiveStore implements LiveStore {
   async finish(user: string, requestId: string) {
     await this.redis.eval(finishScript, [recordKey(user, requestId), activeKey(user), dueKey], [requestId, retention]);
   }
+  async defer(user: string, requestId: string, notBefore: number) {
+    // Check and reschedule atomically: never resurrect work finished by another worker.
+    await this.redis.eval(`
+local raw = redis.call('GET', KEYS[1]); if not raw then return 0 end
+local r = cjson.decode(raw); if r.closed then return 0 end
+redis.call('ZADD', KEYS[2], ARGV[1], KEYS[1]); return 1`,
+    [recordKey(user, requestId), dueKey], [notBefore]);
+  }
   async due(now: number) {
     const keys = await this.redis.zrange<string[]>(dueKey, 0, now, { byScore: true, offset: 0, count: 25 });
     if (!keys.length) return [];
