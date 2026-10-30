@@ -2,6 +2,8 @@
 
 ## Estado y alcance
 
+Este documento conserva la preparación del 28 de octubre. Para invitaciones entregadas, cuenta confirmada, sesión habilitada y el bloqueo actual de la voz, consultar el [estado verificado del 30 de octubre](ATENEA_STAGING_STATUS_2026-10-30.md).
+
 **NO-GO operativo.** Rama `codex/atenea-invitations-20261028`, basada en el PR #39 (`6e7ef002f076a868ca59995a90c5888a6b6c35c3`). El auto-deploy de la rama está bloqueado en ambos `vercel.json`. No se modifica producción ni se habilita voz.
 
 El 28 de octubre de 2026 se confirmó mediante Vercel el registro de `miatenea.app` en el equipo Leviathan, DNS de Vercel y contacto del titular verificado. Renovación automática desactivada; vencimiento el 28 de octubre de 2027. Registro no equivale a sitio publicado ni remitente de correo verificado. No se publican datos del titular.
