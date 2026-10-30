@@ -85,6 +85,10 @@ declare
   protection_token text;
   request_id bigint;
 begin
+  if has_table_privilege('anon', 'net.http_request_queue', 'select')
+     or has_table_privilege('authenticated', 'net.http_request_queue', 'select') then
+    raise exception 'ATENEA scheduler queue permissions are not restricted';
+  end if;
   perform atenea_ops.collect_reaper_results();
   select decrypted_secret into reaper_token from vault.decrypted_secrets
     where name = 'atenea_preview_reaper_token';
