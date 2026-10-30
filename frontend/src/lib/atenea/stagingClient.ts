@@ -44,7 +44,8 @@ export class StagingAccess {
   async check() {
     const token = await this.token();
     const response = await this.http('/api/atenea-voz/identity-check', {
-      method: 'POST', credentials: 'omit', cache: 'no-store', redirect: 'error', signal: AbortSignal.any([this.abort.signal, AbortSignal.timeout(10000)]),
+      // Preserve the private preview's same-origin authentication cookie; never forward it cross-origin.
+      method: 'POST', credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal: AbortSignal.any([this.abort.signal, AbortSignal.timeout(10000)]),
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!response.ok || (await response.json()).authorized !== true || this.disposed) throw new Error('Acceso de prueba no autorizado.');

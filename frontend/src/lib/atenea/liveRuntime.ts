@@ -4,17 +4,19 @@ import { accessTokenAuthenticator } from './liveAuth';
 import { RedisLiveStore } from './liveStore';
 import { OpenAILiveProvider } from './liveProvider';
 import type { LiveDependencies } from './liveTypes';
-import { stagingAuthConfig } from './stagingConfig';
+import { stagingAuthConfig, stagingRedisConfig } from './stagingConfig';
 import { stagingSubjectHash, supabaseStagingAuthenticator } from './stagingAuth';
 import { cookieLiveAccess, RedisIdentitySessions, type AccessDependencies } from './stagingAccess';
 
 /** Lazy: missing staging settings must never break builds or enable anonymous access. */
 function identityBindings() {
   const env = process.env;
-  const names = ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN', 'ATENEA_VOICE_ORIGIN'] as const;
-  if (names.some(name => !env[name]?.trim())) return null;
+  const redisConfig = env.ATENEA_STAGING_IDENTITY_PROVIDER
+    ? stagingRedisConfig(env)
+    : { url: env.UPSTASH_REDIS_REST_URL, token: env.UPSTASH_REDIS_REST_TOKEN };
+  if (!redisConfig?.url || !redisConfig.token || !env.ATENEA_VOICE_ORIGIN?.trim()) return null;
   try {
-    if (new URL(env.UPSTASH_REDIS_REST_URL!).protocol !== 'https:' ||
+    if (new URL(redisConfig.url).protocol !== 'https:' ||
         new URL(env.ATENEA_VOICE_ORIGIN!).origin !== env.ATENEA_VOICE_ORIGIN ||
         new URL(env.ATENEA_VOICE_ORIGIN!).protocol !== 'https:') return null;
     let verify: (request: Request) => Promise<string | null>;
@@ -31,7 +33,7 @@ function identityBindings() {
       if (!Array.isArray(jwks.keys) || !jwks.keys.length || jwks.keys.some((key: { kty?: string; d?: string }) => key.kty !== 'RSA' || key.d)) return null;
       verify = accessTokenAuthenticator(jwks, env.ATENEA_AUTH_ISSUER, env.ATENEA_AUTH_AUDIENCE);
     }
-    const redis = new Redis({ url: env.UPSTASH_REDIS_REST_URL!, token: env.UPSTASH_REDIS_REST_TOKEN!, retry: { retries: 0 }, signal: () => AbortSignal.timeout(5000) });
+    const redis = new Redis({ url: redisConfig.url, token: redisConfig.token, retry: { retries: 0 }, signal: () => AbortSignal.timeout(5000) });
     const profile = env.ATENEA_STAGING_IDENTITY_PROVIDER ? stagingAuthConfig(env, true) : null;
     const permitted = (user: string) => !profile || profile.allowedSubjects.some(subject => stagingSubjectHash(profile, subject) === user);
     return { redis, verify, sessions: new RedisIdentitySessions(redis, verify), permitted,

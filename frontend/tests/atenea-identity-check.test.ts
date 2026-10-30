@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { stagingAuthConfig } from '../src/lib/atenea/stagingConfig';
+import { stagingAuthConfig, stagingRedisConfig } from '../src/lib/atenea/stagingConfig';
 import { stagingAccessRoute, stagingAuthenticator } from '../src/lib/atenea/stagingAuth';
 import { StagingAccess, pilotClientOptions, type PilotAuth } from '../src/lib/atenea/stagingClient';
 
@@ -89,7 +89,7 @@ function clientFixture() {
     logout: async () => { signedOut++; session = null; }, stop: () => { stopped++; },
   };
   const http: typeof fetch = async (input, init) => {
-    calls++; assert.equal(input, '/api/atenea-voz/identity-check'); assert.equal(init?.method, 'POST'); assert.equal(init.credentials, 'omit');
+    calls++; assert.equal(input, '/api/atenea-voz/identity-check'); assert.equal(init?.method, 'POST'); assert.equal(init.credentials, 'same-origin'); assert.equal(init.redirect, 'error');
     assert.equal('body' in init, false); return Response.json({ authorized: true });
   };
   return { auth, http, access: new StagingAccess(auth, http), expire: () => { session!.expires_at = Date.now() / 1000 + 10; },
@@ -162,4 +162,15 @@ test('leaving during the app exchange cannot authorize a late response', async (
   const app = new StagingAccess(f.auth, () => new Promise(resolve => { finish = () => resolve(Response.json({ authenticated: true, expiresAt: Date.now() + 60000 })); }));
   const pending = app.establish(); const rejected = assert.rejects(pending);
   while (!finish) await Promise.resolve(); app.stop(); finish(); await rejected;
+});
+
+test('staging Redis uses only dedicated integration credentials and rejects production or shared fallback', () => {
+  const settings = { VERCEL_ENV: 'preview', ATENEA_STAGING_IDENTITY_PROVIDER: 'supabase-staging',
+    ATENEA_KV_REST_API_URL: 'https://synthetic.upstash.io', ATENEA_KV_REST_API_TOKEN: 'synthetic-staging',
+    UPSTASH_REDIS_REST_URL: 'https://production.upstash.io', UPSTASH_REDIS_REST_TOKEN: 'synthetic-production' };
+  assert.deepEqual(stagingRedisConfig(settings), { url: settings.ATENEA_KV_REST_API_URL, token: 'synthetic-staging' });
+  for (const patch of [{ VERCEL_ENV: 'production' }, { ATENEA_STAGING_IDENTITY_PROVIDER: 'unknown' },
+    { ATENEA_KV_REST_API_URL: '' }, { ATENEA_KV_REST_API_TOKEN: '' },
+    { ATENEA_KV_REST_API_URL: 'http://synthetic.upstash.io' }, { ATENEA_KV_REST_API_URL: 'https://user:password@synthetic.upstash.io' },
+    { ATENEA_KV_REST_API_URL: 'https://synthetic.upstash.io/path' }]) assert.equal(stagingRedisConfig({ ...settings, ...patch }), null);
 });

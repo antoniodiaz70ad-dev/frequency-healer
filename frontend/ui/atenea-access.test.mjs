@@ -36,6 +36,7 @@ test('staging page has no microphone, disk session or voice calls; mocked SDK lo
       Storage.prototype.setItem = function(key, value) { window.__accessWrites.push({key, probe: key === value && /^lswt-/.test(key)}); return set.call(this, key, value); };
       navigator.mediaDevices.getUserMedia = async () => { window.__microphoneCalls++; throw new Error('No microphone in identity test'); };
     });
+    await context.addCookies([{ name: 'preview-test-session', value: 'synthetic-preview-session', url: server.origin, httpOnly: true, sameSite: 'Lax' }]);
     const page = await context.newPage(), errors = [], modelCalls = [], providerCalls = [], accessCalls = [], consoleErrors = [];
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text().slice(0, 200)); });
@@ -52,7 +53,16 @@ test('staging page has no microphone, disk session or voice calls; mocked SDK lo
       return route.fulfill({ headers, contentType: 'application/json', body: JSON.stringify({ access_token: token, refresh_token: 'synthetic-refresh', token_type: 'bearer', expires_in: 3600, expires_at: now + 3600,
         user: { id: user, email: 'pilot@example.test', is_anonymous: false, email_confirmed_at: '2026-01-01', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01' } }) });
     });
-    await page.route('**/api/atenea-voz/identity-check', route => { accessCalls.push(route.request().method()); return route.fulfill({ contentType: 'application/json', body: '{"authorized":true}' }); });
+    await page.route('**/api/atenea-voz/identity-check', async route => {
+      accessCalls.push(route.request().method());
+      const headers = await route.request().allHeaders();
+      // Model private-preview protection: a missing same-origin cookie redirects before the app runs.
+      if (!headers.cookie?.includes('preview-test-session=synthetic-preview-session')) {
+        return route.fulfill({ status: 302, headers: { location: server.origin + '/preview-signin' } });
+      }
+      assert.equal(headers.authorization, `Bearer ${token}`);
+      return route.fulfill({ contentType: 'application/json', body: '{"authorized":true}' });
+    });
     await page.goto(server.origin + '/atenea-acceso');
     await page.getByRole('heading', { name: 'Acceso de prueba' }).waitFor();
     await page.getByLabel('Correo de prueba').fill('pilot@example.test');
