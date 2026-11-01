@@ -39,7 +39,7 @@ test('retrieval is owner-scoped, citation-first, bounded and supports an injecte
   const chunks = chunkExtractedPages({
     ownerId: 'owner-a', sourceFileId: source.fileId, sourceRevision: source.revision,
     author: 'P. D. Ouspensky', work: 'Tertium Organum', pages: [
-      { pageNumber: 14, text: 'La observación del observador distingue conciencia, percepción y experiencia. '.repeat(3) },
+      { pageNumber: 14, provenance: { kind: 'pdf-page-extractor', pdfPageIndex: 13, sourceFileId: source.fileId, sourceRevision: source.revision }, text: 'La observación del observador distingue conciencia, percepción y experiencia. '.repeat(3) },
     ],
   });
   const privateChunk = { ...chunks[0], id: 'private-other-user', ownerId: 'owner-b' };
