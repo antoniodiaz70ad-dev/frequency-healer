@@ -33,3 +33,11 @@
 ## Criterio para el siguiente corte
 
 Primero terminar el login Auth0 ya descrito en PR #41 y definir políticas RLS por sujeto verificado; luego registrar Dropbox OAuth (scope mínimo de lectura, URI de retorno y refresh token en secret manager), construir el conector incremental con revocación/borrados, extractor de PDF con páginas verificables y búsqueda híbrida con citas. Mantener el feature flag apagado y no desplegar a producción.
+
+
+## Revisión complementaria (01-nov-2026)
+
+- **Migraciones de staging:** el SQL de esta biblioteca fue aplicado al proyecto `frequency-healer-atenea-staging` y su historial utiliza versiones `20261101230640` y `20261101230730`. El comentario inicial del archivo SQL dice «not applied» y representa el estado en que se redactó originalmente; **ya no refleja el estado de staging**. Se conserva el contenido de las migraciones aplicadas para no alterar su historial; esta nota es la aclaración vigente.
+- **Control defensivo:** el adaptador puro `searchAuthorizedKnowledge` comprueba permisos, propiedad, vigencia de revisión, derechos y eliminación. No autentica por sí mismo: las identidades y el estado de archivos deben provenir de consultas verificadas del servidor. No hay endpoint ni OAuth conectados. `service_role` puede omitir RLS; ninguna llamada debe aceptar identidad de un navegador.
+- **Páginas:** un entero positivo no prueba referencia exacta. La procedencia se marca solo si el extractor de PDF suministra índice físico, identidad y revisión coincidentes. Las citas indican **página física del PDF**, no página impresa; hasta validar el extractor, no se publicarán referencias como verificadas.
+- **Seguridad:** este corte conserva flags OFF, sin lectura real de Dropbox, sin libros indexados y sin modificaciones en producción.

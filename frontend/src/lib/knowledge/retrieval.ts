@@ -1,4 +1,7 @@
-import type { KnowledgeChunk, KnowledgeHit } from './types';
+import type {
+  KnowledgeChunk, KnowledgeHit, KnowledgeSourceState,
+  KnowledgeDocumentState, KnowledgePermissionState,
+} from './types';
 
 function terms(value: string) {
   return value.toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').match(/[\p{L}\p{N}]{3,}/gu) ?? [];
@@ -31,8 +34,57 @@ export function searchKnowledge(input: {
     .slice(0, limit)
     .map((hit) => ({
       ...hit,
-      citation: `${hit.author}, *${hit.work}*${hit.chapter ? `, ${hit.chapter}` : ''}${hit.pageVerified && hit.pageNumber ? `, p. ${hit.pageNumber}` : ' (página no verificada)'}`,
+      citation: `${hit.author}, *${hit.work}*${hit.chapter ? `, ${hit.chapter}` : ''}${hit.pageVerified && hit.pageNumber ? `, PDF p. ${hit.pageNumber}` : ' (página no verificada)'}`,
     }));
+}
+
+/**
+ * Fail-closed application-level filtering. ALL parameters must originate from
+ * a trusted server adapter after independently verifying the user's session.
+ * This function is NOT authentication; service_role bypasses PostgreSQL RLS.
+ * Never expose raw searchKnowledge with client-selected requesterId.
+ */
+export function searchAuthorizedKnowledge(input: {
+  query: string;
+  verifiedRequesterId: string;
+  verifiedOwnerId: string;
+  sources: KnowledgeSourceState[];
+  documents: KnowledgeDocumentState[];
+  permissions: KnowledgePermissionState[];
+  chunks: KnowledgeChunk[];
+  semanticScores?: ReadonlyMap<string, number>;
+  limit?: number;
+}): KnowledgeHit[] {
+  const { verifiedOwnerId: owner, verifiedRequesterId: requester } = input;
+  if (!owner || !requester) return [];
+  if (!input.permissions.some((p) =>
+    p.ownerId === owner && p.appUserId === requester &&
+    p.scope === 'read-private-library' && !p.revokedAt
+  )) return [];
+
+  const allowedSources = new Set(
+    input.sources.filter((s) =>
+      s.ownerId === owner && s.ingestionStatus === 'indexed' &&
+      s.rights === 'owner-authorized-private-use' && !s.deletedAt
+    ).map((s) => [s.sourceFileId, s.currentRevision].join('\0'))
+  );
+  const allowedDocuments = new Set(
+    input.documents.filter((d) =>
+      d.ownerId === owner && !d.deletedAt &&
+      allowedSources.has([d.sourceFileId, d.sourceRevision].join('\0'))
+    ).map((d) => [d.sourceFileId, d.sourceRevision].join('\0'))
+  );
+  const eligible = input.chunks.filter((c) =>
+    c.ownerId === owner &&
+    allowedDocuments.has([c.sourceFileId, c.sourceRevision].join('\0'))
+  );
+  return searchKnowledge({
+    query: input.query,
+    requesterId: owner,
+    chunks: eligible,
+    semanticScores: input.semanticScores,
+    limit: input.limit,
+  });
 }
 
 export function buildGroundedContext(hits: KnowledgeHit[], maxCharacters = 5_000) {
