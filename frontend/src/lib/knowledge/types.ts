@@ -13,9 +13,42 @@ export interface DropboxPdfSource {
   deleted?: boolean;
 }
 
+/** Evidence must be supplied by a trusted PDF extractor over this exact file revision. */
+export interface PdfPageProvenance {
+  kind: 'pdf-page-extractor';
+  sourceFileId: string;
+  sourceRevision: string;
+  /** Zero-based physical page index in the PDF; not the printed page label. */
+  pdfPageIndex: number;
+}
+
 export interface ExtractedPage {
+  /** Physical 1-based PDF page. A bare positive number is not verified evidence. */
   pageNumber: number | null;
   text: string;
+  provenance?: PdfPageProvenance;
+}
+
+/** Trusted server-loaded status; never hydrate these from a browser request. */
+export interface KnowledgeSourceState {
+  ownerId: string;
+  sourceFileId: string;
+  currentRevision: string;
+  ingestionStatus: KnowledgeIngestionStatus;
+  rights: KnowledgeSourceRights;
+  deletedAt?: string | null;
+}
+export interface KnowledgeDocumentState {
+  ownerId: string;
+  sourceFileId: string;
+  sourceRevision: string;
+  deletedAt?: string | null;
+}
+export interface KnowledgePermissionState {
+  ownerId: string;
+  appUserId: string;
+  scope: 'read-private-library';
+  revokedAt?: string | null;
 }
 
 export interface KnowledgeChunk {
