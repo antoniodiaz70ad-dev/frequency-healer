@@ -22,14 +22,14 @@
 
 | Tabla privada | Campos clave | Regla de aislamiento |
 |---|---|---|
-| `knowledge_sources` | `id`, `owner_id`, `provider`, `dropbox_file_id`, `path`, `revision`, `content_hash`, `rights_status`, `last_seen_at`, `ingestion_status` | El dueño solo ve sus fuentes autorizadas. |
-| `knowledge_documents` | `id`, `source_id`, `owner_id`, `title`, `author`, `edition`, `language`, `source_revision`, `deleted_at` | `owner_id` debe coincidir con el dueño de la fuente. |
+| `knowledge_sources` | `id`, `owner_id` (hash del issuer + `sub` verificados), `provider`, `dropbox_file_id`, `path`, `revision`, `content_hash`, `rights_status`, `last_seen_at`, `ingestion_status` | No guardar correo ni el `sub` original; el dueño solo ve sus fuentes autorizadas. |
+| `knowledge_documents` | `id`, `source_id`, `owner_id`, `title`, `author`, `edition`, `language`, `source_revision`, `deleted_at` | `owner_id` debe coincidir con el dueño de la fuente mediante clave compuesta. |
 | `knowledge_chunks` | `id`, `document_id`, `owner_id`, `chapter`, `page_number`, `page_verified`, `content`, `content_hash`, `embedding` futuro | RLS por propietario; contenido nunca público. |
 | `knowledge_ingestion_runs` | `id`, `source_id`, `owner_id`, `started_at`, `finished_at`, `status`, `error_code`, `indexed_count` | No guardar tokens OAuth, textos completos ni audio en logs. |
 | `knowledge_permissions` | `owner_id`, `app_user_id`, `scope`, `granted_at`, `revoked_at` | Revocación invalida acceso y elimina/inhabilita índice asociado. |
 
-**Condición de diseño:** no escribir políticas basadas en `auth.uid()` hasta acordar cómo la sesión vigente del sitio se traduce a un sujeto verificable de Supabase. RLS en todas las tablas; ninguna clave `service_role` en cliente; funciones de búsqueda en esquema no expuesto o endpoint server-only con autorización explícita.
+**Condición de diseño:** PR #41 contiene un verificador de token y sesión revocable que produce un identificador pseudónimo, pero su login Auth0 sigue documentado como pendiente. La futura búsqueda debe recibir del servidor ese identificador validado, jamás un `owner_id` elegido por el navegador. RLS está habilitado y no hay políticas para acceso de clientes; el servicio futuro usará credenciales solo servidor y deberá filtrar por propietario en cada consulta. Ninguna clave `service_role` en cliente.
 
 ## Criterio para el siguiente corte
 
-Primero revisar la migración en un proyecto staging aislado y resolver autenticación de ATENEA; luego registrar Dropbox OAuth (scope mínimo de lectura, URI de retorno y refresh token en secret manager), construir el conector incremental con revocación/borrados, extractor de PDF con páginas verificables y búsqueda híbrida con citas. Mantener el feature flag apagado y no desplegar a producción.
+Primero revisar y validar la migración en un proyecto staging aislado y terminar el login Auth0 ya descrito en PR #41; luego registrar Dropbox OAuth (scope mínimo de lectura, URI de retorno y refresh token en secret manager), construir el conector incremental con revocación/borrados, extractor de PDF con páginas verificables y búsqueda híbrida con citas. Mantener el feature flag apagado y no desplegar a producción.
