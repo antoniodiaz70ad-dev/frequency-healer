@@ -46,11 +46,11 @@ export function chunkExtractedPages(input: {
     // A page number alone proves nothing. Treat it as verified only when a trusted
     // extractor identifies its physical PDF index and the matching source revision.
     const provenance = page.provenance;
-    const pageVerified = pageNumber !== null &&
+    const pageVerified = Boolean(pageNumber !== null &&
       provenance?.kind === 'pdf-page-extractor' &&
       provenance.pdfPageIndex === pageNumber - 1 &&
       provenance.sourceFileId === input.sourceFileId &&
-      provenance.sourceRevision === input.sourceRevision;
+      provenance.sourceRevision === input.sourceRevision);
 
     const append = (body: string, currentChapter: string | null) => {
       if (!body.trim()) return;
