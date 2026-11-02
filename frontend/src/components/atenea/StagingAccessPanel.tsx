@@ -30,14 +30,25 @@ export default function StagingAccessPanel({ url, publishableKey }: { url: strin
     const form = event.currentTarget, data = new FormData(form);
     const email = String(data.get('email') ?? ''), password = String(data.get('password') ?? '');
     form.reset(); setBusy(true); setMessage('Comprobando acceso…');
+    let phase: 'provider' | 'identity' | 'session' = 'provider';
     try {
       const current = access.current ??= createStagingAccess(url, publishableKey);
-      await current.login(email, password);
+      await current.login(email, password, stage => {
+        phase = stage;
+        if (alive.current) setMessage(stage === 'provider' ? 'Comprobando credenciales con Supabase…' : 'Verificando autorización con ATENEA…');
+      });
+      phase = 'session';
+      if (alive.current) setMessage('Creando sesión privada de ATENEA…');
       await current.establish();
       if (alive.current) { setAuthorized(true); setMessage('Sesión de aplicación verificada. No se inicia conversación ni se activa el micrófono.'); }
     } catch {
       access.current?.stop(); access.current = null;
-      if (alive.current) { setAuthorized(false); setMessage('No se pudo autorizar esta cuenta de prueba.'); }
+      const safeMessage = phase === 'provider'
+        ? 'El proveedor de identidad no completó el inicio de sesión. Comprueba tus credenciales o recupera el acceso desde Supabase.'
+        : phase === 'identity'
+          ? 'Supabase aceptó la sesión, pero ATENEA no pudo verificar la autorización. Se requiere revisar la configuración del servidor.'
+          : 'ATENEA verificó la identidad, pero no pudo crear la sesión privada. Se requiere comprobar el servicio de sesiones.';
+      if (alive.current) { setAuthorized(false); setMessage(safeMessage); }
     }
     finally { if (alive.current) setBusy(false); }
   }
