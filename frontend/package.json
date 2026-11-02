@@ -2,7 +2,9 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "engines": { "node": ">=22.0.0" },
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -27,10 +29,17 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/ws": "8.18.2",
-    "eslint": "^9",
-    "eslint-config-next": "16.4.3",
+    "eslint": "^10.14.0",
     "playwright-core": "1.63.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "16.4.3",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "typescript-eslint": "^8.72.1",
+    "globals": "^17.14.0"
+  },
+  "overrides": {
+    "minimatch": "11.0.1"
   }
 }
