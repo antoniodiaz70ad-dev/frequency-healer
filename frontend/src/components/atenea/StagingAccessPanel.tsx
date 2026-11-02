@@ -43,11 +43,12 @@ export default function StagingAccessPanel({ url, publishableKey }: { url: strin
       if (alive.current) { setAuthorized(true); setMessage('Sesión de aplicación verificada. No se inicia conversación ni se activa el micrófono.'); }
     } catch {
       access.current?.stop(); access.current = null;
-      const safeMessage = phase === 'provider'
-        ? 'El proveedor de identidad no completó el inicio de sesión. Comprueba tus credenciales o recupera el acceso desde Supabase.'
-        : phase === 'identity'
-          ? 'Supabase aceptó la sesión, pero ATENEA no pudo verificar la autorización. Se requiere revisar la configuración del servidor.'
-          : 'ATENEA verificó la identidad, pero no pudo crear la sesión privada. Se requiere comprobar el servicio de sesiones.';
+      const failureMessages: Record<'provider' | 'identity' | 'session', string> = {
+        provider: 'El proveedor de identidad no completó el inicio de sesión. Comprueba tus credenciales o recupera el acceso desde Supabase.',
+        identity: 'Supabase aceptó la sesión, pero ATENEA no pudo verificar la autorización. Se requiere revisar la configuración del servidor.',
+        session: 'ATENEA verificó la identidad, pero no pudo crear la sesión privada. Se requiere comprobar el servicio de sesiones.',
+      };
+      const safeMessage = failureMessages[phase];
       if (alive.current) { setAuthorized(false); setMessage(safeMessage); }
     }
     finally { if (alive.current) setBusy(false); }
