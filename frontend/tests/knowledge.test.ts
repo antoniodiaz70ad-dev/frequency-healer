@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { chunkExtractedPages } from '../src/lib/knowledge/chunking';
-import { isDropboxReadOnlyRequest, sourceEligibility } from '../src/lib/knowledge/policy';
+import { isCanonicalDropboxAppFolderPath, isDropboxReadOnlyRequest, sourceEligibility } from '../src/lib/knowledge/policy';
 import { buildGroundedContext, searchKnowledge, searchAuthorizedKnowledge } from '../src/lib/knowledge/retrieval';
 import type { DropboxPdfSource } from '../src/lib/knowledge/types';
 
 const source: DropboxPdfSource = {
-  fileId: 'dbx-file-1', path: '/Mis plataformas/book.pdf', revision: 'rev-1', name: 'book.pdf',
+  fileId: 'dbx-file-1', path: '/book.pdf', revision: 'rev-1', name: 'book.pdf',
   mimeType: 'application/pdf', sizeBytes: 1234, rights: 'owner-authorized-private-use',
 };
 
@@ -18,6 +18,17 @@ test('source policy excludes unsupported files, unreviewed rights, oversized and
   assert.equal(sourceEligibility({ ...source, deleted: true }).ok, false);
   assert.equal(isDropboxReadOnlyRequest('GET'), true);
   assert.equal(isDropboxReadOnlyRequest('POST'), false);
+});
+
+test('Dropbox App Folder accepts its root and canonical subpaths, rejecting traversal and malformed paths', () => {
+  assert.equal(isCanonicalDropboxAppFolderPath('/Tertium_Organum_-_PD_Ouspensky.pdf'), true);
+  assert.equal(isCanonicalDropboxAppFolderPath('/books/Tertium Organum.pdf'), true);
+  for (const path of [
+    '/', '//book.pdf', '/books//book.pdf', '/books/../book.pdf', '/./book.pdf',
+    '/books/./book.pdf', '/books\\book.pdf',
+    '/books/book.html', '/books/Control\u0007.pdf', '/books/cafe\u0301.pdf',
+  ]) assert.equal(isCanonicalDropboxAppFolderPath(path), false, path);
+  assert.equal(sourceEligibility({ ...source, name: 'index.html', mimeType: 'text/html' }).ok, false);
 });
 
 test('chunking preserves work, chapter and exact page provenance; missing pages stay unverified', () => {
