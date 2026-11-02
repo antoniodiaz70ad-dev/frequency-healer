@@ -9,28 +9,64 @@ export default function StagingAccessPanel({ url, publishableKey }: { url: strin
   const [busy, setBusy] = useState(false), [authorized, setAuthorized] = useState(false);
   const [message, setMessage] = useState('Usa una cuenta de prueba previamente autorizada.');
   const alive = useRef(true);
-  useEffect(() => { alive.current = true; return () => { alive.current = false; access.current?.stop(); access.current = null; }; }, []);
+  useEffect(() => {
+    alive.current = true;
+    const controller = new AbortController();
+    void fetch('/api/atenea-voz/access', { credentials: 'same-origin', cache: 'no-store', signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) throw new Error();
+        const status = await response.json();
+        if (alive.current && status.authenticated === true) {
+          setAuthorized(true);
+          setMessage('Sesión de aplicación verificada. La voz requiere sus propios controles.');
+        }
+      })
+      .catch(() => { if (alive.current && !controller.signal.aborted) setMessage('Inicia sesión con una cuenta de prueba previamente autorizada.'); });
+    return () => { alive.current = false; controller.abort(); access.current?.stop(); access.current = null; };
+  }, []);
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     const form = event.currentTarget, data = new FormData(form);
     const email = String(data.get('email') ?? ''), password = String(data.get('password') ?? '');
     form.reset(); setBusy(true); setMessage('Comprobando acceso…');
+    let phase: 'provider' | 'identity' | 'session' = 'provider';
     try {
       const current = access.current ??= createStagingAccess(url, publishableKey);
-      await current.login(email, password);
-      if (alive.current) { setAuthorized(true); setMessage('Cuenta autorizada. Esta prueba no inicia una conversación ni activa el micrófono.'); }
+      await current.login(email, password, stage => {
+        phase = stage;
+        if (alive.current) setMessage(stage === 'provider' ? 'Comprobando credenciales con Supabase…' : 'Verificando autorización con ATENEA…');
+      });
+      phase = 'session';
+      if (alive.current) setMessage('Creando sesión privada de ATENEA…');
+      await current.establish();
+      if (alive.current) { setAuthorized(true); setMessage('Sesión de aplicación verificada. No se inicia conversación ni se activa el micrófono.'); }
     } catch {
       access.current?.stop(); access.current = null;
-      if (alive.current) { setAuthorized(false); setMessage('No se pudo autorizar esta cuenta de prueba.'); }
+      const failureMessages: Record<'provider' | 'identity' | 'session', string> = {
+        provider: 'El proveedor de identidad no completó el inicio de sesión. Comprueba tus credenciales o recupera el acceso desde Supabase.',
+        identity: 'Supabase aceptó la sesión, pero ATENEA no pudo verificar la autorización. Se requiere revisar la configuración del servidor.',
+        session: 'ATENEA verificó la identidad, pero no pudo crear la sesión privada. Se requiere comprobar el servicio de sesiones.',
+      };
+      const safeMessage = failureMessages[phase];
+      if (alive.current) { setAuthorized(false); setMessage(safeMessage); }
     }
     finally { if (alive.current) setBusy(false); }
   }
   async function logout() {
     if (busy) return;
     setBusy(true);
-    try { await access.current?.logout(); if (alive.current) { setAuthorized(false); setMessage('Acceso cerrado.'); } }
-    catch { if (alive.current) setMessage('No se pudo confirmar el cierre de acceso. Intenta de nuevo.'); }
+    try {
+      const response = await fetch('/api/atenea-voz/access', {
+        method: 'DELETE', credentials: 'same-origin', cache: 'no-store', redirect: 'error',
+        signal: AbortSignal.timeout(15000),
+      });
+      const result = await response.json();
+      if (!response.ok || result.revocationConfirmed !== true) throw new Error();
+      await access.current?.logout();
+      access.current?.stop(); access.current = null;
+      if (alive.current) { setAuthorized(false); setMessage('Sesión de aplicación revocada.'); }
+    } catch { if (alive.current) setMessage('No se pudo confirmar el cierre de acceso. Intenta de nuevo.'); }
     finally { if (alive.current) setBusy(false); }
   }
   return <FHPageShell width="narrow">
