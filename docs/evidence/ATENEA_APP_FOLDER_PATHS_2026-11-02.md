@@ -10,9 +10,9 @@ Correct the library path assumption for the Dropbox app `Atenea Biblioteca`, whi
 
 Before: staging constraint `knowledge_sources_path_check` required `path LIKE '/Mis plataformas/%'`, which rejects App Folder root paths.
 
-Forward-only migration: `supabase/migrations/20261102001246_atenea_app_folder_paths.sql` drops only that path check and adds `knowledge_sources_app_folder_path_check`. It permits canonical absolute Dropbox API paths rooted at the app folder, PDF suffixes, and rejects empty/dot traversal segments, backslashes, and control characters. It leaves the original schema migrations unchanged.
+Forward-only migration: `supabase/migrations/20261102001357_atenea_app_folder_paths.sql` drops only that path check and adds `knowledge_sources_app_folder_path_check`. It permits canonical absolute Dropbox API paths rooted at the app folder, PDF suffixes, and rejects empty/dot traversal segments, backslashes, and control characters. It leaves the original schema migrations unchanged.
 
-After applying the migration to Supabase staging project `rayebpxdfatsnkbderot`, a catalog query returned `convalidated=true` for the new constraint and no old path constraint. A read-only SQL matrix returned:
+Supabase recorded the applied migration as version `20261102001357` (`atenea_app_folder_paths`) in `supabase_migrations.schema_migrations`; the repository filename matches that ledger entry. After applying it to staging project `rayebpxdfatsnkbderot`, a catalog query returned `convalidated=true` for the new constraint and no old path constraint. A read-only SQL matrix returned:
 
 | Path | Accepted |
 |---|---:|
