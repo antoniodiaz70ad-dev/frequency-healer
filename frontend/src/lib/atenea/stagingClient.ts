@@ -20,11 +20,13 @@ export class StagingAccess {
     this.auth.stop(); void this.auth.logout().catch(() => {});
     throw new Error('Acceso cerrado.');
   }
-  async login(email: string, password: string) {
+  async login(email: string, password: string, onStage?: (stage: 'provider' | 'identity') => void) {
     if (this.disposed || this.signingIn) throw new Error('No se pudo autorizar esta cuenta de prueba.');
     this.signingIn = true;
     try {
+      onStage?.('provider');
       if (!await this.auth.login(email, password)) throw new Error();
+      onStage?.('identity');
       await this.check();
     } catch {
       try { await this.auth.logout(); } catch { /* no private provider error escapes */ }
