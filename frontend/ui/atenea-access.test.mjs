@@ -27,7 +27,7 @@ after(async () => {
   }
 });
 
-test('staging page has no microphone, disk session or voice calls; mocked SDK login is lost on reload', { timeout: 45000 }, async t => {
+test('staging login issues a server cookie, uses no microphone or disk storage, and keeps server access after reload', { timeout: 45000 }, async () => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   try {
     await context.addInitScript(() => {
@@ -38,6 +38,7 @@ test('staging page has no microphone, disk session or voice calls; mocked SDK lo
     });
     await context.addCookies([{ name: 'preview-test-session', value: 'synthetic-preview-session', url: server.origin, httpOnly: true, sameSite: 'Lax' }]);
     const page = await context.newPage(), errors = [], modelCalls = [], providerCalls = [], accessCalls = [], consoleErrors = [];
+    let appSession = false, exchanges = 0, revocations = 0;
     page.on('pageerror', error => errors.push(error.message));
     page.on('console', message => { if (message.type() === 'error') consoleErrors.push(message.text().slice(0, 200)); });
     page.on('request', request => { if (/api\.openai\.com|\/api\/atenea-voz\/session/.test(request.url())) modelCalls.push(request.url()); });
@@ -63,27 +64,48 @@ test('staging page has no microphone, disk session or voice calls; mocked SDK lo
       assert.equal(headers.authorization, `Bearer ${token}`);
       return route.fulfill({ contentType: 'application/json', body: '{"authorized":true}' });
     });
+    await page.route('**/api/atenea-voz/access', async route => {
+      const method = route.request().method(); accessCalls.push(method);
+      if (method === 'GET') {
+        const cookie = route.request().headers().cookie ?? '';
+        return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ authenticated: appSession && cookie.includes('__Host-atenea-session=') }) });
+      }
+      if (method === 'POST') {
+        assert.ok(route.request().headers().authorization?.startsWith('Bearer '));
+        assert.equal(route.request().postData(), null);
+        exchanges++; appSession = true;
+        return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ authenticated: true, expiresAt: Date.now() + 3_500_000 }),
+          headers: { 'set-cookie': `__Host-atenea-session=${'a'.repeat(64)}; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=3600` } });
+      }
+      if (method === 'DELETE') {
+        revocations++; appSession = false;
+        return route.fulfill({ contentType: 'application/json', body: JSON.stringify({ authenticated: false, revocationConfirmed: true, remoteConfirmed: true }),
+          headers: { 'set-cookie': '__Host-atenea-session=; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=0' } });
+      }
+      return route.fulfill({ status: 405 });
+    });
     await page.goto(server.origin + '/atenea-acceso');
     await page.getByRole('heading', { name: 'Acceso de prueba' }).waitFor();
     await page.getByLabel('Correo de prueba').fill('pilot@example.test');
     await page.getByLabel('Contraseña', { exact: true }).fill('synthetic-password');
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-    await page.waitForFunction(() => !document.querySelector('[role="status"]')?.textContent?.includes('Comprobando acceso'));
-    if (!(await page.getByRole('status').innerText()).includes('Cuenta autorizada')) t.diagnostic(JSON.stringify({ providerCalls, accessCalls, errors, consoleErrors, nodeNow: now, browserNow: await page.evaluate(() => Math.floor(Date.now()/1000)) }));
-    assert.match(await page.getByRole('status').innerText(), /Cuenta autorizada/);
+    await page.getByRole('status').filter({ hasText: 'Sesión de aplicación verificada' }).waitFor();
+    assert.equal(exchanges, 1);
     assert.equal(await page.getByLabel('Contraseña', { exact: true }).count(), 0);
     assert.equal(await page.evaluate(() => window.__microphoneCalls), 0);
     assert.ok(await page.evaluate(() => window.__accessWrites.every(write => write.probe)));
     assert.equal(await page.evaluate(() => localStorage.length + sessionStorage.length), 0);
     assert.equal(await page.evaluate(() => document.cookie), '');
     await page.getByRole('button', { name: 'Cerrar acceso', exact: true }).click();
-    await page.getByRole('status').filter({ hasText: 'Acceso cerrado' }).waitFor();
+    await page.getByRole('status').filter({ hasText: 'Sesión de aplicación revocada' }).waitFor();
+    assert.equal(revocations, 1);
     await page.getByLabel('Correo de prueba').fill('pilot@example.test');
     await page.getByLabel('Contraseña', { exact: true }).fill('synthetic-password');
     await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-    await page.getByRole('status').filter({ hasText: 'Cuenta autorizada' }).waitFor();
-    await page.reload(); await page.getByRole('button', { name: 'Entrar', exact: true }).waitFor();
-    assert.equal(await page.getByRole('button', { name: 'Cerrar acceso' }).count(), 0);
+    await page.getByRole('status').filter({ hasText: 'Sesión de aplicación verificada' }).waitFor();
+    await page.reload(); await page.getByRole('button', { name: 'Cerrar acceso', exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Entrar', exact: true }).count(), 0);
+    assert.equal(exchanges, 2);
     assert.deepEqual(modelCalls, []); assert.deepEqual(errors, []);
     if (process.env.FH_UI_ARTIFACTS_DIR) {
       await mkdir(process.env.FH_UI_ARTIFACTS_DIR, { recursive: true });
