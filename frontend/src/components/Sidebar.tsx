@@ -1,5 +1,6 @@
 "use client";
 import { VOICE_ENABLED, HARMONIC_ENABLED } from "@/lib/voice/feature";
+import { FIRE_ENABLED } from "@/lib/fire/feature";
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -13,6 +14,7 @@ const navGroups = [
     ...(HARMONIC_ENABLED ? [{ href: "/laboratorio-armonico", label: "Laboratorio Armónico", icon: "∿" }] : []),
     { href: "/laboratorio-cimatico", label: "Laboratorio Cimático", icon: "◉" },
     { href: "/respiracion-atencion", label: "Respiración y atención", icon: "◒" },
+    ...(FIRE_ENABLED ? [{ href: "/prueba-de-fuego", label: "Prueba de Fuego", icon: "◈" }] : []),
     { href: "/biblioteca", label: "Atlas de frecuencias", icon: "◌" },
     { href: "/protocolos", label: "Protocolos históricos", icon: "≋" },
     { href: "/generador", label: "Generador manual", icon: "⌁" },
