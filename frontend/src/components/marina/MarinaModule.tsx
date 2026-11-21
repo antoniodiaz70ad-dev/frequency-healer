@@ -14,6 +14,7 @@ import styles from './marina.module.css';
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'finished' | 'stopped';
 type Tab = 'guided' | 'free' | 'study' | 'journal';
+type MarinaSession = Omit<MarinaRecord, 'endedAt' | 'status' | 'elapsedMs' | 'notes'>;
 const EMPTY_NOTES: MarinaNotes = { intention: '', experience: '', interpretation: '', events: '', action: '' };
 const time = (ms: number) => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms % 60000 / 1000)).padStart(2, '0')}`;
 function download(text: string, filename: string) {
@@ -36,17 +37,20 @@ export default function MarinaModule() {
   const [records, setRecords] = useState<MarinaRecord[]>([]);
   const [message, setMessage] = useState('');
   const [storageError, setStorageError] = useState(false);
+  const [sessionView, setSessionView] = useState<MarinaSession | null>(null);
+  const [sessionDurationMs, setSessionDurationMs] = useState<number | null>(null);
   const audioRef = useRef<MarinaAudio | null>(null);
   const clockRef = useRef<MarinaClock | null>(null);
-  const sessionRef = useRef<Omit<MarinaRecord, 'endedAt' | 'status' | 'elapsedMs' | 'notes'> | null>(null);
+  const sessionRef = useRef<MarinaSession | null>(null);
   const operation = useRef(0);
   const lastPhase = useRef('');
   const volumeRef = useRef(volume);
   const active = status === 'playing' || status === 'starting' || status === 'paused';
-  const guided = sessionRef.current?.kind === 'guided' || (!sessionRef.current && tab === 'guided');
+  const guided = sessionView?.kind === 'guided' || (!sessionView && tab === 'guided');
   const phase = guided ? marinaPhaseAt(elapsed) : null;
-  const total = clockRef.current?.durationMs ?? (tab === 'guided' ? MARINA_TOTAL_MS : minutes * 60000);
+  const total = sessionDurationMs ?? (tab === 'guided' ? MARINA_TOTAL_MS : minutes * 60000);
 
+  const invalidatePending = useCallback(() => { operation.current += 1; }, []);
   const stopSpeech = useCallback(() => { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }, []);
   const pause = useCallback(() => {
     operation.current++;
@@ -59,8 +63,8 @@ export default function MarinaModule() {
       try { setRecords(readMarinaRecords(localStorage)); }
       catch (error) { setStorageError(true); setMessage((error as Error).message); }
     }, 0);
-    return () => { window.clearTimeout(timer); operation.current++; audioRef.current?.dispose(); stopSpeech(); };
-  }, [stopSpeech]);
+    return () => { window.clearTimeout(timer); invalidatePending(); audioRef.current?.dispose(); stopSpeech(); };
+  }, [invalidatePending, stopSpeech]);
   useEffect(() => { volumeRef.current = volume; audioRef.current?.setVolume(volume); }, [volume]);
   useEffect(() => {
     if (status !== 'playing') return;
@@ -106,7 +110,7 @@ export default function MarinaModule() {
     };
     window.speechSynthesis.speak(utterance);
     return () => { utterance.onerror = null; stopSpeech(); };
-  }, [phase?.id, status, voice, voiceVolume, stopSpeech]); // A guide speaks once per phase.
+  }, [phase, status, voice, voiceVolume, stopSpeech]); // A guide speaks once per phase.
 
   async function start(resume = false) {
     const ticket = ++operation.current;
@@ -117,8 +121,12 @@ export default function MarinaModule() {
         const initialConfig: MarinaAudioConfig = kind === 'guided' ? { mode: 'pulse', hz: 3, carrierHz: config.carrierHz } : { ...config };
         validateMarinaAudio(initialConfig);
         if (kind === 'free' && (!Number.isFinite(minutes) || minutes < 1 || minutes > 240)) throw new Error('Elige una duración entre 1 y 240 minutos.');
-        sessionRef.current = { id: crypto.randomUUID(), version: MARINA_VERSION, startedAt: new Date().toISOString(), kind, config: initialConfig, soundEnabled: sound };
-        clockRef.current = new MarinaClock(kind === 'guided' ? MARINA_TOTAL_MS : minutes * 60000);
+        const session: MarinaSession = { id: crypto.randomUUID(), version: MARINA_VERSION, startedAt: new Date().toISOString(), kind, config: initialConfig, soundEnabled: sound };
+        const durationMs = kind === 'guided' ? MARINA_TOTAL_MS : minutes * 60000;
+        sessionRef.current = session;
+        setSessionView(session);
+        setSessionDurationMs(durationMs);
+        clockRef.current = new MarinaClock(durationMs);
         setElapsed(0);
       }
       const session = sessionRef.current;
@@ -147,12 +155,12 @@ export default function MarinaModule() {
     const record: MarinaRecord = { ...sessionRef.current, endedAt: new Date().toISOString(), status: status === 'finished' ? 'completed' : 'stopped', elapsedMs: Math.round(clockRef.current?.elapsedMs ?? 0), notes: { ...notes } };
     try {
       setRecords(saveMarinaRecord(localStorage, record)); setStorageError(false);
-      sessionRef.current = null; clockRef.current = null; setStatus('idle'); setElapsed(0);
+      sessionRef.current = null; clockRef.current = null; setSessionView(null); setSessionDurationMs(null); setStatus('idle'); setElapsed(0);
       setNotes({ ...EMPTY_NOTES, intention: notes.intention }); setMessage('Sesión guardada en este navegador.');
     } catch (error) { setMessage(`${(error as Error).message} Descarga esta sesión para conservarla.`); download(JSON.stringify(record, null, 2), 'marina-sesion-recuperacion.json'); }
   }
-  function discard() { sessionRef.current = null; clockRef.current = null; setStatus('idle'); setElapsed(0); setMessage('Sesión descartada; el diario guardado se conserva.'); }
-  const actualConfig: MarinaAudioConfig = phase && sessionRef.current?.kind === 'guided' ? { mode: phase.mode, hz: phase.hz, carrierHz: sessionRef.current.config.carrierHz } : sessionRef.current?.config ?? config;
+  function discard() { sessionRef.current = null; clockRef.current = null; setSessionView(null); setSessionDurationMs(null); setStatus('idle'); setElapsed(0); setMessage('Sesión descartada; el diario guardado se conserva.'); }
+  const actualConfig: MarinaAudioConfig = phase && sessionView?.kind === 'guided' ? { mode: phase.mode, hz: phase.hz, carrierHz: sessionView.config.carrierHz } : sessionView?.config ?? config;
 
   return <FHPageShell width="wide">
     <FHPageHeader eyebrow="Exploración personal · Marina Jacobi" title="Punto Cero" description="Explora sonido, emoción e imagen. Construye tu escena, suéltala y conserva tus experiencias con tus propias palabras." />
@@ -180,7 +188,7 @@ export default function MarinaModule() {
             <p className={styles.phase}>{status === 'finished' ? 'Práctica completa' : phase && guided ? phase.name : 'Exploración libre'}</p>
             <p className={styles.timer} aria-label="Tiempo restante">{time(Math.max(0, total - elapsed))}</p>
             <progress max={total} value={elapsed} aria-label="Avance de la práctica" />
-            <p>{sessionRef.current?.soundEnabled === false || (!sessionRef.current && !sound) ? 'Silencio' : marinaAudioLabel(actualConfig)}</p>
+            <p>{sessionView?.soundEnabled === false || (!sessionView && !sound) ? 'Silencio' : marinaAudioLabel(actualConfig)}</p>
             {phase && guided && <p className={styles.guide}>{phase.guide}</p>}
           </div>
           <div className={styles.actions}>
