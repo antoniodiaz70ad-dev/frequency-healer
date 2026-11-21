@@ -43,11 +43,21 @@ export const MARINA_PHASES = [
   { id: 'hold', name: 'Sostener', seconds: 120, hz: 8, mode: 'pulse', guide: 'Sostén la escena y el sentimiento. Permite una estabilidad cómoda. Advierte sensaciones, imágenes o ideas sin apresurarte a explicarlas.' },
   { id: 'release', name: 'Soltar', seconds: 180, hz: 0, mode: 'silence', guide: 'Deja caer la imagen. Respira y vuelve al entorno. Conserva lo que quieras registrar y elige cómo llevar tu intención al día.' },
 ] as const;
+export type MarinaProtocol = 'classic24' | 'creation12';
+export const MARINA_CREATION_PHASES = [
+  { id: 'neutral', name: 'Neutralidad', seconds: 180, hz: 3, mode: 'pulse', guide: 'Respira con naturalidad. Reconoce el deseo y la emoción que lo contradice. Permanece sin alimentarlos ni combatirlos.' },
+  { id: 'choose', name: 'Elegir', seconds: 120, hz: 3, mode: 'pulse', guide: 'Elige una sola dirección. Formula una intención concreta y comprensible, sin apresurar el resultado.' },
+  { id: 'integrate', name: 'Imagen y sentimiento', seconds: 180, hz: 7, mode: 'binaural', guide: 'Reúne tu escena, tu frase y un sentimiento que puedas sostener cómodamente. Observa si apuntan en la misma dirección.' },
+  { id: 'express', name: 'Expresión', seconds: 120, hz: 0, mode: 'silence', guide: 'Di tu frase suavemente o escucha tu grabación. Advierte cómo se siente al escucharla. Después deja espacio.' },
+  { id: 'settle', name: 'Estabilización', seconds: 120, hz: 0, mode: 'silence', guide: 'Permanece en silencio sin añadir instrucciones. Al terminar puedes prolongar esta quietud y después registrar tu experiencia.' },
+] as const;
+export function marinaPhases(protocol: MarinaProtocol = 'classic24') { return protocol === 'creation12' ? MARINA_CREATION_PHASES : MARINA_PHASES; }
+export function marinaDuration(protocol: MarinaProtocol = 'classic24') { return marinaPhases(protocol).reduce((sum, phase) => sum + phase.seconds * 1000, 0); }
 export const MARINA_TOTAL_MS = MARINA_PHASES.reduce((sum, phase) => sum + phase.seconds * 1000, 0);
-export function marinaPhaseAt(elapsedMs: number) {
-  if (elapsedMs >= MARINA_TOTAL_MS) return null;
+export function marinaPhaseAt(elapsedMs: number, protocol: MarinaProtocol = 'classic24') {
+  if (elapsedMs >= marinaDuration(protocol)) return null;
   let startMs = 0;
-  for (const phase of MARINA_PHASES) {
+  for (const phase of marinaPhases(protocol)) {
     const endMs = startMs + phase.seconds * 1000;
     if (elapsedMs < endMs) return { ...phase, startMs, endMs };
     startMs = endMs;
@@ -70,7 +80,10 @@ export class MarinaClock {
   pause(now: number) { this.tick(now); this.last = null; }
 }
 export type MarinaNotes = { intention: string; experience: string; interpretation: string; events: string; action: string };
+export type MarinaFollowUp = { id: string; at: string; text: string };
+export type MarinaPractice = { statement: string; scene: string; feeling: string };
 export type MarinaRecord = {
+  protocol?: MarinaProtocol; practice?: MarinaPractice; followUps?: MarinaFollowUp[];
   id: string; version: typeof MARINA_VERSION; startedAt: string; endedAt: string;
   kind: 'guided' | 'free'; status: 'completed' | 'stopped'; elapsedMs: number;
   config: MarinaAudioConfig; soundEnabled: boolean; notes: MarinaNotes;
@@ -81,6 +94,9 @@ export function isMarinaRecord(value: unknown): value is MarinaRecord {
   const r = value as MarinaRecord;
   try {
     if (!r.config) return false;
+    if (r.protocol !== undefined && !['classic24', 'creation12'].includes(r.protocol)) return false;
+    if (r.practice !== undefined && (!r.practice || !['statement', 'scene', 'feeling'].every(key => typeof r.practice?.[key as keyof MarinaPractice] === 'string'))) return false;
+    if (r.followUps !== undefined && (!Array.isArray(r.followUps) || !r.followUps.every(f => f && typeof f.id === 'string' && typeof f.text === 'string' && typeof f.at === 'string' && Number.isFinite(Date.parse(f.at))))) return false;
     validateMarinaAudio(r.config);
     return typeof r.id === 'string' && r.id.length > 0 && r.version === MARINA_VERSION &&
       ['guided', 'free'].includes(r.kind) && ['completed', 'stopped'].includes(r.status) &&
@@ -105,3 +121,20 @@ export function saveMarinaRecord(store: MarinaStore, record: MarinaRecord): Mari
   store.setItem(MARINA_STORAGE_KEY, JSON.stringify(next));
   return next;
 }
+
+/** Append against the latest stored session, retaining earlier dated observations. */
+export function addMarinaFollowUp(store: MarinaStore, id: string, followUp: MarinaFollowUp) {
+  if (!followUp.text.trim()) throw new Error('Escribe un hecho antes de guardarlo.');
+  const record = readMarinaRecords(store).find(r => r.id === id);
+  if (!record) throw new Error('La sesión ya no está disponible. Exporta el diario antes de continuar.');
+  return saveMarinaRecord(store, { ...record, followUps: [...(record.followUps ?? []), followUp] });
+}
+export const MARINA_BOOK_CARDS = [
+  { title: 'Neutralidad antes de elegir', page: 23, original: 'Mobilizing Structures propone nivelar las realidades en punto cero antes de proyectar una nueva dirección.', application: 'La práctica de 12 minutos y sus tiempos son una adaptación nuestra.' },
+  { title: 'Palabra, corazón e intención', page: 25, original: 'Sound Continuum Vibration relaciona palabras, sentimiento y pensamiento con la expresión del holograma.', application: 'Puedes reunir una frase, una escena y un sentimiento; grabar tu voz es una función de la aplicación.' },
+  { title: 'Sonido del corazón y su opuesto', page: 6, original: 'Metatronic Conversion distingue el sonido del corazón del latido y propone combinarlo con un subtono opuesto.', application: 'El texto no define una medición completa. Aquí no medimos ese sonido ni equiparamos el opuesto con invertir la fase.' },
+  { title: 'Pulsaciones y números primos', page: 15, original: 'Bio Crystalize Technology propone medir diferencias entre pulsaciones moleculares y utilizar números primos.', application: 'No incluye una lista de frecuencias ni un algoritmo completo de reproducción.' },
+  { title: '378394 Hz y estabilización', page: 14, original: 'Marina vincula 378394 Hz con regeneración y describe tres días de estabilización en un proceso a escala nano.', application: 'Referencia de estudio; no es una receta para audífonos ni una salida de este generador.' },
+  { title: 'Cristales y pirámides', page: 24, original: 'El texto menciona 7.8 Hz, giros opuestos y el incremento escrito como «0.1378 HZ %».', application: 'Conservamos la unidad ambigua. No se interpreta como un incremento programable.' },
+  { title: 'Ejemplo de firmas de holograma', page: 19, original: 'Utiliza 1.13005 Hz y otro valor 2.7383 Hz por encima como ejemplo de cambio de holograma.', application: 'No se presenta como una secuencia universal de escucha.' },
+] as const;

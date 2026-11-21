@@ -98,3 +98,37 @@ test('corrupt or malformed diary is never overwritten', () => {
     const s = storage(raw); assert.throws(() => saveMarinaRecord(s, record())); assert.equal(s.getItem(MARINA_STORAGE_KEY), raw);
   }
 });
+
+test('12-minute creation visits all five phases and ends in silence without changing classic timing', async () => {
+  const { marinaDuration, marinaPhases } = await import('../src/lib/marina/model');
+  assert.equal(marinaDuration('creation12'), 720000);
+  assert.equal(marinaDuration('classic24'), 1440000);
+  let boundary = 0;
+  for (const phase of marinaPhases('creation12')) {
+    assert.equal(marinaPhaseAt(boundary, 'creation12')?.id, phase.id);
+    assert.equal(marinaPhaseAt(boundary + phase.seconds * 1000 - 1, 'creation12')?.id, phase.id);
+    boundary += phase.seconds * 1000;
+  }
+  assert.equal(marinaPhaseAt(boundary, 'creation12'), null);
+  assert.equal(marinaPhaseAt(600000, 'creation12')?.mode, 'silence');
+});
+test('new session metadata and dated follow-ups round-trip without migrating old records', async () => {
+  const { addMarinaFollowUp } = await import('../src/lib/marina/model');
+  const s = storage(), old = record(); saveMarinaRecord(s, old);
+  const next: MarinaRecord = { ...record(), id: 'new', protocol: 'creation12', practice: { statement: 'Mi frase', scene: 'Escena', feeling: 'Calma' } };
+  saveMarinaRecord(s, next);
+  addMarinaFollowUp(s, 'new', { id: 'first', at: '2026-11-21T12:00:00Z', text: 'Primer hecho' });
+  addMarinaFollowUp(s, 'new', { id: 'second', at: '2026-11-22T12:00:00Z', text: 'Segundo hecho' });
+  const rows = readMarinaRecords(s);
+  assert.deepEqual(rows[0], old);
+  assert.deepEqual(rows[1].practice, next.practice);
+  assert.deepEqual(rows[1].followUps?.map(f => f.text), ['Primer hecho', 'Segundo hecho']);
+  assert.throws(() => addMarinaFollowUp(s, 'missing', { id: 'x', at: new Date().toISOString(), text: 'Lost' }));
+  assert.throws(() => addMarinaFollowUp(s, 'new', { id: 'x', at: new Date().toISOString(), text: ' ' }));
+});
+test('malformed new metadata preserves the original diary', () => {
+  for (const field of [{ protocol: 'unknown' }, { practice: { statement: 1 } }, { followUps: [{ id: 'x', at: 'invalid', text: 'x' }] }]) {
+    const raw = JSON.stringify([{ ...record(), ...field }]), s = storage(raw);
+    assert.throws(() => saveMarinaRecord(s, record())); assert.equal(s.getItem(MARINA_STORAGE_KEY), raw);
+  }
+});

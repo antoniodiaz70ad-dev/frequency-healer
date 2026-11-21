@@ -36,3 +36,6 @@
 @keyframes breathe { 50% { transform: scale(1.035); opacity: .8; } }
 @media (prefers-reduced-motion: reduce) { .moving { animation: none; } }
 @media (max-width: 640px) { .frequencyGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }.fields, .studyGrid, .phases { grid-template-columns: 1fr; }.tabs button { flex: 1 1 40%; }.actions button { flex: 1 1 auto; } }
+.phraseBox { border: 1px solid var(--fh-border); border-radius: .8rem; padding: 1rem; margin-block: 1.25rem; }
+.phraseBox audio { width: 100%; margin-block: 1rem; }
+.phraseBox input[type=file] { display: block; max-width: 100%; margin-top: .5rem; }
