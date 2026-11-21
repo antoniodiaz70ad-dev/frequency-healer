@@ -1,0 +1,18 @@
+.module { display: grid; gap: 1.5rem; line-height: 1.65; }
+.module > :global(.fh-surface) { padding: clamp(1rem, 3vw, 1.5rem); }
+.fields { display: grid; gap: 1rem; margin-top: 1rem; }
+.fields label { display: grid; gap: .4rem; }
+.fields input, .fields select, .fields textarea { width: 100%; min-height: 44px; padding: .7rem; border: 1px solid var(--fh-border-strong); border-radius: .6rem; background: var(--fh-bg); color: var(--fh-text); }
+.module .check { display: flex; align-items: flex-start; gap: .7rem; margin-block: 1rem; }
+.module .check input { flex: 0 0 24px; width: 24px; min-height: 24px; height: 24px; margin-top: .2rem; }
+.safety { padding: 1rem; border: 1px solid var(--fh-accent); border-radius: .7rem; }
+.practice { display: grid; gap: 1rem; text-align: center; }
+.practice h2 { font-size: 1.5rem; color: var(--fh-accent); }
+.timer { font-variant-numeric: tabular-nums; font-size: clamp(3rem, 10vw, 5rem); }
+.actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.25rem; }
+.module button { min-height: 44px; }
+.module button:disabled { opacity: .5; cursor: not-allowed; }
+.module :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--fh-accent); outline-offset: 3px; }
+.calendar { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .5rem; margin-top: 1rem; }
+.calendar li { border: 1px solid var(--fh-border); border-radius: .5rem; padding: .7rem; }
+.comparison { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }

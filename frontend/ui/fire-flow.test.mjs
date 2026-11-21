@@ -1,0 +1,136 @@
+import { before, after, test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
+import { startHarness, observeBrowser } from './browser-harness.mjs';
+
+let harness;
+before(async () => { harness = await startHarness(); }, { timeout: 60000 });
+after(async () => { await harness?.close(); }, { timeout: 15000 });
+const key = 'rl:prueba-de-fuego:v1';
+
+test('mobile session phases, pause/resume, consent, persistence, export and scoped deletion', { timeout: 60000 }, async () => {
+  const context = await harness.browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
+  await context.addInitScript(observeBrowser);
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto(harness.origin + '/prueba-de-fuego');
+  await page.getByRole('heading', { name: 'Prueba de Fuego', exact: true }).waitFor();
+  assert.equal(await page.getByRole('checkbox', { name: /Guía de voz/ }).isChecked(), false);
+  assert.equal(await page.evaluate(key => localStorage.getItem(key), key), null);
+  await page.getByLabel('Ejercicio mental', { exact: true }).fill('Memorizar un poema');
+  await page.keyboard.press('Tab');
+  assert.equal(await page.getByLabel('Modalidad', { exact: true }).evaluate(element => document.activeElement === element), true);
+  await page.getByRole('checkbox', { name: /Autorizo guardar/ }).check();
+  await page.getByRole('button', { name: 'Crear programa de 14 días' }).click();
+  await page.getByText('Día 14', { exact: false }).waitFor();
+  await page.clock.install();
+  await page.getByRole('button', { name: 'Comenzar 7 minutos' }).click();
+  await page.getByRole('heading', { name: 'Anclaje', exact: true }).waitFor();
+  await page.clock.fastForward(60000);
+  await page.getByRole('heading', { name: 'Atención simultánea', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Pausar', exact: true }).click();
+  const paused = await page.getByRole('timer').textContent();
+  await page.clock.fastForward(120000);
+  assert.equal(await page.getByRole('timer').textContent(), paused);
+  await page.getByRole('button', { name: 'Reanudar', exact: true }).click();
+  await page.clock.fastForward(120000);
+  await page.getByRole('heading', { name: 'Identificación de impulsos', exact: true }).waitFor();
+  await page.clock.fastForward(120000);
+  await page.getByRole('heading', { name: 'Metaconciencia', exact: true }).waitFor();
+  await page.clock.fastForward(120000);
+  await page.getByRole('heading', { name: 'Registro voluntario' }).waitFor();
+  await page.getByLabel('Presencia percibida (0–10)', { exact: true }).selectOption('0');
+  await page.getByLabel('Distracciones identificadas (autorreporte)', { exact: true }).fill('3');
+  await page.getByRole('button', { name: 'Guardar sesión', exact: true }).click();
+  await page.getByText('Sesión guardada en este navegador.', { exact: true }).waitFor();
+  const stored = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), key);
+  assert.equal(stored.sessions.length, 1);
+  assert.equal(stored.sessions[0].elapsedMs, 420000);
+  assert.equal(stored.sessions[0].completedPhases.length, 4);
+  assert.equal(stored.sessions[0].presence, 0);
+  assert.equal((await page.evaluate(() => window.__fhUI.snapshot())).contexts.length, 0);
+  await page.reload();
+  await page.getByText('Historial local · 1 sesión', { exact: true }).waitFor();
+  const downloaded = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exportar datos de esta práctica' }).click();
+  assert.equal((await downloaded).suggestedFilename(), 'prueba-de-fuego.json');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await mkdir('artifacts/fire', { recursive: true });
+  await page.screenshot({ path: 'artifacts/fire/mobile.png', fullPage: true });
+  await page.evaluate(() => localStorage.setItem('other-module', 'keep'));
+  await page.getByRole('button', { name: 'Eliminar datos de esta práctica' }).click();
+  await page.getByRole('button', { name: 'Confirmar eliminación' }).click();
+  assert.equal(await page.evaluate(key => localStorage.getItem(key), key), null);
+  assert.equal(await page.evaluate(() => localStorage.getItem('other-module')), 'keep');
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test('treadmill requires safety acceptance, no in-motion responses, report only off belt', { timeout: 30000 }, async () => {
+  const context = await harness.browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await context.newPage();
+  await page.goto(harness.origin + '/prueba-de-fuego');
+  await page.getByLabel('Ejercicio mental', { exact: true }).fill('Atender a sensaciones corporales');
+  await page.getByLabel('Modalidad', { exact: true }).selectOption('treadmill');
+  assert.equal(await page.getByRole('button', { name: 'Comenzar 7 minutos' }).isDisabled(), true);
+  await page.getByRole('checkbox', { name: /He elegido una tarea/ }).check();
+  await page.getByRole('button', { name: 'Comenzar 7 minutos' }).click();
+  assert.equal(await page.getByRole('textbox').count(), 0);
+  await page.getByRole('button', { name: 'Terminar práctica' }).click();
+  assert.equal(await page.getByLabel('Nota opcional', { exact: true }).count(), 0);
+  await page.getByRole('checkbox', { name: /Ya me detuve/ }).check();
+  await page.getByLabel('Nota opcional', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Guardar sesión', exact: true }).isDisabled(), true);
+  await page.getByRole('button', { name: 'Descartar sin guardar' }).click();
+  assert.equal(await page.evaluate(key => localStorage.getItem(key), key), null);
+  await context.close();
+});
+
+test('corruption remains exportable, is never silently overwritten', { timeout: 30000 }, async () => {
+  const context = await harness.browser.newContext();
+  await context.addInitScript(key => localStorage.setItem(key, '{broken'), key);
+  const page = await context.newPage();
+  await page.goto(harness.origin + '/prueba-de-fuego');
+  await page.getByRole('status').filter({ hasText: 'Se conservaron sin sobrescribir' }).waitFor();
+  await page.getByRole('checkbox', { name: /Autorizo guardar/ }).check();
+  await page.getByRole('button', { name: 'Crear programa de 14 días' }).click();
+  assert.equal(await page.evaluate(key => localStorage.getItem(key), key), '{broken');
+  await context.close();
+});
+
+test('voice is opt-in, speaks only phase boundaries and cancels on pause/navigation', { timeout: 30000 }, async () => {
+  const context = await harness.browser.newContext();
+  // Probe dispatch, not acoustic quality: native voices need a separate device check.
+  await context.addInitScript(() => {
+    window.__fireSpeech = { spoken: [], cancelled: 0 };
+    speechSynthesis.speak = utterance => window.__fireSpeech.spoken.push(utterance.text);
+    speechSynthesis.cancel = () => window.__fireSpeech.cancelled++;
+  });
+  const page = await context.newPage();
+  await page.goto(harness.origin + '/prueba-de-fuego');
+  await page.getByLabel('Ejercicio mental', { exact: true }).fill('Contenido privado que no se lee');
+  assert.deepEqual(await page.evaluate(() => window.__fireSpeech.spoken), []);
+  await page.getByRole('checkbox', { name: /Guía de voz/ }).check();
+  await page.clock.install();
+  await page.getByRole('button', { name: 'Comenzar 7 minutos' }).click();
+  await page.waitForFunction(() => window.__fireSpeech.spoken.length === 1);
+  await page.clock.fastForward(30000);
+  assert.equal(await page.evaluate(() => window.__fireSpeech.spoken.length), 1);
+  await page.clock.fastForward(30000);
+  await page.waitForFunction(() => window.__fireSpeech.spoken.length === 2);
+  assert.equal(await page.evaluate(() => window.__fireSpeech.spoken.join('').includes('Contenido privado')), false);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await page.getByRole('button', { name: 'Reanudar', exact: true }).waitFor();
+  const paused = await page.getByRole('timer').textContent();
+  await page.clock.fastForward(60000);
+  assert.equal(await page.getByRole('timer').textContent(), paused);
+  const before = await page.evaluate(() => window.__fireSpeech.cancelled);
+  await page.getByRole('link', { name: /Inicio/ }).click();
+  await page.waitForFunction(before => window.__fireSpeech.cancelled > before, before);
+  assert.ok(before > 0);
+  await context.close();
+});

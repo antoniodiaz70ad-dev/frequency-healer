@@ -65,6 +65,7 @@ jobs:
     env:
       NEXT_PUBLIC_VOICE_JOURNEY_ENABLED: ${{ matrix.enabled }}
       NEXT_PUBLIC_HARMONIC_LAB_ENABLED: ${{ matrix.enabled }}
+      NEXT_PUBLIC_PRUEBA_DE_FUEGO_ENABLED: ${{ matrix.enabled }}
       VOICE_AI_ENABLED: 'false'
       NEXT_TELEMETRY_DISABLED: '1'
       FH_UI_BROWSER: chromium

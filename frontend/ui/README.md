@@ -4,12 +4,14 @@ Run from `frontend/` with Node >=20 and Google Chrome installed:
 
 ```sh
 npm ci
-NEXT_PUBLIC_VOICE_JOURNEY_ENABLED=true NEXT_PUBLIC_HARMONIC_LAB_ENABLED=true VOICE_AI_ENABLED=false npm run build
+NEXT_PUBLIC_VOICE_JOURNEY_ENABLED=true NEXT_PUBLIC_HARMONIC_LAB_ENABLED=true NEXT_PUBLIC_PRUEBA_DE_FUEGO_ENABLED=true VOICE_AI_ENABLED=false npm run build
 npm test
 npm run test:ui
 ```
 
 `test:ui` uses Node's existing test runner and pinned `playwright-core`. It starts and stops its own Next production server on an ephemeral loopback port. It launches a separate headless Chrome process, muted, with an isolated browser context for every test. It never connects to deployed origins, existing browser profiles or user records. No credentials are required. Build with flags ON first; an OFF build intentionally fails setup rather than silently skipping tests.
+
+`fire-flow.test.mjs` covers Prueba de Fuego on a mobile viewport, all four phases with a controlled browser clock, pause/resume, opt-in storage, zero-valued self-reports, reload/export/deletion, corruption, treadmill guards and optional speech dispatch. The speech probe verifies utterance scheduling/cancellation; it does not verify audible output or suitability during real walking. Human device and treadmill validation remains required.
 
 If Chrome is not installed, supply a compatible Chromium executable using `FH_UI_BROWSER_PATH=/absolute/path/to/chromium npm run test:ui`. No browser downloads or system installs happen automatically. This suite is currently validated on Chrome/macOS; it is not a Firefox/WebKit/device compatibility guarantee.
 
