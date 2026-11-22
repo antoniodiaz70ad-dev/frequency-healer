@@ -1,5 +1,13 @@
 # Marina · Punto Cero
 
+## Included composer recipes across devices (2026-11-22)
+
+The composer includes a built-in bank of four recipes, available on a fresh browser without importing or signing in: Punto Cero 7.8 (6 min, 200/207.8 Hz, 50%), Imagen y creación (8 min, 259.2/324/388.8 Hz continuous layers at 50/35/25%), Foco 15 (10 min, 220/235 Hz, 60%), and Exploración 40 (8 min, 340/380 Hz, 50%). All use 4-second fades and the existing 15% initial listening volume. The first three are a manually selected 24-minute sequence; the fourth is an alternative.
+
+The direct route `/marina-punto-cero/compositor` opens the composer immediately. The existing route retains the guided-practice default. Loading an included recipe creates an editable draft and clears the selected local recipe ID; saving it creates a separate local copy, preserving existing recipes and private journals. No audio starts when a recipe is loaded.
+
+This is shared app content, **not account synchronization**. Local changes, future personal recipes, recordings and diary entries remain device-local. The UI states this distinction. No personal localStorage, saved intentions or journal text is uploaded or embedded in the app bundle.
+
 New additive route: `/marina-punto-cero`, linked from **Explorar**. No dependency, server API, credential, database migration or existing preset change.
 
 ## Included

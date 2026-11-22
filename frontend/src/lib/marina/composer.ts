@@ -35,6 +35,40 @@ export function defaultComposition(): ComposerRecipe {
   ] };
 }
 
+/** App recipes remain available on a fresh device without copying private local data. */
+export function starterCompositions(): ComposerRecipe[] {
+  const point = defaultComposition();
+  point.name = '01 · Punto Cero 7.8';
+  point.durationMinutes = 6;
+  point.transitionSeconds = 4;
+  point.intention = 'Respira naturalmente, siente manos o pies y formula una intención concreta. Después continúa con 02 · Imagen y creación y 03 · Foco 15.';
+  Object.assign(point.layers[0], { mode: 'binaural', carrierHz: 200, rateHz: 7.8, level: .5 });
+
+  const image = defaultComposition();
+  image.name = '02 · Imagen y creación';
+  image.durationMinutes = 8;
+  image.transitionSeconds = 4;
+  image.intention = 'Dedica un minuto a imaginar un resultado concreto. Después ensaya los pasos, un obstáculo y tu respuesta. Al terminar, continúa con 03 · Foco 15 y ejecuta una acción.';
+  image.layers.forEach((layer, index) => Object.assign(layer, {
+    enabled: true, mode: 'tone', carrierHz: [259.2, 324, 388.8][index], level: [.5, .35, .25][index],
+  }));
+
+  const focus = defaultComposition();
+  focus.name = '03 · Foco 15';
+  focus.durationMinutes = 10;
+  focus.transitionSeconds = 4;
+  focus.intention = 'Ejecuta una sola tarea concreta: redactar una propuesta, completar un cálculo o preparar un documento.';
+  Object.assign(focus.layers[0], { mode: 'binaural', carrierHz: 220, rateHz: 15, level: .6 });
+
+  const alternative = defaultComposition();
+  alternative.name = 'Alternativa · Exploración 40';
+  alternative.durationMinutes = 8;
+  alternative.transitionSeconds = 4;
+  alternative.intention = 'Para otra sesión; no se suma a los 24 minutos iniciales. Compara tu comodidad y atención con Foco 15 usando una tarea similar.';
+  Object.assign(alternative.layers[0], { mode: 'binaural', carrierHz: 340, rateHz: 40, level: .5 });
+  return [point, image, focus, alternative];
+}
+
 export function validateComposition(recipe: ComposerRecipe, sampleRate = 48000): void {
   if (!recipe || recipe.version !== COMPOSER_VERSION || typeof recipe.name !== 'string' || !recipe.name.trim() || recipe.name.length > 120 || typeof recipe.intention !== 'string' || recipe.intention.length > 6000 || typeof recipe.visual !== 'boolean') throw new Error('La composición tiene un formato diferente.');
   if (!Number.isFinite(recipe.durationMinutes) || recipe.durationMinutes < 1 || recipe.durationMinutes > 240) throw new Error('Elige una duración entre 1 y 240 minutos.');
