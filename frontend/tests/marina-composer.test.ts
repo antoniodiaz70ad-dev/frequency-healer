@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   COMPOSER_RECIPES_KEY, COMPOSER_SESSIONS_KEY, NANO_REFERENCES, compositionMix,
-  defaultComposition, readCompositions, readComposerSessions, saveComposition, saveComposerSession,
+  defaultComposition, starterCompositions, readCompositions, readComposerSessions, saveComposition, saveComposerSession,
   validateComposition, type ComposerSession,
 } from '../src/lib/marina/composer';
 import { MarinaComposerAudio } from '../src/lib/marina/composerAudio';
@@ -36,6 +36,22 @@ function store(initial: Record<string, string> = {}) {
   const values = new Map(Object.entries(initial));
   return { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
 }
+
+test('starter recipes survive fresh devices and local edits without writing over saved recipes or journals', () => {
+  const desktop = store({ 'fh.marina.sessions.v1': 'private desktop journal' });
+  const phone = store();
+  const recipes = starterCompositions();
+  recipes.forEach(recipe => validateComposition(recipe));
+  const copy = structuredClone(recipes[0]);
+  copy.name = 'Mi copia'; copy.layers[0].rateHz = 6;
+  saveComposition(desktop, { id: 'personal', savedAt: '2026-11-22T15:00:00Z', recipe: copy });
+  assert.equal(readCompositions(desktop)[0].recipe.layers[0].rateHz, 6);
+  assert.equal(desktop.getItem('fh.marina.sessions.v1'), 'private desktop journal');
+  assert.deepEqual(readCompositions(phone), []);
+  assert.deepEqual(starterCompositions(), recipes);
+  recipes[0].layers[0].rateHz = 12;
+  assert.equal(starterCompositions()[0].layers[0].rateHz, 7.8);
+});
 
 test('composer preserves every sub-Hz decimal through save/load, without changing the older Marina journal', () => {
   const storage = store({ 'fh.marina.sessions.v1': 'legacy untouched' });

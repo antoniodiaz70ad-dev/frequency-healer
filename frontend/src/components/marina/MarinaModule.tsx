@@ -26,8 +26,8 @@ function download(text: string, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export default function MarinaModule() {
-  const [tab, setTab] = useState<Tab>('guided');
+export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: Tab } = {}) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [status, setStatus] = useState<Status>('idle');
   const [config, setConfig] = useState<MarinaAudioConfig>({ ...DEFAULT_MARINA_CONFIG });
   const [sound, setSound] = useState(true);

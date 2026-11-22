@@ -6,7 +6,7 @@ import { getAudioEngine } from '@/lib/audioEngine';
 import { MarinaComposerAudio } from '@/lib/marina/composerAudio';
 import {
   COMPOSER_RECIPES_KEY, COMPOSER_SESSIONS_KEY, COMPOSER_VERSION, NANO_REFERENCES, NANO_SOURCE,
-  defaultComposition, layerLabel, readCompositions, readComposerSessions, saveComposition, saveComposerSession,
+  defaultComposition, starterCompositions, layerLabel, readCompositions, readComposerSessions, saveComposition, saveComposerSession,
   validateComposition, type ComposerLayer, type ComposerRecipe, type ComposerSession, type SavedComposition,
 } from '@/lib/marina/composer';
 import styles from './marina.module.css';
@@ -21,6 +21,7 @@ function exportJSON(value: unknown, filename: string) {
 
 export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => void }) {
   const [recipe, setRecipe] = useState<ComposerRecipe>(defaultComposition);
+  const [starters] = useState(starterCompositions);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saved, setSaved] = useState<SavedComposition[]>([]);
   const [sessions, setSessions] = useState<ComposerSession[]>([]);
@@ -136,6 +137,19 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   const scale = .93 + .07 * Math.sin(2 * Math.PI * visualRate * elapsed / 1000);
 
   return <>
+    <FHSurface className="p-5 md:p-7">
+      <p className={styles.eyebrow}>Disponibles en todos tus dispositivos</p>
+      <h2>Tu secuencia · 24 minutos</h2>
+      <p className={styles.muted}>Estas cuatro recetas están incluidas en la aplicación: puedes abrirlas en iPhone, Samsung o computadora. Carga los tramos 01 → 02 → 03 en orden; Exploración 40 queda para otra sesión.</p>
+      {starters.map(starter => <article key={starter.name} className={styles.savedComposition}>
+        <div><h3>{starter.name}</h3><p className={styles.muted}>{starter.durationMinutes} min · {starter.layers.filter(layer => layer.enabled).length} capas activas</p></div>
+        <button type="button" className="fh-action fh-action--secondary" disabled={locked} aria-label={`Usar ${starter.name}`} onClick={() => {
+          setRecipe(structuredClone(starter)); setSelectedId(null); setMessage('Receta incluida cargada. Toca Escuchar composición cuando estés listo.');
+        }}>Usar receta</button>
+      </article>)}
+      <p className={styles.muted}>Si personalizas una receta, guarda tu copia en Mis recetas. Esas copias y tu diario se conservan sólo en este dispositivo; los cambios no se sincronizan entre teléfonos.</p>
+      <a href="/marina-punto-cero/compositor">Enlace directo al compositor</a>
+    </FHSurface>
     <FHSurface className="p-5 md:p-7">
       <div className={styles.titleRow}><div><p className={styles.eyebrow}>Sonido por capas</p><h2>Tu compositor</h2></div><span className={styles.tag}>Hasta tres capas</span></div>
       <p className={styles.muted}>Combina tonos, pulsaciones y diferencias binaurales. Guarda una receta para volver a explorar sus mismos ajustes.</p>
