@@ -13,6 +13,7 @@ const navGroups = [
     ...(HARMONIC_ENABLED ? [{ href: "/laboratorio-armonico", label: "Laboratorio Armónico", icon: "∿" }] : []),
     { href: "/laboratorio-cimatico", label: "Laboratorio Cimático", icon: "◉" },
     { href: "/respiracion-atencion", label: "Respiración y atención", icon: "◒" },
+    { href: "/marina-punto-cero", label: "Marina · Punto Cero", icon: "◇" },
     { href: "/biblioteca", label: "Atlas de frecuencias", icon: "◌" },
     { href: "/protocolos", label: "Protocolos históricos", icon: "≋" },
     { href: "/generador", label: "Generador manual", icon: "⌁" },
