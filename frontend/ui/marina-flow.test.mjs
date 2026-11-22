@@ -6,7 +6,7 @@ import { startLocalServer } from '../scripts/local-test-server.mjs';
 test('Marina: legacy diary, local recording, 12-minute flow, phase speech and dated follow-ups', { timeout: 90000 }, async () => {
   const server = await startLocalServer(false);
   let browser;
-  try { browser = await chromium.launch({ executablePath: process.env.FH_UI_BROWSER_PATH || '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--mute-audio', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] }); } catch (error) { await server.close(); throw error; }
+  try { browser = await chromium.launch({ headless: true, args: ['--mute-audio', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'], ...(process.env.FH_UI_BROWSER_PATH ? { executablePath: process.env.FH_UI_BROWSER_PATH } : process.env.FH_UI_BROWSER === 'chromium' ? {} : { channel: 'chrome' }) }); } catch (error) { await server.close(); throw error; }
   const context = await browser.newContext({ permissions: ['microphone'] });
   const page = await context.newPage();
   const errors = []; page.on('pageerror', e => errors.push(e.message));

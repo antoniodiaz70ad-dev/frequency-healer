@@ -6,7 +6,7 @@ import { startLocalServer } from '../scripts/local-test-server.mjs';
 test('composer: precise recipe persistence, native audio, pause/resume, diary and mobile layout', { timeout: 90000 }, async () => {
   const server = await startLocalServer(false);
   let browser;
-  try { browser = await chromium.launch({ executablePath: process.env.FH_UI_BROWSER_PATH || '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--mute-audio'] }); }
+  try { browser = await chromium.launch({ headless: true, args: ['--mute-audio'], ...(process.env.FH_UI_BROWSER_PATH ? { executablePath: process.env.FH_UI_BROWSER_PATH } : process.env.FH_UI_BROWSER === 'chromium' ? {} : { channel: 'chrome' }) }); }
   catch (error) { await server.close(); throw error; }
   const context = await browser.newContext();
   const page = await context.newPage(), errors = [];
