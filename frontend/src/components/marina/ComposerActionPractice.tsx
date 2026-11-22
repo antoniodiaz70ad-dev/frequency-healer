@@ -10,7 +10,7 @@ import type { ComposerSession } from '@/lib/marina/composer';
 import styles from './marina.module.css';
 
 function FocusRating({ label, value, disabled, onChange }: { label: string; value: number | null; disabled?: boolean; onChange: (value: number | null) => void }) {
-  return <label>{label}<select disabled={disabled} value={value ?? ''} onChange={event => onChange(event.target.value === '' ? null : Number(event.target.value))}>
+  return <label>{label}<select aria-label={label} disabled={disabled} value={value ?? ''} onChange={event => onChange(event.target.value === '' ? null : Number(event.target.value))}>
     <option value="">Sin registrar</option>{Array.from({ length: 11 }, (_, i) => <option value={i} key={i}>{i} / 10</option>)}
   </select></label>;
 }
@@ -70,7 +70,7 @@ export function ComposerActionReview({ plan, review, onChange }: { plan: ActionP
     <div className={styles.fields}>
       <FocusRating label="Concentración después de escuchar" value={review.focusAfter} onChange={focusAfter => onChange({ ...review, focusAfter })} />
       <label>Distracciones que observé<input type="number" min="0" max="999" step="1" value={review.distractions ?? ''} onChange={event => onChange({ ...review, distractions: event.target.value === '' ? null : Number(event.target.value) })} /></label>
-      <label>Estado de mi primera acción<select value={review.actionStatus} onChange={event => onChange({ ...review, actionStatus: event.target.value as ActionStatus })}>{Object.entries(ACTION_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label>Estado de mi primera acción<select aria-label="Estado de mi primera acción" value={review.actionStatus} onChange={event => onChange({ ...review, actionStatus: event.target.value as ActionStatus })}>{Object.entries(ACTION_STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Qué hice o qué quedó pendiente<textarea maxLength={2000} value={review.evidence} onChange={event => onChange({ ...review, evidence: event.target.value })} /></label>
     </div>
   </section>;
@@ -89,7 +89,7 @@ export function ComposerActionDiary({ session, onAppend }: { session: ComposerSe
     {review && <><p>Concentración antes: {review.focusBefore ?? 'sin registrar'} / después: {review.focusAfter ?? 'sin registrar'} · Distracciones: {review.distractions ?? 'sin registrar'}</p><p>Registro al guardar: {ACTION_STATUS_LABELS[review.actionStatus]}{review.evidence ? ` · ${review.evidence}` : ''}</p></>}
     {(session.actionFollowUps ?? []).map(update => <p key={update.id}>{new Date(update.recordedAt).toLocaleString('es-MX')} · {ACTION_STATUS_LABELS[update.actionStatus]} · {update.evidence}</p>)}
     <details><summary>Añadir seguimiento de mi acción</summary><div className={styles.fields}>
-      <label>Resultado de la acción<select value={actionStatus} onChange={event => setActionStatus(event.target.value as ActionFollowUp['actionStatus'])}>{Object.entries(ACTION_STATUS_LABELS).filter(([value]) => value !== 'pending').map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+      <label>Resultado de la acción<select aria-label="Resultado de la acción" value={actionStatus} onChange={event => setActionStatus(event.target.value as ActionFollowUp['actionStatus'])}>{Object.entries(ACTION_STATUS_LABELS).filter(([value]) => value !== 'pending').map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <label>Mi avance concreto<textarea maxLength={2000} value={evidence} onChange={event => setEvidence(event.target.value)} /></label>
     </div><button type="button" className="fh-action fh-action--secondary" onClick={() => {
       if (!evidence.trim()) { setMessage('Anota qué hiciste o qué impidió avanzar.'); return; }
