@@ -6,11 +6,13 @@ import { getAudioEngine } from '@/lib/audioEngine';
 import { MarinaComposerAudio } from '@/lib/marina/composerAudio';
 import {
   COMPOSER_RECIPES_KEY, COMPOSER_SESSIONS_KEY, COMPOSER_VERSION, NANO_REFERENCES, NANO_SOURCE,
-  defaultComposition, starterCompositions, layerLabel, readCompositions, readComposerSessions, saveComposition, saveComposerSession,
+  defaultComposition, starterCompositions, actionPracticeComposition, appendComposerActionFollowUp, layerLabel, readCompositions, readComposerSessions, saveComposition, saveComposerSession,
   validateComposition, type ComposerLayer, type ComposerRecipe, type ComposerSession, type SavedComposition,
 } from '@/lib/marina/composer';
 import styles from './marina.module.css';
 import { useMarinaMediaSession } from './useMarinaMediaSession';
+import { emptyPracticeReview, validateActionPlan } from '@/lib/marina/actionPractice';
+import { ComposerActionPlanEditor, ComposerActionGuide, ComposerActionReview, ComposerActionDiary } from './ComposerActionPractice';
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'completed' | 'stopped';
 const time = (ms: number) => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms % 60000 / 1000)).padStart(2, '0')}`;
@@ -32,6 +34,9 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   const [experience, setExperience] = useState('');
   const [message, setMessage] = useState('');
   const [storageError, setStorageError] = useState(false);
+  const [focusBefore, setFocusBefore] = useState<number | null>(null);
+  const [practiceReview, setPracticeReview] = useState(emptyPracticeReview);
+  const [visualVisible, setVisualVisible] = useState(true);
   const audio = useRef<MarinaComposerAudio | null>(null);
   const operation = useRef(0);
   const elapsedRef = useRef(0);
@@ -82,9 +87,10 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
     try {
       if (!resume) {
         validateComposition(recipe);
+        if (recipe.actionPlan) validateActionPlan(recipe.actionPlan, true);
         if (!recipe.layers.some(layer => layer.enabled && layer.level > 0)) throw new Error('Activa al menos una capa con volumen mayor que cero.');
         snapshot.current = { id: crypto.randomUUID(), startedAt: new Date().toISOString(), recipe: structuredClone(recipe) };
-        elapsedRef.current = 0; setElapsed(0); setExperience('');
+        elapsedRef.current = 0; setElapsed(0); setExperience(''); setPracticeReview(emptyPracticeReview(focusBefore));
       }
       if (!snapshot.current) return;
       setStatus('starting'); setMessage('');
@@ -107,7 +113,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
     setMessage('Composición detenida. Puedes guardar la experiencia y sus ajustes.');
   }
   function resetSession() {
-    snapshot.current = null; elapsedRef.current = 0; setElapsed(0); setStatus('idle'); setExperience('');
+    snapshot.current = null; elapsedRef.current = 0; setElapsed(0); setStatus('idle'); setExperience(''); setFocusBefore(null); setPracticeReview(emptyPracticeReview());
   }
   function saveRecipe() {
     try {
@@ -117,7 +123,9 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   }
   function saveSession() {
     if (!snapshot.current) return;
-    const row: ComposerSession = { ...snapshot.current, endedAt: new Date().toISOString(), elapsedMs: Math.round(Math.min(durationMs, elapsedRef.current)), status: status === 'completed' ? 'completed' : 'stopped', experience };
+    const row: ComposerSession = { ...snapshot.current, endedAt: new Date().toISOString(), elapsedMs: Math.round(Math.min(durationMs, elapsedRef.current)), status: status === 'completed' ? 'completed' : 'stopped', experience,
+      ...(snapshot.current.recipe.actionPlan ? { practiceReview: structuredClone(practiceReview) } : {}),
+    };
     try {
       setSessions(saveComposerSession(localStorage, row)); resetSession(); setMessage('Experiencia guardada con la composición completa.');
     } catch (error) {
@@ -134,6 +142,11 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   });
 
   return <>
+    <ComposerActionPlanEditor plan={recipe.actionPlan} disabled={locked} focusBefore={focusBefore} onFocusBefore={setFocusBefore}
+      onChange={actionPlan => setRecipe(current => ({ ...current, actionPlan }))}
+      onPrepare={() => { setRecipe(actionPracticeComposition()); setSelectedId(null); setFocusBefore(null); setMessage('Práctica de 8 minutos preparada. Completa tu plan y pulsa Escuchar composición cuando estés listo.'); }}
+      onListen={() => { void play(); document.getElementById('marina-composer-player')?.scrollIntoView({ block: 'start' }); }}
+      onSave={saveRecipe} />
     <FHSurface className="p-5 md:p-7">
       <p className={styles.eyebrow}>Disponibles en todos tus dispositivos</p>
       <h2>Tu secuencia · 24 minutos</h2>
@@ -141,7 +154,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
       {starters.map(starter => <article key={starter.name} className={styles.savedComposition}>
         <div><h3>{starter.name}</h3><p className={styles.muted}>{starter.durationMinutes} min · {starter.layers.filter(layer => layer.enabled).length} capas activas</p></div>
         <button type="button" className="fh-action fh-action--secondary" disabled={locked} aria-label={`Usar ${starter.name}`} onClick={() => {
-          setRecipe(structuredClone(starter)); setSelectedId(null); setMessage('Receta incluida cargada. Toca Escuchar composición cuando estés listo.');
+          setRecipe(structuredClone(starter)); setSelectedId(null); setFocusBefore(null); setMessage('Receta incluida cargada. Toca Escuchar composición cuando estés listo.');
         }}>Usar receta</button>
       </article>)}
       <p className={styles.muted}>Si personalizas una receta, guarda tu copia en Mis recetas. Esas copias y tu diario se conservan sólo en este dispositivo; los cambios no se sincronizan entre teléfonos.</p>
@@ -175,15 +188,16 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
       <p className={styles.muted}>Los valores inferiores a 1 Hz controlan la pulsación del volumen sobre la portadora audible. Binaural requiere audífonos estéreo. Los niveles de las capas se ajustan juntos para mantener acotada la mezcla.</p>
       <div className={styles.actions}>
         <button type="button" className="fh-action fh-action--secondary" disabled={locked} onClick={saveRecipe}>{selectedId ? 'Guardar cambios de receta' : 'Guardar receta'}</button>
-        <button type="button" className="fh-action fh-action--secondary" disabled={locked} onClick={() => { setRecipe(defaultComposition()); setSelectedId(null); setMessage('Nueva composición lista para editar.'); }}>Nueva composición</button>
+        <button type="button" className="fh-action fh-action--secondary" disabled={locked} onClick={() => { setRecipe(defaultComposition()); setSelectedId(null); setFocusBefore(null); setMessage('Nueva composición lista para editar.'); }}>Nueva composición</button>
       </div>
-      <div className={styles.player}>
-        {recipe.visual && <div className={styles.composerGeometry} aria-hidden="true"><svg viewBox="0 0 200 160" style={{ transform: `scale(${scale})` }}><ellipse cx="100" cy="80" rx="85" ry="50" /><ellipse cx="100" cy="80" rx="85" ry="24" /><ellipse cx="100" cy="80" rx="40" ry="50" /><ellipse cx="100" cy="80" rx="14" ry="50" /><circle cx="100" cy="80" r="5" /></svg></div>}
+      <div className={styles.player} id="marina-composer-player">
+        {recipe.visual && visualVisible && <div className={styles.composerGeometry} aria-hidden="true"><svg viewBox="0 0 200 160" style={{ transform: `scale(${scale})` }}><ellipse cx="100" cy="80" rx="85" ry="50" /><ellipse cx="100" cy="80" rx="85" ry="24" /><ellipse cx="100" cy="80" rx="40" ry="50" /><ellipse cx="100" cy="80" rx="14" ry="50" /><circle cx="100" cy="80" r="5" /></svg></div>}
+        {recipe.actionPlan && active && <ComposerActionGuide plan={recipe.actionPlan} elapsedMs={elapsed} durationMs={durationMs} />}
         <p className={styles.phase}>{({ idle: 'Lista para escuchar', starting: 'Preparando audio…', playing: 'Composición en curso', paused: 'Composición pausada', completed: 'Composición completa', stopped: 'Composición detenida' })[status]}</p>
         <p className={styles.timer} aria-label="Tiempo restante del compositor">{time(Math.max(0, durationMs - elapsed))}</p>
         <progress max={durationMs} value={elapsed} aria-label="Avance del compositor" />
         <label className={styles.field}>Volumen de escucha · {Math.round(volume * 100)} %<input type="range" min="0" max="0.6" step="0.01" value={volume} onChange={event => setVolume(Number(event.target.value))} /></label>
-        {recipe.visual && <p className={styles.muted}>Geometría de atención con movimiento lento; no representa mediciones del cuerpo.</p>}
+        {recipe.visual && <><p className={styles.muted}>Geometría de atención con movimiento lento; no representa mediciones del cuerpo.</p><button type="button" className="fh-action fh-action--secondary" onClick={() => setVisualVisible(value => !value)}>{visualVisible ? 'Ocultar visual' : 'Mostrar visual'}</button></>}
       </div>
       <div className={styles.actions}>
         {status === 'idle' && <button type="button" className="fh-action fh-action--primary" onClick={() => void play()}>Escuchar composición</button>}
@@ -194,13 +208,16 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
       <p className={styles.muted}>Puedes apagar la pantalla: la aplicación mantiene el sonido. Si el teléfono interrumpe el audio, pulsa Reanudar. Para cambiar capas, detén la sesión y guarda o descarta su registro.</p>
     </FHSurface>
 
-    {(status === 'completed' || status === 'stopped') && <FHSurface className="p-5 md:p-7"><h2>Experiencia de la composición</h2><label className={styles.field}>Lo que observé<textarea maxLength={6000} value={experience} onChange={event => setExperience(event.target.value)} /></label><div className={styles.actions}><button type="button" className="fh-action fh-action--primary" onClick={saveSession}>Guardar experiencia del compositor</button><button type="button" className="fh-action fh-action--secondary" onClick={resetSession}>Continuar sin guardar experiencia</button></div></FHSurface>}
+    {(status === 'completed' || status === 'stopped') && <FHSurface className="p-5 md:p-7"><h2>Experiencia de la composición</h2>{recipe.actionPlan && <ComposerActionReview plan={recipe.actionPlan} review={practiceReview} onChange={setPracticeReview} />}<label className={styles.field}>Lo que observé<textarea maxLength={6000} value={experience} onChange={event => setExperience(event.target.value)} /></label><div className={styles.actions}><button type="button" className="fh-action fh-action--primary" onClick={saveSession}>Guardar experiencia del compositor</button><button type="button" className="fh-action fh-action--secondary" onClick={resetSession}>Continuar sin guardar experiencia</button></div></FHSurface>}
 
     <FHSurface className="p-5 md:p-7"><div className={styles.titleRow}><h2>Mis recetas · {saved.length}</h2><button type="button" className="fh-action fh-action--secondary" onClick={() => {
       try { exportJSON({ version: COMPOSER_VERSION, compositions: readCompositions(localStorage), sessions: readComposerSessions(localStorage) }, 'marina-compositor.json'); } catch (error) { setMessage((error as Error).message); }
-    }}>Exportar compositor</button></div><p className={styles.muted}>Guardado en este navegador. El volumen de escucha se ajusta por separado; cada receta conserva las capas, sus niveles, la duración, la transición y la intención.</p>{saved.length === 0 && <p>Todavía no has guardado recetas.</p>}{[...saved].reverse().map(row => <article key={row.id} className={styles.savedComposition}><div><h3>{row.recipe.name}</h3><p className={styles.muted}>{row.recipe.durationMinutes} min · {row.recipe.layers.filter(layer => layer.enabled).length} capas activas</p></div><button type="button" className="fh-action fh-action--secondary" disabled={locked} aria-label={`Cargar ${row.recipe.name}`} onClick={() => { setRecipe(structuredClone(row.recipe)); setSelectedId(row.id); setMessage('Receta cargada. Toca Escuchar composición cuando estés listo.'); }}>Cargar receta</button></article>)}</FHSurface>
+    }}>Exportar compositor</button></div><p className={styles.muted}>Guardado en este navegador. El volumen de escucha se ajusta por separado; cada receta conserva las capas, sus niveles, la duración, la transición y la intención.</p>{saved.length === 0 && <p>Todavía no has guardado recetas.</p>}{[...saved].reverse().map(row => <article key={row.id} className={styles.savedComposition}><div><h3>{row.recipe.name}</h3><p className={styles.muted}>{row.recipe.durationMinutes} min · {row.recipe.layers.filter(layer => layer.enabled).length} capas activas</p></div><button type="button" className="fh-action fh-action--secondary" disabled={locked} aria-label={`Cargar ${row.recipe.name}`} onClick={() => { setRecipe(structuredClone(row.recipe)); setSelectedId(row.id); setFocusBefore(null); setMessage('Receta cargada. Toca Escuchar composición cuando estés listo.'); }}>Cargar receta</button></article>)}</FHSurface>
 
-    <FHSurface className="p-5 md:p-7"><h2>Diario del compositor · {sessions.length}</h2>{sessions.length === 0 && <p className={styles.muted}>Puedes guardar lo que observes al terminar o detener una composición.</p>}{[...sessions].reverse().map(row => <details className={styles.entry} key={row.id}><summary>{row.recipe.name} · {new Date(row.startedAt).toLocaleString('es-MX')} · {row.status === 'completed' ? 'Completa' : 'Detenida'} · {time(row.elapsedMs)}</summary><p>{row.recipe.intention}</p>{row.recipe.layers.filter(layer => layer.enabled).map(layer => <p key={layer.id}>{layerLabel(layer)} · nivel {Math.round(layer.level * 100)} %</p>)}<p>{row.experience || 'Sin observaciones escritas.'}</p></details>)}</FHSurface>
+    <FHSurface className="p-5 md:p-7"><h2>Diario del compositor · {sessions.length}</h2>{sessions.length === 0 && <p className={styles.muted}>Puedes guardar lo que observes al terminar o detener una composición.</p>}{[...sessions].reverse().map(row => <details className={styles.entry} key={row.id}><summary>{row.recipe.name} · {new Date(row.startedAt).toLocaleString('es-MX')} · {row.status === 'completed' ? 'Completa' : 'Detenida'} · {time(row.elapsedMs)}</summary><p>{row.recipe.intention}</p>{row.recipe.layers.filter(layer => layer.enabled).map(layer => <p key={layer.id}>{layerLabel(layer)} · nivel {Math.round(layer.level * 100)} %</p>)}<p>{row.experience || 'Sin observaciones escritas.'}</p><ComposerActionDiary session={row} onAppend={update => {
+      try { setSessions(appendComposerActionFollowUp(localStorage, row.id, update)); return true; }
+      catch (error) { setMessage((error as Error).message); return false; }
+    }} /></details>)}</FHSurface>
 
     <FHSurface className="p-5 md:p-7"><h2>Referencias de Nano Technology</h2><p className={styles.muted}>Valores citados por Jacobi para explorar. Las recetas acústicas son una adaptación nuestra; el libro no demuestra efectos terapéuticos ni modificación del ADN.</p><div className={styles.studyGrid}>{NANO_REFERENCES.map(reference => <article key={reference.hz}><h3>{reference.label}</h3><p>{reference.description}</p><p>Página impresa {reference.printedPage}.</p></article>)}</div><a href={NANO_SOURCE} target="_blank" rel="noreferrer">Consultar Nano Technology · The Constructive Elements</a></FHSurface>
     {storageError && <button type="button" className="fh-action fh-action--secondary" onClick={() => {

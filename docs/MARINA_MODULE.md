@@ -1,5 +1,55 @@
 # Marina · Punto Cero
 
+## Intention-to-action practice (2026-11-22)
+
+The existing composer now starts with **Intención y acción**. “Preparar práctica
+de 8 minutos” loads a new editable draft using the existing Imagen y creación
+tones (259.2 / 324 / 388.8 Hz, relative levels 50 / 35 / 25%, four-second fades).
+It never starts playback or writes personal data automatically. The same optional
+plan can be attached to any existing recipe.
+
+The plan records a feasible goal, imagined outcome, internal obstacle, if–then
+cue and response, first ten-minute action and intended time. Incomplete plans
+can be saved as drafts; playback requires all plan fields when the practice is
+enabled. The written guide follows the composer's existing active audio clock:
+25% settling, 12.5% goal, 12.5% outcome, 12.5% obstacle, 25% response rehearsal,
+12.5% first action. On the eight-minute recipe these are 2/1/1/1/2/1 minutes.
+Other recipe durations scale the same written phases. No new audio source,
+automatic voice, physiological measurement or frequency-effect claim is added.
+
+An optional concentration rating before listening is captured with the session;
+after stopping or completing, the user can record concentration, counted
+distractions, action status and a concrete note. Unobserved ratings remain null;
+explicit zeros remain zero. The initial action status is “Por realizar”, not an
+inferred success. A saved diary entry accepts later dated action follow-ups,
+appended to the latest stored session without replacing its original observation,
+plan, settings or ratings. Retried identical update IDs are idempotent; conflicting
+IDs, invalid measurements and corrupted existing data block writes.
+
+Optional additive `actionPlan`, `practiceReview` and `actionFollowUps` fields use
+`intention-action-1`; existing composer recipes and sessions remain readable and
+are not migrated. The existing JSON export includes the new fields. Personal
+plans, ratings and follow-ups are browser-local, not cross-device synchronized.
+The older Marina journal and voice Blob store are untouched.
+
+“Ocultar visual” hides only the existing illustrative geometry and leaves audio,
+the session clock and Media Session controls running. No background-audio policy
+or audio graph is changed. Mobile viewport checks do not prove sound continuity
+on a physically locked iPhone or Samsung.
+
+This is an app adaptation inspired by [WOOP](https://woopmylife.org/en/practice)
+and [mental contrasting with implementation intentions](https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2021.565202/full).
+The chosen sounds, durations and interface are application design choices.
+
+Validation for this addition: 303 unit/integration tests pass, including draft
+round-trips, legacy compatibility, explicit zero/null measurements, blocked
+invalid/corrupt writes, append-only dated follow-ups and phase boundaries. Local
+ESLint, TypeScript and the webpack production build pass. The new native browser
+flow covers preparation, draft reload, playback, hiding the visual, pause/resume,
+ratings and a later dated follow-up; local Chromium is blocked at process launch
+by `socket() failed: Operation not permitted`, so local UI execution is not
+passing evidence. CI browser checks are required before release.
+
 ## Background audio and lock-screen controls (2026-11-22)
 
 The composer and guided/free practices no longer pause in response to `visibilitychange`. Both audio engines request `navigator.audioSession.type = 'playback'` when supported; optional API failures do not block playback, and a reference-counted lease restores the previous policy on stop/dispose without overriding a later microphone policy. Media Session exposes play/pause/stop, title, elapsed position and duration to the operating system. Unsupported controls degrade without changing the audio engine.
