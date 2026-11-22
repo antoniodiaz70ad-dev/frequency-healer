@@ -127,3 +127,12 @@ test('session snapshot round-trips and cannot replace a corrupt history', () => 
   const corrupt = store({ [COMPOSER_SESSIONS_KEY]: '[null]' });
   assert.throws(() => saveComposerSession(corrupt, row)); assert.equal(corrupt.getItem(COMPOSER_SESSIONS_KEY), '[null]');
 });
+
+test('a failed new unlock cannot inherit elapsed time from the preceding session', async () => {
+  const ctx = new Context(), audio = new MarinaComposerAudio(() => ctx.audio());
+  await audio.play(defaultComposition(), .15);
+  ctx.currentTime = 20; audio.stop(); assert.equal(audio.elapsedMs(), 10000);
+  ctx.state = 'suspended'; ctx.resume = async () => { throw new Error('unlock denied'); };
+  await assert.rejects(audio.play(defaultComposition(), .15), /unlock denied/);
+  assert.equal(audio.elapsedMs(), 0); audio.dispose();
+});

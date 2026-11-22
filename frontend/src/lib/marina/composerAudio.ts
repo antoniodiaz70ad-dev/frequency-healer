@@ -26,6 +26,7 @@ export class MarinaComposerAudio {
     validateComposition(recipe);
     const level = this.level(volume);
     if (!Number.isFinite(elapsedMs) || elapsedMs < 0 || elapsedMs >= recipe.durationMinutes * 60000) throw new Error('La composición ya terminó o tiene un tiempo inválido.');
+    this.offsetMs = elapsedMs;
     const layers = compositionMix(recipe);
     if (!layers.length) throw new Error('Activa al menos una capa con volumen mayor que cero.');
     this.stopExternal();
