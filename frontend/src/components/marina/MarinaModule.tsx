@@ -13,9 +13,10 @@ import {
 } from '@/lib/marina/model';
 import styles from './marina.module.css';
 import MarinaPhrase from './MarinaPhrase';
+import MarinaComposer from './MarinaComposer';
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'finished' | 'stopped';
-type Tab = 'guided' | 'free' | 'study' | 'journal';
+type Tab = 'guided' | 'free' | 'composer' | 'study' | 'journal';
 type MarinaSession = Omit<MarinaRecord, 'endedAt' | 'status' | 'elapsedMs' | 'notes'>;
 const EMPTY_NOTES: MarinaNotes = { intention: '', experience: '', interpretation: '', events: '', action: '' };
 const time = (ms: number) => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms % 60000 / 1000)).padStart(2, '0')}`;
@@ -36,6 +37,7 @@ export default function MarinaModule() {
   const [protocol, setProtocol] = useState<MarinaProtocol>('classic24');
   const [practice, setPractice] = useState<MarinaPractice>({ statement: '', scene: '', feeling: '' });
   const [phraseBusy, setPhraseBusy] = useState(false);
+  const [composerBusy, setComposerBusy] = useState(false);
   const [hasPhrase, setHasPhrase] = useState(false);
   const [followUpDrafts, setFollowUpDrafts] = useState<Record<string, string>>({});
   const [minutes, setMinutes] = useState(20);
@@ -177,8 +179,9 @@ export default function MarinaModule() {
     <FHPageHeader eyebrow="Exploración personal · Marina Jacobi" title="Punto Cero" description="Explora sonido, emoción e imagen. Construye tu escena, suéltala y conserva tus experiencias con tus propias palabras." />
     <div className={styles.module}>
       <div className={styles.tabs} role="group" aria-label="Áreas del módulo">
-        {([['guided', 'Práctica guiada'], ['free', 'Frecuencias libres'], ['study', 'Cuaderno de estudio'], ['journal', 'Mi diario']] as const).map(([id, title]) => <button type="button" key={id} aria-pressed={tab === id} disabled={active || phraseBusy} onClick={() => setTab(id)}>{title}</button>)}
+        {([['guided', 'Práctica guiada'], ['free', 'Frecuencias libres'], ['composer', 'Compositor'], ['study', 'Cuaderno de estudio'], ['journal', 'Mi diario']] as const).map(([id, title]) => <button type="button" key={id} aria-pressed={tab === id} disabled={active || phraseBusy || composerBusy} onClick={() => setTab(id)}>{title}</button>)}
       </div>
+      {tab === 'composer' && <MarinaComposer onBusy={setComposerBusy} />}
       {(tab === 'guided' || tab === 'free') && <>
         <FHSurface className="p-5 md:p-7">
           <div className={styles.titleRow}><div><p className={styles.eyebrow}>{tab === 'guided' ? `Recorrido de ${marinaDuration(selectedProtocol) / 60000} minutos` : 'Una frecuencia a la vez'}</p><h2>{tab === 'guided' ? 'Quietud · emoción · imagen · soltar' : 'Tu exploración sonora'}</h2></div><span className={styles.tag}>Adaptación acústica</span></div>
