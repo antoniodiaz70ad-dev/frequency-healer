@@ -1,4 +1,5 @@
 /** Reproducible acoustic recipes. Source associations are not therapeutic claims. */
+import { emptyActionPlan, validateActionPlan, validateActionFollowUps, validatePracticeReview, type ActionPlan, type ActionFollowUp, type PracticeReview } from './actionPractice';
 export const COMPOSER_VERSION = 'marina-composer-1';
 export const COMPOSER_RECIPES_KEY = 'fh.marina.compositions.v1';
 export const COMPOSER_SESSIONS_KEY = 'fh.marina.composer-sessions.v1';
@@ -19,11 +20,13 @@ export type ComposerRecipe = {
   version: typeof COMPOSER_VERSION; name: string; intention: string;
   durationMinutes: number; transitionSeconds: number; visual: boolean;
   layers: ComposerLayer[];
+  actionPlan?: ActionPlan;
 };
 export type SavedComposition = { id: string; savedAt: string; recipe: ComposerRecipe };
 export type ComposerSession = {
   id: string; startedAt: string; endedAt: string; elapsedMs: number;
   status: 'completed' | 'stopped'; recipe: ComposerRecipe; experience: string;
+  practiceReview?: PracticeReview; actionFollowUps?: ActionFollowUp[];
 };
 type Store = Pick<Storage, 'getItem' | 'setItem'>;
 
@@ -69,8 +72,17 @@ export function starterCompositions(): ComposerRecipe[] {
   return [point, image, focus, alternative];
 }
 
+export function actionPracticeComposition(): ComposerRecipe {
+  const recipe = starterCompositions()[1];
+  recipe.name = 'Intención y acción · 8 minutos';
+  recipe.intention = 'Estabiliza, elige, imagina, reconoce el obstáculo, ensaya tu respuesta y prepara una acción concreta.';
+  recipe.actionPlan = emptyActionPlan();
+  return recipe;
+}
+
 export function validateComposition(recipe: ComposerRecipe, sampleRate = 48000): void {
   if (!recipe || recipe.version !== COMPOSER_VERSION || typeof recipe.name !== 'string' || !recipe.name.trim() || recipe.name.length > 120 || typeof recipe.intention !== 'string' || recipe.intention.length > 6000 || typeof recipe.visual !== 'boolean') throw new Error('La composición tiene un formato diferente.');
+  if (recipe.actionPlan !== undefined) validateActionPlan(recipe.actionPlan);
   if (!Number.isFinite(recipe.durationMinutes) || recipe.durationMinutes < 1 || recipe.durationMinutes > 240) throw new Error('Elige una duración entre 1 y 240 minutos.');
   if (!Number.isFinite(recipe.transitionSeconds) || recipe.transitionSeconds < .05 || recipe.transitionSeconds > 10) throw new Error('Elige una transición entre 0.05 y 10 segundos.');
   if (!Number.isFinite(sampleRate) || sampleRate <= 0) throw new Error('La frecuencia de muestreo no es válida.');
@@ -117,6 +129,8 @@ export function readComposerSessions(store: Store): ComposerSession[] {
     const row = value as ComposerSession;
     try {
       validateComposition(row.recipe);
+      if (row.practiceReview !== undefined) { if (!row.recipe.actionPlan) return false; validatePracticeReview(row.practiceReview); }
+      if (row.actionFollowUps !== undefined) { if (!row.recipe.actionPlan) return false; validateActionFollowUps(row.actionFollowUps); }
       return typeof row.id === 'string' && !!row.id && validDate(row.startedAt) && validDate(row.endedAt) && ['completed', 'stopped'].includes(row.status) && Number.isFinite(row.elapsedMs) && row.elapsedMs >= 0 && row.elapsedMs <= row.recipe.durationMinutes * 60000 && typeof row.experience === 'string' && row.experience.length <= 6000;
     } catch { return false; }
   });
@@ -128,6 +142,19 @@ export function saveComposerSession(store: Store, row: ComposerSession) {
   const next = [...rows.filter(item => item.id !== row.id), row];
   store.setItem(COMPOSER_SESSIONS_KEY, JSON.stringify(next));
   return next;
+}
+/** Read the latest stored session and append; never replace its original observation. */
+export function appendComposerActionFollowUp(store: Store, sessionId: string, update: ActionFollowUp) {
+  validateActionFollowUps([update]);
+  const row = readComposerSessions(store).find(item => item.id === sessionId);
+  if (!row?.recipe.actionPlan) throw new Error('No se encontró la sesión con su plan de acción.');
+  const existing = row.actionFollowUps ?? [];
+  const duplicate = existing.find(item => item.id === update.id);
+  if (duplicate) {
+    if (JSON.stringify(duplicate) !== JSON.stringify(update)) throw new Error('Ese seguimiento ya existe con otro contenido.');
+    return readComposerSessions(store);
+  }
+  return saveComposerSession(store, { ...row, actionFollowUps: [...existing, update] });
 }
 function readArray<T>(store: Store, key: string, valid: (row: unknown) => row is T): T[] {
   const raw = store.getItem(key);
