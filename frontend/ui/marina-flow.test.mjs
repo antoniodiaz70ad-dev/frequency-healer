@@ -36,7 +36,13 @@ test('Marina: legacy diary, local recording, 12-minute flow, phase speech and da
     await page.clock.install();
     await page.getByRole('button', { name: 'Comenzar 12 minutos', exact: true }).click();
     await page.getByRole('button', { name: 'Pausar', exact: true }).waitFor();
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
     await page.clock.runFor(1000);
+    assert.equal(await page.getByRole('button', { name: 'Pausar', exact: true }).count(), 1, 'hiding the guided practice must not pause it');
+    await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); });
     assert.equal(await page.evaluate(() => window.__speechCount), 1, 'voice must not restart on 200ms render ticks');
     await page.getByRole('button', { name: 'Pausar', exact: true }).click();
     const remaining = await page.getByLabel('Tiempo restante').textContent();

@@ -10,6 +10,7 @@ import {
   validateComposition, type ComposerLayer, type ComposerRecipe, type ComposerSession, type SavedComposition,
 } from '@/lib/marina/composer';
 import styles from './marina.module.css';
+import { useMarinaMediaSession } from './useMarinaMediaSession';
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'completed' | 'stopped';
 const time = (ms: number) => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms % 60000 / 1000)).padStart(2, '0')}`;
@@ -72,15 +73,6 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
     }, 100);
     return () => window.clearInterval(timer);
   }, [status, durationMs]);
-  useEffect(() => {
-    const hide = () => {
-      if (document.hidden && (status === 'playing' || status === 'starting')) {
-        pause(); setMessage('Composición pausada al salir de esta pantalla. Toca Reanudar para continuar.');
-      }
-    };
-    document.addEventListener('visibilitychange', hide);
-    return () => document.removeEventListener('visibilitychange', hide);
-  }, [status, pause]);
 
   function updateLayer(id: string, patch: Partial<ComposerLayer>) {
     setRecipe(current => ({ ...current, layers: current.layers.map(layer => layer.id === id ? { ...layer, ...patch } : layer) }));
@@ -135,6 +127,11 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   }
   const visualRate = recipe.layers.find(layer => layer.enabled && layer.mode === 'pulse' && layer.rateHz <= 1)?.rateHz ?? .1;
   const scale = .93 + .07 * Math.sin(2 * Math.PI * visualRate * elapsed / 1000);
+  useMarinaMediaSession(recipe.name, durationMs, elapsed, active, status === 'playing', {
+    play: () => { if (status === 'paused') void play(true); },
+    pause: () => { if (status === 'playing' || status === 'starting') pause(); },
+    stop: () => { if (active) stop(); },
+  });
 
   return <>
     <FHSurface className="p-5 md:p-7">
@@ -194,7 +191,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
         {status === 'paused' && <button type="button" className="fh-action fh-action--primary" onClick={() => void play(true)}>Reanudar composición</button>}
         {active && <button type="button" className="fh-action fh-action--danger" onClick={stop}>Detener composición</button>}
       </div>
-      <p className={styles.muted}>La composición se pausa al salir de esta pantalla o bloquear el dispositivo. Para cambiar capas, detén la sesión y guarda o descarta su registro.</p>
+      <p className={styles.muted}>Puedes apagar la pantalla: la aplicación mantiene el sonido. Si el teléfono interrumpe el audio, pulsa Reanudar. Para cambiar capas, detén la sesión y guarda o descarta su registro.</p>
     </FHSurface>
 
     {(status === 'completed' || status === 'stopped') && <FHSurface className="p-5 md:p-7"><h2>Experiencia de la composición</h2><label className={styles.field}>Lo que observé<textarea maxLength={6000} value={experience} onChange={event => setExperience(event.target.value)} /></label><div className={styles.actions}><button type="button" className="fh-action fh-action--primary" onClick={saveSession}>Guardar experiencia del compositor</button><button type="button" className="fh-action fh-action--secondary" onClick={resetSession}>Continuar sin guardar experiencia</button></div></FHSurface>}

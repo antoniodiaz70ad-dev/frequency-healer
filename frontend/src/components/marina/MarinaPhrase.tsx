@@ -56,7 +56,7 @@ export default function MarinaPhrase({ active, autoPlay, volume, onBusy, onAvail
     stream.current?.getTracks().forEach(track => track.stop());
   }
   useEffect(() => {
-    const hidden = () => { if (document.hidden) { stopRecording(); player.current?.pause(); } };
+    const hidden = () => { if (document.hidden) stopRecording(); };
     document.addEventListener('visibilitychange', hidden);
     return () => document.removeEventListener('visibilitychange', hidden);
   }, []);

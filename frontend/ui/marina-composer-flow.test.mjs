@@ -68,6 +68,15 @@ test('composer: precise recipe persistence, native audio, pause/resume, diary an
     assert.equal(await page.getByLabel('Activar capa 2', { exact: true }).isChecked(), true);
     await page.getByRole('button', { name: 'Escuchar composición', exact: true }).click();
     await page.getByRole('button', { name: 'Pausar composición', exact: true }).waitFor();
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForTimeout(350);
+    assert.equal(await page.getByRole('button', { name: 'Pausar composición', exact: true }).count(), 1, 'hiding the page must not pause the composition');
+    assert.equal(await page.evaluate(() => navigator.mediaSession.playbackState), 'playing');
+    assert.equal(await page.evaluate(() => navigator.mediaSession.metadata.title), 'Prueba de capas');
+    await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')); });
     await page.waitForTimeout(1100);
     await page.getByRole('button', { name: 'Pausar composición', exact: true }).click();
     const paused = await page.getByLabel('Avance del compositor', { exact: true }).getAttribute('value');
