@@ -5,7 +5,8 @@ import { MARINA_PHASES, MARINA_TOTAL_MS, MARINA_STORAGE_KEY, MARINA_VERSION, Mar
 
 class Param {
   value = 0;
-  setValueAtTime(value: number) { this.value = value; }
+  events: { value: number; time: number }[] = [];
+  setValueAtTime(value: number, time = 0) { this.value = value; this.events.push({ value, time }); }
   linearRampToValueAtTime(value: number) { this.value = value; }
   setTargetAtTime(value: number) { this.value = value; }
   cancelScheduledValues() {}
@@ -14,8 +15,9 @@ class Node {
   frequency = new Param(); gain = new Param(); type = 'sine';
   connections: { destination: unknown; output?: number; input?: number }[] = [];
   started = false; stopped = false; disconnected = false;
+  starts: number[] = []; stops: number[] = [];
   connect(destination: unknown, output?: number, input?: number) { this.connections.push({ destination, output, input }); return destination; }
-  start() { this.started = true; } stop() { this.stopped = true; } disconnect() { this.disconnected = true; }
+  start(at = 0) { this.started = true; this.starts.push(at); } stop(at = 0) { this.stopped = true; this.stops.push(at); } disconnect() { this.disconnected = true; }
 }
 class Context {
   currentTime = 0; sampleRate = 48000; state = 'running'; destination = {}; onstatechange: (() => void) | null = null;
@@ -44,6 +46,36 @@ test('active clock excludes pause time and caps at completion', () => {
   const c = new MarinaClock(10000); c.resume(100); c.pause(1100);
   assert.equal(c.tick(5000), 1000); c.resume(9000);
   assert.equal(c.tick(10000), 2000); assert.equal(c.tick(999999), 10000);
+});
+test('all guided phase boundaries and final silence are scheduled without UI timer callbacks', async () => {
+  const ctx = new Context(), audio = new MarinaAudio(() => ctx.asAudio());
+  const steps = MARINA_PHASES.map(phase => ({ seconds: phase.seconds, config: { mode: phase.mode, hz: phase.hz, carrierHz: 200 } }));
+  await audio.playTimeline(steps, .15);
+  assert.deepEqual(ctx.oscillators.map(node => node.starts[0]), [0, 0, 240, 240, 420, 420, 900, 900, 1140, 1140]);
+  assert.deepEqual(ctx.oscillators.map(node => node.stops[0]), [240.01, 240.01, 420.01, 420.01, 900.01, 900.01, 1140.01, 1140.01, 1260.01, 1260.01]);
+  assert.deepEqual(ctx.gains[0].gain.events.at(-1), { value: 0, time: 1440 });
+  ctx.currentTime = 5; audio.stop();
+  assert.ok(ctx.oscillators.every(node => node.stops.at(-1) === 5.035), 'stop cancels future phases as well as the current one');
+  audio.dispose();
+});
+test('resume schedules only the remaining phases and silence never creates an audio context', async () => {
+  const ctx = new Context(), audio = new MarinaAudio(() => ctx.asAudio());
+  const steps = MARINA_PHASES.map(phase => ({ seconds: phase.seconds, config: { mode: phase.mode, hz: phase.hz, carrierHz: 200 } }));
+  await audio.playTimeline(steps, .15, 450000);
+  assert.deepEqual(ctx.oscillators.map(node => node.frequency.value), [200, 207, 200, 207, 200, 8]);
+  assert.deepEqual(ctx.oscillators.map(node => node.starts[0]), [0, 0, 450, 450, 690, 690]);
+  audio.dispose();
+  const silent = new MarinaAudio(() => { throw new Error('must not create'); });
+  assert.equal(await silent.playTimeline(steps, .15, 1260000), true);
+  await assert.rejects(silent.playTimeline(steps, .15, 1440000));
+});
+test('stop during a timeline unlock prevents every future phase from starting', async () => {
+  const ctx = new Context(); ctx.state = 'suspended'; let resolve!: () => void;
+  ctx.resume = () => new Promise<void>(r => { resolve = () => { ctx.state = 'running'; r(); }; });
+  const audio = new MarinaAudio(() => ctx.asAudio());
+  const pending = audio.playTimeline([{ config: { mode: 'direct', hz: 200, carrierHz: 200 }, seconds: 60 }], .15);
+  audio.stop(); resolve();
+  assert.equal(await pending, false); assert.equal(ctx.oscillators.length, 0); audio.dispose();
 });
 test('binaural graph routes 200 and 207 into separate channels', async () => {
   const ctx = new Context(); let externalStops = 0;

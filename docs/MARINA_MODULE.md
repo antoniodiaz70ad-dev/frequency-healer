@@ -1,5 +1,17 @@
 # Marina · Punto Cero
 
+## Background audio and lock-screen controls (2026-11-22)
+
+The composer and guided/free practices no longer pause in response to `visibilitychange`. Both audio engines request `navigator.audioSession.type = 'playback'` when supported; optional API failures do not block playback, and a reference-counted lease restores the previous policy on stop/dispose without overriding a later microphone policy. Media Session exposes play/pause/stop, title, elapsed position and duration to the operating system. Unsupported controls degrade without changing the audio engine.
+
+Guided/free tones are scheduled as a complete, finite timeline on `AudioContext.currentTime`, including future phase boundaries, fades and silent phases. Background JavaScript throttling therefore cannot prolong a tone or delay a tone transition. Resume schedules only the remaining timeline; stopping cancels both current and future sources. The existing composer already schedules its duration in audio time.
+
+Real AudioContext suspension/interruption still pauses the practice and offers user-initiated resume. Navigating away still disposes the graph. A microphone recording still stops when the page is hidden, while an already playing recorded phrase is no longer explicitly paused by hiding. Browser speech synthesis and the start of a recorded phrase at a future phase depend on the browser delivering callbacks; this change does not turn synthesized guidance into a background audio file.
+
+Validation includes hidden-page event regressions, native browser Media Session metadata, playback policy ownership/fallback tests, scheduled phase endpoints without UI ticks, resume into a later phase, and cancellation during unlock. Desktop/CI checks do not establish locked-screen behavior on a physical iPhone or Samsung. That last check needs the user's device, Safari/Chrome version and output route.
+
+References: [Audio Session type](https://developer.mozilla.org/en-US/docs/Web/API/AudioSession/type), [Media Session position](https://developer.mozilla.org/en-US/docs/Web/API/MediaSession/setPositionState), and [WebKit background AudioContext issue 261554](https://bugs.webkit.org/show_bug.cgi?id=261554). Playback policy is a browser hint, not a guarantee that the operating system will never interrupt audio.
+
 ## Included composer recipes across devices (2026-11-22)
 
 The composer includes a built-in bank of four recipes, available on a fresh browser without importing or signing in: Punto Cero 7.8 (6 min, 200/207.8 Hz, 50%), Imagen y creación (8 min, 259.2/324/388.8 Hz continuous layers at 50/35/25%), Foco 15 (10 min, 220/235 Hz, 60%), and Exploración 40 (8 min, 340/380 Hz, 50%). All use 4-second fades and the existing 15% initial listening volume. The first three are a manually selected 24-minute sequence; the fourth is an alternative.
@@ -15,7 +27,7 @@ New additive route: `/marina-punto-cero`, linked from **Explorar**. No dependenc
 - Free exploration: ten attributed reference cards; sinusoidal amplitude modulation, stereo binaural difference, direct tone and silence. Editable carrier, frequency, duration and sound level.
 - A 24-minute guided composition: quiet (4 min), emotion (3), blueprint (8), deepen (4), hold (2), release (3). The duration and sound sequence are our adaptation; they are not advertised as Jacobi's literal protocol.
 - Optional browser speech synthesis in Spanish, independent voice level, current written instruction always available.
-- Pause/resume with active-time accounting. Stop invalidates asynchronous audio starts. Hidden tabs and interrupted AudioContexts pause the practice; navigating away releases this module's audio and speech. No locked-iPhone playback guarantee.
+- Pause/resume with active-time accounting. Stop invalidates asynchronous audio starts. Interrupted AudioContexts pause the practice; navigating away releases this module's audio and speech. Background support is detailed above.
 - Explicit local journal save, stopped versus completed status, repeat-safe session IDs, later event notes, JSON export. No ATENEA synchronization or medical inference. Invalid stored data is preserved and exportable; a failed save offers a recovery file.
 - Source notebook: attributed ideas, links to the books, and additional numeric passages retained for study. The high-frequency reference has no playback control.
 
@@ -67,7 +79,7 @@ The source bank retains **7–8 Hz**, **0.3879 Hz**, **0.32789 Hz**, and **0.378
 
 `MarinaComposerAudio` owns its context and nodes. For enabled layer levels `w`, gains are `w/max(1,sum(w))`, bounding the combined per-channel sine peak without boosting quiet mixes. For AM depth `d`, the envelope is `1-d/2 + (d/2)*sin(2πft)`, in `[1-d,1]`. Both binaural channels connect to separate merger inputs. Validation includes the actual context sample rate and the upper AM sideband.
 
-Oscillator start/stop and both fades are scheduled on the audio clock. UI delays cannot extend the audible recipe past its scheduled deadline. The active clock reads context time; pause excludes inactive time, and resume schedules only the remaining duration. Resume restarts oscillator phase and briefly fades in; phase continuity across a pause is not claimed. Stop, page hiding, context interruption and unmount release this graph; generation checks cancel a start awaiting context unlock. The shared audio engine is stopped on composer start. Master listening volume is adjustable independently, including zero; layers are locked until a session is saved or discarded.
+Oscillator start/stop and both fades are scheduled on the audio clock. UI delays cannot extend the audible recipe past its scheduled deadline. The active clock reads context time; pause excludes inactive time, and resume schedules only the remaining duration. Resume restarts oscillator phase and briefly fades in; phase continuity across a pause is not claimed. Stop, context interruption and unmount release this graph; generation checks cancel a start awaiting context unlock. The shared audio engine is stopped on composer start. Master listening volume is adjustable independently, including zero; layers are locked until a session is saved or discarded.
 
 The optional geometry is a slow attention aid, not a sensor. It follows the first active pulse at or below 1 Hz, otherwise 0.1 Hz, and respects reduced-motion preference.
 

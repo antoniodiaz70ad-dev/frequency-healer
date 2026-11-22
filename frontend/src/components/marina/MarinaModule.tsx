@@ -14,6 +14,7 @@ import {
 import styles from './marina.module.css';
 import MarinaPhrase from './MarinaPhrase';
 import MarinaComposer from './MarinaComposer';
+import { useMarinaMediaSession } from './useMarinaMediaSession';
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'finished' | 'stopped';
 type Tab = 'guided' | 'free' | 'composer' | 'study' | 'journal';
@@ -52,7 +53,6 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
   const clockRef = useRef<MarinaClock | null>(null);
   const sessionRef = useRef<MarinaSession | null>(null);
   const operation = useRef(0);
-  const lastPhase = useRef('');
   const volumeRef = useRef(volume);
   const active = status === 'playing' || status === 'starting' || status === 'paused';
   const guided = sessionView?.kind === 'guided' || (!sessionView && tab === 'guided');
@@ -94,24 +94,6 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
     return () => window.clearInterval(id);
   }, [status, stopSpeech]);
   useEffect(() => {
-    const hidden = () => {
-      if (document.hidden && (status === 'playing' || status === 'starting')) {
-        pause(); setMessage('La práctica se pausó al salir de esta pantalla. Toca Reanudar para continuar.');
-      }
-    };
-    document.addEventListener('visibilitychange', hidden);
-    return () => document.removeEventListener('visibilitychange', hidden);
-  }, [status, pause]);
-  useEffect(() => {
-    if (status !== 'playing' || !phase || !sessionRef.current || lastPhase.current === phase.id) return;
-    lastPhase.current = phase.id;
-    const ticket = ++operation.current;
-    const next: MarinaAudioConfig = { mode: sessionRef.current.soundEnabled ? phase.mode : 'silence', hz: phase.hz, carrierHz: sessionRef.current.config.carrierHz };
-    void audioRef.current?.play(next, volumeRef.current).catch(error => {
-      if (ticket === operation.current) { pause(); setMessage((error as Error).message); }
-    });
-  }, [phase, status, pause]);
-  useEffect(() => {
     if (status !== 'playing' || !voice || !phaseGuide || phrasePlayback) return;
     if (!('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(phaseGuide);
@@ -148,10 +130,10 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
       if (!audioRef.current) audioRef.current = new MarinaAudio(undefined, () => getAudioEngine().stop(), () => {
         pause(); setMessage('El dispositivo interrumpió el audio. La práctica se pausó; puedes reanudarla.');
       });
-      const current = session.kind === 'guided' ? marinaPhaseAt(clockRef.current?.elapsedMs ?? 0, session.protocol) : null;
-      lastPhase.current = current?.id ?? '';
-      const recipe: MarinaAudioConfig = !session.soundEnabled ? { ...session.config, mode: 'silence' } : current ? { mode: current.mode, hz: current.hz, carrierHz: session.config.carrierHz } : session.config;
-      const started = await audioRef.current.play(recipe, volumeRef.current);
+      const steps = session.kind === 'guided'
+        ? marinaPhases(session.protocol).map(item => ({ seconds: item.seconds, config: { mode: session.soundEnabled ? item.mode : 'silence', hz: item.hz, carrierHz: session.config.carrierHz } as MarinaAudioConfig }))
+        : [{ seconds: (clockRef.current?.durationMs ?? 0) / 1000, config: session.soundEnabled ? session.config : { ...session.config, mode: 'silence' as const } }];
+      const started = await audioRef.current.playTimeline(steps, volumeRef.current, clockRef.current?.elapsedMs ?? 0);
       if (!started || ticket !== operation.current) return;
       clockRef.current?.resume(performance.now()); setStatus('playing');
       if (voice && !('speechSynthesis' in window)) setMessage('La voz no está disponible en este navegador. Las instrucciones siguen visibles.');
@@ -174,6 +156,11 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
   }
   function discard() { sessionRef.current = null; clockRef.current = null; setSessionView(null); setSessionDurationMs(null); setStatus('idle'); setElapsed(0); setMessage('Sesión descartada; el diario guardado se conserva.'); }
   const actualConfig: MarinaAudioConfig = phase && sessionView?.kind === 'guided' ? { mode: phase.mode, hz: phase.hz, carrierHz: sessionView.config.carrierHz } : sessionView?.config ?? config;
+  useMarinaMediaSession(tab === 'guided' ? `Punto Cero · ${selectedProtocol === 'creation12' ? '12' : '24'} minutos` : 'Punto Cero · Frecuencias libres', total, elapsed, active, status === 'playing', {
+    play: () => { if (status === 'paused') void start(true); },
+    pause: () => { if (status === 'playing' || status === 'starting') pause(); },
+    stop: () => { if (active) finish(); },
+  });
 
   return <FHPageShell width="wide">
     <FHPageHeader eyebrow="Exploración personal · Marina Jacobi" title="Punto Cero" description="Explora sonido, emoción e imagen. Construye tu escena, suéltala y conserva tus experiencias con tus propias palabras." />
@@ -217,7 +204,7 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
             {status === 'starting' && <span role="status">Preparando audio…</span>}
             {active && <button type="button" className="fh-action fh-action--danger" onClick={finish}>Detener</button>}
           </div>
-          <p className={styles.muted}>Al cambiar de pestaña o bloquear el dispositivo, la práctica se pausa. Reanúdala desde esta pantalla.</p>
+          <p className={styles.muted}>Puedes apagar la pantalla: la aplicación mantiene la secuencia sonora. La voz del navegador depende del dispositivo. Si el teléfono interrumpe el audio, pulsa Reanudar.</p>
         </FHSurface>
         {tab === 'guided' && <FHSurface className="p-5 md:p-7"><h2>El recorrido</h2><ol className={styles.phases}>{phases.map(p => <li key={p.id}><strong>{p.name}</strong><span>{p.seconds / 60} min · {p.mode === 'silence' ? 'silencio' : `${p.hz} Hz · ${p.mode === 'binaural' ? 'diferencia binaural' : 'pulso'}`}</span><p>{p.guide}</p></li>)}</ol></FHSurface>}
       </>}

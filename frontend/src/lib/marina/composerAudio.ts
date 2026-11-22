@@ -1,4 +1,5 @@
 import { compositionMix, validateComposition, type ComposerRecipe } from './composer';
+import { acquirePlaybackSession } from './backgroundPlayback';
 
 function createContext(): AudioContext {
   const browser = globalThis as typeof globalThis & { webkitAudioContext?: typeof AudioContext };
@@ -19,6 +20,7 @@ export class MarinaComposerAudio {
   private offsetMs = 0;
   private startedAt = 0;
   private durationMs = 0;
+  private releasePlayback = () => {};
   constructor(private readonly factory = createContext, private readonly stopExternal = () => {}, private readonly onInterrupted = () => {}) {}
 
   async play(recipe: ComposerRecipe, volume: number, elapsedMs = 0): Promise<boolean> {
@@ -31,15 +33,16 @@ export class MarinaComposerAudio {
     if (!layers.length) throw new Error('Activa al menos una capa con volumen mayor que cero.');
     this.stopExternal();
     const ticket = this.generation;
-    const ctx = this.context ?? (this.context = this.factory());
-    validateComposition(recipe, ctx.sampleRate);
-    ctx.onstatechange = () => {
-      if (ctx.state !== 'running' && this.nodes.length) { this.stop(); this.onInterrupted(); }
-    };
-    if (ctx.state !== 'running') await ctx.resume();
-    if (ticket !== this.generation) return false;
-    if (ctx.state !== 'running') throw new Error('El navegador pausó el audio. Toca Reanudar para continuar.');
+    this.releasePlayback = acquirePlaybackSession();
     try {
+      const ctx = this.context ?? (this.context = this.factory());
+      validateComposition(recipe, ctx.sampleRate);
+      ctx.onstatechange = () => {
+        if (ctx.state !== 'running' && this.nodes.length) { this.stop(); this.onInterrupted(); }
+      };
+      if (ctx.state !== 'running') await ctx.resume();
+      if (ticket !== this.generation) return false;
+      if (ctx.state !== 'running') throw new Error('El navegador pausó el audio. Toca Reanudar para continuar.');
       const now = ctx.currentTime, remaining = recipe.durationMinutes * 60 - elapsedMs / 1000;
       const fade = Math.min(recipe.transitionSeconds, remaining / 2);
       const master = ctx.createGain();
@@ -77,7 +80,7 @@ export class MarinaComposerAudio {
       }
       for (const source of this.sources) { source.start(now); source.stop(this.endsAt + .01); }
       return true;
-    } catch (error) { this.stop(); throw error; }
+    } catch (error) { if (ticket === this.generation) this.stop(); throw error; }
   }
   /** Audio-context time excludes suspension and stays aligned with rendered audio. */
   elapsedMs() {
@@ -103,6 +106,7 @@ export class MarinaComposerAudio {
   }
   stop() {
     this.generation++;
+    this.releasePlayback(); this.releasePlayback = () => {};
     const ctx = this.context, sources = this.sources, nodes = this.nodes, master = this.master;
     if (ctx && master) this.offsetMs = this.elapsedMs();
     this.sources = []; this.nodes = []; this.master = null;
