@@ -53,6 +53,7 @@ export default function CrystalModule() {
   const durationMs = current.duration * 60000;
   const phase = crystalPhaseAt(elapsed, current.duration);
   const guide = phase?.guide;
+  const coils = current.exposure === 'coils';
   const spoken = guide && phase?.id === 'program' ? `${guide} Tu intención: ${current.intention}` : guide;
   const stopVoice = useCallback(() => { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); }, []);
   const invalidate = useCallback(() => { operation.current++; }, []);
@@ -82,7 +83,7 @@ export default function CrystalModule() {
     return () => clearInterval(timer);
   }, [status, durationMs, stopVoice]);
   useEffect(() => {
-    if (status !== 'playing' || !voice || !spoken || document.hidden || !('speechSynthesis' in window)) return;
+    if (status !== 'playing' || !voice || coils || !spoken || document.hidden || !('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(spoken);
     utterance.lang = 'es-MX'; utterance.rate = .88; utterance.volume = voiceVolume;
     const spanish = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('es'));
@@ -90,7 +91,7 @@ export default function CrystalModule() {
     utterance.onerror = event => { if (!['canceled', 'interrupted'].includes(event.error)) setMessage('La voz no está disponible. La guía escrita sigue visible.'); };
     window.speechSynthesis.speak(utterance);
     return () => { utterance.onerror = null; stopVoice(); };
-  }, [spoken, status, voice, voiceVolume, stopVoice]);
+  }, [spoken, status, voice, voiceVolume, coils, stopVoice]);
   useEffect(() => {
     const hidden = () => { if (document.hidden) stopVoice(); };
     document.addEventListener('visibilitychange', hidden);
@@ -112,7 +113,7 @@ export default function CrystalModule() {
       const started = await audio.current.play(snapshot.current.preparation, volumeRef.current, elapsedRef.current);
       if (!started || ticket !== operation.current) return;
       setStatus('playing');
-      if (voice && !('speechSynthesis' in window)) setMessage('La voz no está disponible en este navegador. Utiliza la guía escrita.');
+      if (voice && snapshot.current.preparation.exposure !== 'coils' && !('speechSynthesis' in window)) setMessage('La voz no está disponible en este navegador. Utiliza la guía escrita.');
     } catch (error) {
       if (ticket === operation.current) { audio.current?.stop(); setStatus(snapshot.current ? 'paused' : 'idle'); setMessage((error as Error).message); }
     }
@@ -169,16 +170,20 @@ export default function CrystalModule() {
         {current.scene && <p className={styles.muted}>{current.scene}</p>}
         <div className={styles.fields}>
           <label className={styles.field}>Tono base (Hz)<input type="number" min={80} max={2000} step="any" disabled={locked} value={baseText} aria-invalid={!baseValid} onChange={e => { const raw = e.target.value, n = Number(raw); setBaseText(raw); if (raw.trim() && Number.isFinite(n) && n >= 80 && n <= 2000) update('baseHz', n); }} /></label>
-          <label className={styles.field}>Forma de uso<select disabled={locked} value={preparation.exposure} onChange={e => update('exposure', e.target.value as CrystalPreparation['exposure'])}><option value="speaker">Altavoz · exposición del entorno</option><option value="headphones">Audífonos · escucha personal</option><option value="voice">Voz propia / silencio · sin tonos generados</option></select></label>
+          <label className={styles.field}>Salida de sonido<select disabled={locked} value={preparation.exposure} onChange={e => {
+            const output = e.target.value as CrystalPreparation['exposure']; update('exposure', output);
+            if (output === 'coils') { setVoice(false); stopVoice(); }
+          }}><option value="speaker">Altavoz · exposición del entorno</option><option value="headphones">Audífonos · escucha personal</option><option value="coils">Mis coils · conexión de audio</option><option value="voice">Voz propia / silencio · sin tonos generados</option></select></label>
           <label className={styles.check}><input type="checkbox" disabled={locked || preparation.exposure === 'voice'} checked={preparation.sound} onChange={e => update('sound', e.target.checked)} /> Acompañamiento sonoro</label>
           <label className={styles.field}>Volumen de tonos · {Math.round(volume * 100)} %<input type="range" min="0" max=".6" step=".01" value={volume} disabled={status === 'starting' || status === 'completed' || status === 'stopped'} onChange={e => {
             const value = Number(e.target.value);
             if (active) volumeChanges.current.push({ elapsedMs: audio.current?.elapsedMs() ?? elapsedRef.current, level: value });
             volumeRef.current = value; audio.current?.setVolume(value); setVolume(value);
           }} /></label>
-          <label className={styles.check}><input type="checkbox" checked={voice} onChange={e => { setVoice(e.target.checked); if (!e.target.checked) stopVoice(); }} /> Leer instrucciones con voz</label>
-          <label className={styles.field}>Volumen de guía · {Math.round(voiceVolume * 100)} %<input type="range" min="0" max="1" step=".05" value={voiceVolume} onChange={e => setVoiceVolume(Number(e.target.value))} /></label>
+          <label className={styles.check}><input type="checkbox" disabled={coils} checked={voice && !coils} onChange={e => { setVoice(e.target.checked); if (!e.target.checked) stopVoice(); }} /> Leer instrucciones con voz</label>
+          <label className={styles.field}>Volumen de guía · {Math.round(voiceVolume * 100)} %<input type="range" disabled={coils} min="0" max="1" step=".05" value={voiceVolume} onChange={e => setVoiceVolume(Number(e.target.value))} /></label>
         </div>
+        {coils && <p className={styles.message}><strong>Mis coils:</strong> conecta el controlador de tus coils a la salida de audio según sus instrucciones y elige la salida cableada o USB en tu teléfono o computadora. Empieza con el nivel mínimo del controlador. La aplicación genera la misma secuencia de tonos; no detecta ni selecciona físicamente el equipo. La guía permanece escrita para que la narración no se envíe a las bobinas.</p>}
         {!baseValid && <p role="alert">El tono base debe estar entre 80 y 2000 Hz.</p>}
         <p className={styles.muted}>{sounding ? `${current.baseHz} · ${current.baseHz * 1.5} · ${current.baseHz * 2} Hz. Base, quinta y octava; amplitudes relativas 1 : 0.5 : 0.25, mezcladas con nivel limitado.` : 'Sin tonos generados. Puedes vocalizar suavemente en una exhalación cómoda o permanecer en silencio.'} Los valores son una elección musical; no identifican la resonancia física ni una carga medida del cristal.</p>
         <div className={styles.player}><div className={`${styles.orb} ${status === 'playing' ? styles.moving : ''}`} aria-hidden="true">◇</div><h3>{status === 'completed' ? 'Preparación terminada' : phase?.title ?? 'Sesión terminada'}</h3><p className={styles.timer} aria-label="Tiempo restante">{clock(Math.max(0, durationMs - elapsed))}</p><progress max={durationMs} value={elapsed} aria-label="Avance de la sesión" /><p>{status === 'completed' || !stageTones.length ? 'Silencio' : `${stageTones.join(' · ')} Hz`}</p>{phase && <p className={styles.guide}>{phase.guide}</p>}</div>
@@ -201,7 +206,7 @@ export default function CrystalModule() {
           void file.text().then(raw => { const book = importCrystalNotebook(localStorage, raw); setNotebook(book); if (!locked && book.preparation) { setPreparation(book.preparation); setBaseText(String(book.preparation.baseHz)); } setStorageError(false); setMessage('Cuaderno importado. Las sesiones existentes se conservaron.'); }).catch(error => setMessage((error as Error).message));
         }} /></label>
         {!notebook.sessions.length && <p className={styles.muted}>Aquí aparecerán las sesiones que decidas guardar.</p>}
-        {[...notebook.sessions].reverse().map(row => <details className={styles.entry} key={row.id}><summary>{row.preparation.crystal} · {new Date(row.startedAt).toLocaleString('es-MX')} · {clock(row.elapsedMs)} · {row.status === 'completed' ? 'Completa' : 'Detenida'}</summary><p><strong>Intención:</strong> {row.preparation.intention}</p><p><strong>Escena:</strong> {row.preparation.scene || 'Sin registrar'}</p><p><strong>Pieza:</strong> {row.preparation.material} · {row.preparation.details || 'Sin detalles'}</p><p><strong>Volumen inicial:</strong> {Math.round(row.initialVolume * 100)} % · {row.volumeChanges.length} ajustes registrados</p><p><strong>Secuencia:</strong> {row.preparation.duration} min · {row.preparation.sound && row.preparation.exposure !== 'voice' ? `${row.preparation.baseHz} / ${row.preparation.baseHz * 1.5} / ${row.preparation.baseHz * 2} Hz` : 'Sin tonos'} · {row.preparation.exposure === 'speaker' ? 'Altavoz' : row.preparation.exposure === 'headphones' ? 'Audífonos' : 'Voz propia / silencio'}</p>{Object.entries(row.notes).filter(([, value]) => value).map(([key, value]) => <p key={key}><strong>{({ experience: 'Experiencia', interpretation: 'Interpretación', action: 'Acción' })[key as keyof CrystalNotes]}:</strong> {value}</p>)}{row.followUps.map(f => <p key={f.id}><strong>{new Date(f.at).toLocaleString('es-MX')}:</strong> {f.text}</p>)}<label className={styles.field}>Observación posterior<textarea maxLength={6000} value={followUps[row.id] ?? ''} onChange={e => setFollowUps(f => ({ ...f, [row.id]: e.target.value }))} /></label><button type="button" disabled={!followUps[row.id]?.trim()} className="fh-action fh-action--secondary" onClick={() => { try { setNotebook(appendCrystalFollowUp(localStorage, row.id, { id: crypto.randomUUID(), at: new Date().toISOString(), text: followUps[row.id].trim() })); setFollowUps(f => ({ ...f, [row.id]: '' })); setMessage('Observación añadida con fecha.'); } catch (error) { setMessage((error as Error).message); } }}>Guardar observación</button></details>)}
+        {[...notebook.sessions].reverse().map(row => <details className={styles.entry} key={row.id}><summary>{row.preparation.crystal} · {new Date(row.startedAt).toLocaleString('es-MX')} · {clock(row.elapsedMs)} · {row.status === 'completed' ? 'Completa' : 'Detenida'}</summary><p><strong>Intención:</strong> {row.preparation.intention}</p><p><strong>Escena:</strong> {row.preparation.scene || 'Sin registrar'}</p><p><strong>Pieza:</strong> {row.preparation.material} · {row.preparation.details || 'Sin detalles'}</p><p><strong>Volumen inicial:</strong> {Math.round(row.initialVolume * 100)} % · {row.volumeChanges.length} ajustes registrados</p><p><strong>Secuencia:</strong> {row.preparation.duration} min · {row.preparation.sound && row.preparation.exposure !== 'voice' ? `${row.preparation.baseHz} / ${row.preparation.baseHz * 1.5} / ${row.preparation.baseHz * 2} Hz` : 'Sin tonos'} · {row.preparation.exposure === 'speaker' ? 'Altavoz' : row.preparation.exposure === 'headphones' ? 'Audífonos' : row.preparation.exposure === 'coils' ? 'Mis coils · audio' : 'Voz propia / silencio'}</p>{Object.entries(row.notes).filter(([, value]) => value).map(([key, value]) => <p key={key}><strong>{({ experience: 'Experiencia', interpretation: 'Interpretación', action: 'Acción' })[key as keyof CrystalNotes]}:</strong> {value}</p>)}{row.followUps.map(f => <p key={f.id}><strong>{new Date(f.at).toLocaleString('es-MX')}:</strong> {f.text}</p>)}<label className={styles.field}>Observación posterior<textarea maxLength={6000} value={followUps[row.id] ?? ''} onChange={e => setFollowUps(f => ({ ...f, [row.id]: e.target.value }))} /></label><button type="button" disabled={!followUps[row.id]?.trim()} className="fh-action fh-action--secondary" onClick={() => { try { setNotebook(appendCrystalFollowUp(localStorage, row.id, { id: crypto.randomUUID(), at: new Date().toISOString(), text: followUps[row.id].trim() })); setFollowUps(f => ({ ...f, [row.id]: '' })); setMessage('Observación añadida con fecha.'); } catch (error) { setMessage((error as Error).message); } }}>Guardar observación</button></details>)}
       </FHSurface>}
       <FHSurface variant="subtle" className="p-5 md:p-7"><details><summary>Fundamento, fuentes y cuidado de la herramienta</summary><div className={styles.cards}>{CRYSTAL_SOURCES.map(source => <article key={source.title}><h3>{source.title}</h3><p className={styles.muted}>{source.text}</p>{source.href && <a href={source.href} target="_blank" rel="noreferrer">Consultar fuente</a>}</article>)}</div><p className={styles.muted}>«Programación» y «carga» nombran aquí una práctica intencional de exploración. El progreso indica tiempo de sesión, no energía almacenada. Conserva una respiración cómoda y un volumen bajo. La pieza se utiliza como herramienta; tú eliges su función.</p><Link href="/marina-punto-cero">Abrir Marina · Punto Cero y el compositor</Link></details></FHSurface>
       {storageError && <button type="button" className="fh-action fh-action--secondary" onClick={() => { try { download(localStorage.getItem(CRYSTAL_KEY) ?? '', 'cristales-cuaderno-original.json', true); } catch (error) { setMessage((error as Error).message); } }}>Exportar datos originales sin modificar</button>}

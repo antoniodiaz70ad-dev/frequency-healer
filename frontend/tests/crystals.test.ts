@@ -101,3 +101,18 @@ test('malformed, unsupported and conflicting notebooks remain untouched; explici
   assert.throws(() => parseCrystalNotebook(JSON.stringify({ schemaVersion: 1, preparation: null, sessions: [{ ...row, status: 'completed' }] })));
   assert.throws(() => saveCrystalSession(s, { ...row, notes: { ...row.notes, experience: 'Conflict' } }));
 });
+
+
+test('coils preserves the bounded audio score and round-trips as an output choice', async () => {
+  const p = { ...preparation(), exposure: 'coils' as const };
+  validatePreparation(p, true);
+  assert.deepEqual(crystalTimeline(p), crystalTimeline(preparation()));
+  const s = store(), row = { ...session(), preparation: p };
+  saveCrystalSession(s, row);
+  const destination = store(); importCrystalNotebook(destination, s.getItem(CRYSTAL_KEY)!);
+  assert.equal(readCrystalNotebook(destination).sessions[0].preparation.exposure, 'coils');
+  const ctx = new Context(), audio = new CrystalAudio(() => ctx.asAudio());
+  await audio.play(p, .12);
+  assert.deepEqual([...new Set(ctx.oscillators.map(n => n.frequency.events[0].value))], [256, 384, 512]);
+  audio.dispose();
+});

@@ -46,3 +46,8 @@ The module has its own JSON export/import; it is not silently added to the exist
 - Added `node --test ui/crystals-flow.test.mjs` for preparation, invalid input, native audio lifecycle, stopped-session save, reload, dated follow-up, JSON download and transfer into a second isolated browser context. Browser execution does not establish physical listening or energetic effects.
 
 Default volume is conservative app gain, not calibrated sound pressure. No control applies electricity to a mineral or to a body.
+
+
+## Coils output option
+
+The output selector also offers **Mis coils · conexión de audio** (`exposure: coils`). It generates the same bounded harmonic timeline through the browser's existing default audio destination. The user connects their coil controller and chooses the cable/USB route in the operating system; the UI does not claim hardware detection, automatic routing, calibration or validated coil support. Browser narration is turned off and unavailable for this mode because speech would otherwise use the same system destination. Written guidance remains available. The choice is included in saved sessions and JSON portability. No coil-specific frequency effects or magnetic-field strength are inferred from the audio gain.

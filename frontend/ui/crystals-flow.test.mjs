@@ -23,6 +23,10 @@ test('crystals: prepare, play, pause, save, reload, follow-up and portable expor
     await page.getByRole('spinbutton', { name: 'Tono base (Hz)', exact: true }).fill('0');
     assert.equal(await page.getByRole('button', { name: 'Comenzar preparación' }).isEnabled(), false);
     await page.getByRole('spinbutton', { name: 'Tono base (Hz)', exact: true }).fill('256');
+    await page.getByLabel('Leer instrucciones con voz', { exact: true }).check();
+    await page.getByRole('combobox', { name: 'Salida de sonido', exact: true }).selectOption('coils');
+    assert.equal(await page.getByLabel('Leer instrucciones con voz', { exact: true }).isEnabled(), false);
+    assert.equal(await page.getByLabel('Leer instrucciones con voz', { exact: true }).isChecked(), false);
     await page.getByRole('button', { name: 'Comenzar preparación' }).click();
     await page.getByRole('button', { name: 'Pausar', exact: true }).waitFor();
     await page.waitForTimeout(700);
@@ -41,7 +45,7 @@ test('crystals: prepare, play, pause, save, reload, follow-up and portable expor
     await page.getByRole('button', { name: 'Guardar observación', exact: true }).click();
     const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('fh.crystals.v1')));
     assert.equal(stored.sessions.length, 1); assert.equal(stored.sessions[0].status, 'stopped');
-    assert.equal(stored.sessions[0].preparation.baseHz, 256); assert.equal(stored.sessions[0].followUps[0].text, 'Revisión posterior');
+    assert.equal(stored.sessions[0].preparation.baseHz, 256); assert.equal(stored.sessions[0].preparation.exposure, 'coils'); assert.equal(stored.sessions[0].followUps[0].text, 'Revisión posterior');
     const downloadPending = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Exportar cuaderno', exact: true }).click();
     const download = await downloadPending; assert.equal(download.suggestedFilename(), 'resonance-lab-cristales.json');

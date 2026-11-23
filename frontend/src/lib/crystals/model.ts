@@ -6,7 +6,7 @@ export type CrystalDuration = 10 | 15;
 export type CrystalPreparation = {
   crystal: string; material: string; details: string; purpose: CrystalPurpose;
   intention: string; scene: string; duration: CrystalDuration; baseHz: number;
-  sound: boolean; exposure: 'speaker' | 'headphones' | 'voice';
+  sound: boolean; exposure: 'speaker' | 'headphones' | 'coils' | 'voice';
 };
 export type CrystalPhase = { id: string; title: string; seconds: number; guide: string; voices: number };
 export type CrystalStep = { seconds: number; tones: { hz: number; level: number }[] };
@@ -21,7 +21,7 @@ export function defaultCrystalPreparation(): CrystalPreparation {
 }
 export function validatePreparation(input: unknown, ready = false): asserts input is CrystalPreparation {
   const p = input as CrystalPreparation;
-  if (!p || typeof p !== 'object' || !['crystal', 'material', 'details', 'intention', 'scene'].every(key => typeof p[key as keyof CrystalPreparation] === 'string' && String(p[key as keyof CrystalPreparation]).length <= (key === 'crystal' || key === 'material' ? 120 : 6000)) || !CRYSTAL_PURPOSES.some(row => row.id === p.purpose) || ![10, 15].includes(p.duration) || !Number.isFinite(p.baseHz) || p.baseHz < 80 || p.baseHz > 2000 || typeof p.sound !== 'boolean' || !['speaker', 'headphones', 'voice'].includes(p.exposure)) throw new Error('Revisa la preparación: base de 80 a 2000 Hz y recorrido de 10 o 15 minutos.');
+  if (!p || typeof p !== 'object' || !['crystal', 'material', 'details', 'intention', 'scene'].every(key => typeof p[key as keyof CrystalPreparation] === 'string' && String(p[key as keyof CrystalPreparation]).length <= (key === 'crystal' || key === 'material' ? 120 : 6000)) || !CRYSTAL_PURPOSES.some(row => row.id === p.purpose) || ![10, 15].includes(p.duration) || !Number.isFinite(p.baseHz) || p.baseHz < 80 || p.baseHz > 2000 || typeof p.sound !== 'boolean' || !['speaker', 'headphones', 'coils', 'voice'].includes(p.exposure)) throw new Error('Revisa la preparación: base de 80 a 2000 Hz y recorrido de 10 o 15 minutos.');
   if (ready && (!p.crystal.trim() || !p.intention.trim())) throw new Error('Nombra tu cristal y escribe una intención antes de comenzar.');
 }
 export function crystalPhases(duration: CrystalDuration): CrystalPhase[] {
