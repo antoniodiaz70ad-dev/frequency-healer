@@ -146,7 +146,8 @@ Ten additional unit tests cover precise sub-Hz round-trips, original-journal iso
 Main's existing Next.js **16.4.6** security update is included; no new dependency is introduced. Physical listening, Safari/iPhone behavior and experiential effects require device observation.
 
 Checks with Next.js 16.4.6: **290/290 unit tests**, TypeScript, scoped ESLint and production build pass. GitHub run 45034886970 passed Quality and Flags ON/OFF, including both Marina browser flows, before the final elapsed-time edge-case correction. Live Chrome checks on the Vercel Preview verified all three enabled layer controls, exact 0.32789 Hz recipe persistence after reload, explicit load without autoplay, playback at listening volume zero, a frozen progress value during pause, resume/stop and explicit diary save. A 390×844 viewport had no horizontal overflow (document width 384 px). These checks verify browser behavior, not acoustic output or efficacy. Both Marina UI test launchers now honor the existing `FH_UI_BROWSER=chromium` CI setting instead of assuming `/usr/bin/chromium`.
-# Cimática del compositor y edición de capas — 22 de noviembre de 2026
+
+## Cimática del compositor y edición de capas — 22 de noviembre de 2026
 
 El compositor sustituye la geometría decorativa por una vista del promedio RMS de la respuesta de una placa virtual a sus capas activas. Reutiliza el modelo modal del Laboratorio Cimático y su canvas de campo; no crea osciladores, micrófonos ni contextos de audio. Ocultar el visual no modifica la reproducción. El cálculo se memoriza por receta/canal y no se repite al actualizar el cronómetro.
 
@@ -156,6 +157,6 @@ El compositor sustituye la geometría decorativa por una vista del promedio RMS 
 - El campo permanece estático durante una mezcla estable; no reproduce pulsos, batidos ni la fase instantánea. Exposición automática declarada en pantalla; el brillo no es potencia, medición corporal ni beneficio.
 - Si cualquier componente activo está fuera de 0.1–2000 Hz (incluido DC), se retira toda la figura y se explica el límite. El audio válido sigue disponible. La cobertura modal finita conserva sus avisos.
 
-El bloqueo de capas se hace explícito mediante una barra junto al editor. **Guardar tramo y editar capas** detiene el audio, conserva en el diario la receta escuchada, el tiempo y las observaciones existentes, y desbloquea la edición. La siguiente escucha empieza desde cero con la mezcla nueva. Pausar no cambia la receta de la sesión. Si el almacenamiento falla, se mantiene la sesión bloqueada y recuperable y se ofrece su descarga; no se descarta silenciosamente.
+El bloqueo de capas se hace explícito mediante una barra junto al editor. **Guardar tramo y editar capas** detiene el audio, conserva en el diario la receta escuchada, el tiempo y las observaciones existentes, y desbloquea la edición. **Aplicar capas y escuchar** inicia la nueva mezcla desde esa misma barra, sin recorrer el formulario hasta el final. La siguiente escucha empieza desde cero con la mezcla nueva. Pausar no cambia la receta de la sesión. Si el almacenamiento falla, se mantiene la sesión bloqueada y recuperable y se ofrece su descarga; no se descarta silenciosamente.
 
 Pruebas añadidas: reconstrucción de señales AM, binaurales independientes, suma coherente y RMS, límites del modelo; flujo móvil con audio nativo, edición desde reproducción/pausa/detención, conservación del historial y recuperación ante rechazo de almacenamiento.

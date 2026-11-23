@@ -23,7 +23,7 @@ test('mobile composer: unlock layers without losing the session and render the a
     await page.getByLabel('Activar capa 3', { exact: true }).check();
     await page.getByLabel('Canal de la simulación', { exact: true }).selectOption('right');
     await spectrum.filter({ hasText: /192.5 · 200 · 207.5 · 227 · 300 Hz/ }).waitFor();
-    await page.getByRole('button', { name: 'Escuchar composición', exact: true }).click();
+    await page.getByRole('button', { name: 'Aplicar capas y escuchar', exact: true }).click();
     await page.getByRole('button', { name: 'Pausar composición', exact: true }).waitFor();
     assert.equal(await page.getByLabel('Activar capa 2', { exact: true }).isDisabled(), true);
     await page.waitForTimeout(250);
@@ -35,7 +35,7 @@ test('mobile composer: unlock layers without losing the session and render the a
     await page.getByLabel('Activar capa 2', { exact: true }).uncheck();
     await page.getByLabel('Modulación de capa 1 (Hz)', { exact: true }).fill('0.32789');
     await spectrum.filter({ hasText: /199.67211 · 200 · 200.32789 · 227 Hz/ }).waitFor();
-    await page.getByRole('button', { name: 'Escuchar composición', exact: true }).click();
+    await page.getByRole('button', { name: 'Aplicar capas y escuchar', exact: true }).click();
     await page.getByRole('button', { name: 'Pausar composición', exact: true }).waitFor();
     await page.getByRole('button', { name: 'Ocultar visual', exact: true }).click();
     assert.equal(await page.getByRole('region', { name: 'Cimática del compositor' }).count(), 0);
