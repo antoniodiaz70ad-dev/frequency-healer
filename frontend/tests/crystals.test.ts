@@ -112,7 +112,9 @@ test('coils preserves the bounded audio score and round-trips as an output choic
   const destination = store(); importCrystalNotebook(destination, s.getItem(CRYSTAL_KEY)!);
   assert.equal(readCrystalNotebook(destination).sessions[0].preparation.exposure, 'coils');
   const ctx = new Context(), audio = new CrystalAudio(() => ctx.asAudio());
-  await audio.play(p, .12);
+  // This context deliberately has no decoder/buffer-source API: coil mode must
+  // ignore narration at the audio boundary, even if a caller passes a score.
+  await audio.play(p, .12, 0, { volume: .7, cues: [{ key: 'crystals-prepare', atMs: 0, endMs: 120000 }] });
   assert.deepEqual([...new Set(ctx.oscillators.map(n => n.frequency.events[0].value))], [256, 384, 512]);
   audio.dispose();
 });

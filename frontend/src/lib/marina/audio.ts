@@ -1,5 +1,6 @@
 import { validateMarinaAudio, type MarinaAudioConfig } from './model';
 import { acquirePlaybackSession } from './backgroundPlayback';
+import { ArthurNarration, type GuideTimeline } from '../narration/arthur';
 
 export type MarinaAudioStep = { config: MarinaAudioConfig; seconds: number };
 
@@ -18,6 +19,8 @@ export class MarinaAudio {
   private master: GainNode | null = null;
   private generation = 0;
   private releasePlayback = () => {};
+  private narration = new ArthurNarration();
+  private narrationAbort: AbortController | null = null;
   constructor(private readonly createContext: ContextFactory = browserContext, private readonly stopExternal: () => void = () => {}, private readonly onInterrupted: () => void = () => {}) {}
   async play(config: MarinaAudioConfig, volume: number): Promise<boolean> {
     this.stop();
@@ -46,7 +49,7 @@ export class MarinaAudio {
     } catch (error) { if (ticket === this.generation) this.stop(); throw error; }
   }
   /** Schedule every phase and its end on the audio clock before the UI can be throttled. */
-  async playTimeline(steps: MarinaAudioStep[], volume: number, elapsedMs = 0): Promise<boolean> {
+  async playTimeline(steps: MarinaAudioStep[], volume: number, elapsedMs = 0, narration?: GuideTimeline): Promise<boolean> {
     this.stop();
     const level = this.level(volume);
     if (!steps.length || steps.some(step => !Number.isFinite(step.seconds) || step.seconds <= 0)) throw new Error('La secuencia sonora no tiene una duración válida.');
@@ -58,7 +61,7 @@ export class MarinaAudio {
       const start = boundary; boundary += step.seconds;
       return { ...step, start: Math.max(0, start - elapsedMs / 1000), end: boundary - elapsedMs / 1000 };
     }).filter(step => step.end > 0 && step.config.mode !== 'silence');
-    if (!remaining.length) return true;
+    if (!remaining.length && !narration?.cues.length) return true;
     this.stopExternal();
     const ticket = this.generation;
     this.releasePlayback = acquirePlaybackSession();
@@ -68,12 +71,16 @@ export class MarinaAudio {
       remaining.forEach(step => validateMarinaAudio(step.config, ctx.sampleRate));
       if (ctx.state !== 'running') await ctx.resume();
       if (ticket !== this.generation) return false;
+      const controller = new AbortController(); this.narrationAbort = controller;
+      const buffers = narration ? await this.narration.prepare(ctx, narration, controller.signal) : new Map<string, AudioBuffer>();
+      if (ticket !== this.generation) return false;
       if (ctx.state !== 'running') throw new Error('El navegador pausó el audio. Vuelve a tocar Reanudar.');
       const now = ctx.currentTime, master = ctx.createGain();
       this.master = master; this.nodes.push(master);
       master.gain.setValueAtTime(level, now);
       master.gain.setValueAtTime(0, now + duration - elapsedMs / 1000);
       master.connect(ctx.destination);
+      if (narration) this.narration.schedule(ctx, narration, buffers, elapsedMs, now);
       for (const step of remaining) {
         const start = now + step.start, end = now + step.end;
         const gain = ctx.createGain(), fade = Math.min(.04, (end - start) / 2);
@@ -118,12 +125,14 @@ export class MarinaAudio {
     if (!this.context || !this.master) return;
     this.master.gain.setTargetAtTime(this.level(volume), this.context.currentTime, .025);
   }
+  setNarrationVolume(volume: number) { this.narration.setVolume(volume); }
   private level(volume: number) {
     if (!Number.isFinite(volume)) throw new Error('El volumen no es válido.');
     return Math.max(0, Math.min(1, volume));
   }
   stop() {
     this.generation++;
+    this.narrationAbort?.abort(); this.narrationAbort = null; this.narration.stop();
     this.releasePlayback(); this.releasePlayback = () => {};
     const ctx = this.context, sources = this.sources, nodes = this.nodes, master = this.master;
     this.sources = []; this.nodes = []; this.master = null;
