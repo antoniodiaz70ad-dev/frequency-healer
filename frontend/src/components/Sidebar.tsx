@@ -14,6 +14,7 @@ const navGroups = [
     { href: "/laboratorio-cimatico", label: "Laboratorio Cimático", icon: "◉" },
     { href: "/respiracion-atencion", label: "Respiración y atención", icon: "◒" },
     { href: "/marina-punto-cero", label: "Marina · Punto Cero", icon: "◇" },
+    { href: "/preparacion-cristales", label: "Preparación de cristales", icon: "⬡" },
     { href: "/biblioteca", label: "Atlas de frecuencias", icon: "◌" },
     { href: "/protocolos", label: "Protocolos históricos", icon: "≋" },
     { href: "/generador", label: "Generador manual", icon: "⌁" },
