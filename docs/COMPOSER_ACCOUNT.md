@@ -14,13 +14,13 @@ The account panel uses a pinned Supabase JS client (2.119.2), passwordless email
 
 ## Production activation gates
 
-1. Dedicated production Supabase project in the user-approved organization; do not reuse the ATENEA staging project. New project quote: US$10/month; approval is required before creation.
+1. Dedicated production Supabase project in the user-approved organization; do not reuse the ATENEA staging project. The user approved the quoted US$10/month and the organization on 23 November 2026. Creation was rejected with `PaymentRequiredException`: overdue invoices in the organization must be settled first. No new project was created.
 2. Apply `COMPOSER_CLOUD_SCHEMA.sql`, inspect its RLS/privileges, and run owner/other-user/anonymous/CAS tests in a rolled-back transaction. No public read or anonymous writes; authenticated users are restricted to their `auth.uid()`.
 3. Configure both signup-confirmation and magic-link email templates to show `{{ .Token }}` for the code entry flow. Verify the sending address can receive auth email. Supabase's default mail transport is restricted to project-team addresses; other addresses require an authorized custom SMTP service. Do not disable email confirmation to bypass delivery.
 4. Configure `NEXT_PUBLIC_COMPOSER_SUPABASE_URL` and `NEXT_PUBLIC_COMPOSER_SUPABASE_KEY` with the new project's public client URL and publishable key. Never deploy service-role credentials to the client.
 5. Validate code delivery/sign-in and an actual two-device transfer before claiming the user's cloud account is active. Synthetic UI checks are not live email or live RLS verification.
 
-Current work is prepared for review; provisioning, mail configuration and production activation remain gated until these requirements are met. The existing published app remains usable with local storage.
+Current work is prepared in draft PR #61; provisioning, mail configuration and production activation remain gated until these requirements are met. The connected Supabase dashboard also requires sign-in before email-template configuration can be performed. The existing published app remains usable with local storage. No production configuration or staging database was modified.
 
 ## Validation
 

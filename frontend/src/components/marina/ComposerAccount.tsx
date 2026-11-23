@@ -15,12 +15,12 @@ export default function ComposerAccount({ onRefresh }: { onRefresh: () => void }
   const [email, setEmail] = useState(''), [token, setToken] = useState(''), [sent, setSent] = useState(false);
   const [status, setStatus] = useState('Preparando tu cuenta…'), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const [pending, setPending] = useState(false);
-  const generation = useRef(0), syncing = useRef(false), rerun = useRef(false), refresh = useRef(onRefresh);
+  const generation = useRef(0), mounted = useRef(false), syncing = useRef(false), rerun = useRef(false), refresh = useRef(onRefresh);
   const live = useRef<{ client: SupabaseClient | null; session: Session | null }>({ client: null, session: null });
   useEffect(() => { refresh.current = onRefresh; }, [onRefresh]);
   const sync = useCallback(async function runSync() {
     const current = live.current;
-    if (!current.client || !current.session || document.visibilityState === 'hidden') return;
+    if (!mounted.current || !current.client || !current.session || document.visibilityState === 'hidden') return;
     if (syncing.current) { rerun.current = true; return; }
     let link: SyncBinding | null;
     try { link = readSyncBinding(localStorage); }
@@ -42,7 +42,8 @@ export default function ComposerAccount({ onRefresh }: { onRefresh: () => void }
     }
   }, []);
   useEffect(() => {
-    const generationRef = generation;
+    const generationRef = generation, mountedRef = mounted;
+    mountedRef.current = true;
     let supabase: SupabaseClient | null = null, unsubscribe = () => {};
     const timer = window.setTimeout(() => {
       try {
@@ -63,7 +64,7 @@ export default function ComposerAccount({ onRefresh }: { onRefresh: () => void }
     const interval = window.setInterval(() => void sync(), 15000);
     window.addEventListener(COMPOSER_CHANGED, changes); window.addEventListener('storage', changes);
     window.addEventListener('online', changes); window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible);
-    return () => { generationRef.current++; window.clearTimeout(timer); window.clearInterval(interval); unsubscribe(); window.removeEventListener(COMPOSER_CHANGED, changes); window.removeEventListener('storage', changes); window.removeEventListener('online', changes); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };
+    return () => { mountedRef.current = false; generationRef.current++; window.clearTimeout(timer); window.clearInterval(interval); unsubscribe(); window.removeEventListener(COMPOSER_CHANGED, changes); window.removeEventListener('storage', changes); window.removeEventListener('online', changes); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible); };
   }, [sync]);
   async function requestCode() {
     if (!client) return;

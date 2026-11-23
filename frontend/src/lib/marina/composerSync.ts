@@ -10,7 +10,7 @@ export interface ComposerCloud {
   compareAndSet(userId: string, revision: number, payload: ComposerDocument): Promise<boolean>;
 }
 export function canonical(value: unknown): string {
-  const ordered = (input: unknown): unknown => Array.isArray(input) ? input.map(ordered) : input && typeof input === 'object' ? Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => [k, ordered(v)])) : input;
+  const ordered = (input: unknown): unknown => Array.isArray(input) ? input.map(ordered) : input && typeof input === 'object' ? Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([k, v]) => [k, ordered(v)])) : input;
   return JSON.stringify(ordered(value));
 }
 async function digest(value: unknown) {
@@ -83,7 +83,7 @@ export async function mergeComposerDocuments(local: ComposerDocument, remote: Co
     }
     sessionRows.set(row.id, { ...prior, ...(updates.size ? { actionFollowUps: [...updates.values()].sort((a, b) => Date.parse(a.recordedAt) - Date.parse(b.recordedAt) || a.id.localeCompare(b.id)) } : {}) });
   }
-  const document = validateComposerDocument({ version: COMPOSER_VERSION, compositions: [...recipes.values()].sort((a, b) => a.id.localeCompare(b.id)), sessions: [...sessionRows.values()].sort((a, b) => a.id.localeCompare(b.id)) });
+  const document = validateComposerDocument({ version: COMPOSER_VERSION, compositions: [...recipes.values()].sort((a, b) => Date.parse(a.savedAt) - Date.parse(b.savedAt) || a.id.localeCompare(b.id)), sessions: [...sessionRows.values()].sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt) || a.id.localeCompare(b.id)) });
   return { document, conflicts };
 }
 

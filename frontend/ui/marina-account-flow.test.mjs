@@ -21,7 +21,9 @@ test('private composer account: explicit activation, two phone profiles, automat
     const context = await browser.newContext({ viewport: { width: 390, height: 844 } }); contexts.push(context);
     await context.route('https://composer-test.invalid/**', async route => {
       const request = route.request(), url = new URL(request.url()), method = request.method();
-      const respond = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+      const headers = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,POST,PATCH,OPTIONS' };
+      const respond = (body, status = 200) => route.fulfill({ status, headers, contentType: 'application/json', body: JSON.stringify(body) });
+      if (method === 'OPTIONS') return route.fulfill({ status: 204, headers });
       if (url.pathname.endsWith('/otp')) return respond({});
       if (url.pathname.endsWith('/verify')) return respond(auth);
       if (url.pathname.endsWith('/user')) return respond(user);
