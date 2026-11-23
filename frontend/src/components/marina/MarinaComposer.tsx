@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { FHSurface } from '@/components/ui/FHLayout';
 import { getAudioEngine } from '@/lib/audioEngine';
 import { MarinaComposerAudio } from '@/lib/marina/composerAudio';
@@ -13,6 +14,8 @@ import styles from './marina.module.css';
 import { useMarinaMediaSession } from './useMarinaMediaSession';
 import { emptyPracticeReview, validateActionPlan } from '@/lib/marina/actionPractice';
 import { ComposerActionPlanEditor, ComposerActionGuide, ComposerActionReview, ComposerActionDiary } from './ComposerActionPractice';
+
+const ComposerCymatics = dynamic(() => import('./ComposerCymatics'), { ssr: false, loading: () => <p>Calculando cimática de las capas…</p> });
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'completed' | 'stopped';
 const time = (ms: number) => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms % 60000 / 1000)).padStart(2, '0')}`;
@@ -37,6 +40,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   const [focusBefore, setFocusBefore] = useState<number | null>(null);
   const [practiceReview, setPracticeReview] = useState(emptyPracticeReview);
   const [visualVisible, setVisualVisible] = useState(true);
+  const [editError, setEditError] = useState('');
   const audio = useRef<MarinaComposerAudio | null>(null);
   const operation = useRef(0);
   const elapsedRef = useRef(0);
@@ -82,6 +86,29 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   function updateLayer(id: string, patch: Partial<ComposerLayer>) {
     setRecipe(current => ({ ...current, layers: current.layers.map(layer => layer.id === id ? { ...layer, ...patch } : layer) }));
   }
+  function editLayers() {
+    operation.current++;
+    const value = audio.current?.elapsedMs() ?? elapsedRef.current;
+    elapsedRef.current = Math.min(durationMs, value); setElapsed(elapsedRef.current);
+    audio.current?.stop();
+    const completed = status === 'completed' || elapsedRef.current >= durationMs;
+    if (!snapshot.current) { resetSession(); return; }
+    setStatus(completed ? 'completed' : 'stopped');
+    const row: ComposerSession = {
+      ...snapshot.current, endedAt: new Date().toISOString(), elapsedMs: Math.round(elapsedRef.current),
+      status: completed ? 'completed' : 'stopped', experience,
+      ...(snapshot.current.recipe.actionPlan ? { practiceReview: structuredClone(practiceReview) } : {}),
+    };
+    try {
+      setSessions(saveComposerSession(localStorage, row));
+      resetSession(); setEditError('');
+      setMessage('Tramo guardado en el diario. Ya puedes activar y ajustar las capas; pulsa Escuchar composición para aplicar la nueva mezcla.');
+    } catch (error) {
+      // Keep the snapshot and observations recoverable. Never unlock by discarding them.
+      setEditError(`${(error as Error).message} Conservamos esta sesión. Puedes descargarla o usar el registro al final del reproductor.`);
+      exportJSON(row, 'marina-compositor-recuperacion.json');
+    }
+  }
   async function play(resume = false) {
     const ticket = ++operation.current;
     try {
@@ -113,7 +140,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
     setMessage('Composición detenida. Puedes guardar la experiencia y sus ajustes.');
   }
   function resetSession() {
-    snapshot.current = null; elapsedRef.current = 0; setElapsed(0); setStatus('idle'); setExperience(''); setFocusBefore(null); setPracticeReview(emptyPracticeReview());
+    snapshot.current = null; elapsedRef.current = 0; setElapsed(0); setStatus('idle'); setExperience(''); setFocusBefore(null); setPracticeReview(emptyPracticeReview()); setEditError('');
   }
   function saveRecipe() {
     try {
@@ -133,8 +160,6 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
       exportJSON(row, 'marina-compositor-recuperacion.json');
     }
   }
-  const visualRate = recipe.layers.find(layer => layer.enabled && layer.mode === 'pulse' && layer.rateHz <= 1)?.rateHz ?? .1;
-  const scale = .93 + .07 * Math.sin(2 * Math.PI * visualRate * elapsed / 1000);
   useMarinaMediaSession(recipe.name, durationMs, elapsed, active, status === 'playing', {
     play: () => { if (status === 'paused') void play(true); },
     pause: () => { if (status === 'playing' || status === 'starting') pause(); },
@@ -163,11 +188,15 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
     <FHSurface className="p-5 md:p-7">
       <div className={styles.titleRow}><div><p className={styles.eyebrow}>Sonido por capas</p><h2>Tu compositor</h2></div><span className={styles.tag}>Hasta tres capas</span></div>
       <p className={styles.muted}>Combina tonos, pulsaciones y diferencias binaurales. Guarda una receta para volver a explorar sus mismos ajustes.</p>
+      <div className={styles.composerEditBar} aria-label="Edición de capas">
+        {locked ? <><p>Las capas corresponden a la sesión actual. Guarda el tramo para editarlas y comenzar una nueva mezcla.</p><button type="button" className="fh-action fh-action--primary" onClick={editLayers}>Guardar tramo y editar capas</button></> : <><p>Capas listas para editar. Activa las que quieras y ajusta sus valores.</p><button type="button" className="fh-action fh-action--secondary" onClick={() => document.getElementById('marina-composer-player')?.scrollIntoView({ block: 'start' })}>Ver cimática y escuchar</button></>}
+        {editError && <p role="alert">{editError}</p>}
+      </div>
       <div className={styles.fields}>
         <label>Nombre de la composición<input type="text" maxLength={120} disabled={locked} value={recipe.name} onChange={event => setRecipe(current => ({ ...current, name: event.target.value }))} /></label>
         <label>Duración de la composición (minutos)<input type="number" min="1" max="240" step="1" disabled={locked} value={recipe.durationMinutes} onChange={event => setRecipe(current => ({ ...current, durationMinutes: Number(event.target.value) }))} /></label>
         <label>Transición de entrada y salida (segundos)<input type="number" min="0.05" max="10" step="0.05" disabled={locked} value={recipe.transitionSeconds} onChange={event => setRecipe(current => ({ ...current, transitionSeconds: Number(event.target.value) }))} /></label>
-        <label className={styles.check}><input type="checkbox" disabled={locked} checked={recipe.visual} onChange={event => setRecipe(current => ({ ...current, visual: event.target.checked }))} /> Geometría de acompañamiento</label>
+        <label className={styles.check}><input type="checkbox" disabled={locked} checked={recipe.visual} onChange={event => setRecipe(current => ({ ...current, visual: event.target.checked }))} /> Cimática de las capas</label>
       </div>
       <label className={styles.field}>Intención de la composición<textarea disabled={locked} maxLength={6000} value={recipe.intention} onChange={event => setRecipe(current => ({ ...current, intention: event.target.value }))} /></label>
       <div className={styles.composerLayers}>
@@ -175,7 +204,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
           <legend>Capa {index + 1} · {layer.name}</legend>
           <label className={styles.check}><input type="checkbox" checked={layer.enabled} onChange={event => updateLayer(layer.id, { enabled: event.target.checked })} /> Activar capa {index + 1}</label>
           <div className={styles.fields}>
-            <label>Tipo de capa {index + 1}<select value={layer.mode} onChange={event => updateLayer(layer.id, { mode: event.target.value as ComposerLayer['mode'] })}><option value="tone">Tono continuo</option><option value="pulse">Pulso sobre portadora</option><option value="binaural">Binaural estéreo</option></select></label>
+            <label>Tipo de capa {index + 1}<select aria-label={`Tipo de capa ${index + 1}`} value={layer.mode} onChange={event => updateLayer(layer.id, { mode: event.target.value as ComposerLayer['mode'] })}><option value="tone">Tono continuo</option><option value="pulse">Pulso sobre portadora</option><option value="binaural">Binaural estéreo</option></select></label>
             <label>Portadora de capa {index + 1} (Hz)<input type="number" min="20" step="any" value={layer.carrierHz} onChange={event => updateLayer(layer.id, { carrierHz: Number(event.target.value) })} /></label>
             {layer.mode !== 'tone' && <label>{layer.mode === 'binaural' ? 'Diferencia' : 'Modulación'} de capa {index + 1} (Hz)<input type="number" min="0.000001" max="40" step="any" value={layer.rateHz} onChange={event => updateLayer(layer.id, { rateHz: Number(event.target.value) })} /></label>}
             {layer.mode === 'pulse' && <label>Profundidad de capa {index + 1} · {Math.round(layer.depth * 100)} %<input type="range" min="0" max="1" step="0.01" value={layer.depth} onChange={event => updateLayer(layer.id, { depth: Number(event.target.value) })} /></label>}
@@ -191,13 +220,13 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
         <button type="button" className="fh-action fh-action--secondary" disabled={locked} onClick={() => { setRecipe(defaultComposition()); setSelectedId(null); setFocusBefore(null); setMessage('Nueva composición lista para editar.'); }}>Nueva composición</button>
       </div>
       <div className={styles.player} id="marina-composer-player">
-        {recipe.visual && visualVisible && <div className={styles.composerGeometry} aria-hidden="true"><svg viewBox="0 0 200 160" style={{ transform: `scale(${scale})` }}><ellipse cx="100" cy="80" rx="85" ry="50" /><ellipse cx="100" cy="80" rx="85" ry="24" /><ellipse cx="100" cy="80" rx="40" ry="50" /><ellipse cx="100" cy="80" rx="14" ry="50" /><circle cx="100" cy="80" r="5" /></svg></div>}
+        {recipe.visual && visualVisible && <ComposerCymatics recipe={recipe} />}
         {recipe.actionPlan && active && <ComposerActionGuide plan={recipe.actionPlan} elapsedMs={elapsed} durationMs={durationMs} />}
         <p className={styles.phase}>{({ idle: 'Lista para escuchar', starting: 'Preparando audio…', playing: 'Composición en curso', paused: 'Composición pausada', completed: 'Composición completa', stopped: 'Composición detenida' })[status]}</p>
         <p className={styles.timer} aria-label="Tiempo restante del compositor">{time(Math.max(0, durationMs - elapsed))}</p>
         <progress max={durationMs} value={elapsed} aria-label="Avance del compositor" />
         <label className={styles.field}>Volumen de escucha · {Math.round(volume * 100)} %<input type="range" min="0" max="0.6" step="0.01" value={volume} onChange={event => setVolume(Number(event.target.value))} /></label>
-        {recipe.visual && <><p className={styles.muted}>Geometría de atención con movimiento lento; no representa mediciones del cuerpo.</p><button type="button" className="fh-action fh-action--secondary" onClick={() => setVisualVisible(value => !value)}>{visualVisible ? 'Ocultar visual' : 'Mostrar visual'}</button></>}
+        {recipe.visual && <button type="button" className="fh-action fh-action--secondary" onClick={() => setVisualVisible(value => !value)}>{visualVisible ? 'Ocultar visual' : 'Mostrar visual'}</button>}
       </div>
       <div className={styles.actions}>
         {status === 'idle' && <button type="button" className="fh-action fh-action--primary" onClick={() => void play()}>Escuchar composición</button>}
@@ -205,7 +234,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
         {status === 'paused' && <button type="button" className="fh-action fh-action--primary" onClick={() => void play(true)}>Reanudar composición</button>}
         {active && <button type="button" className="fh-action fh-action--danger" onClick={stop}>Detener composición</button>}
       </div>
-      <p className={styles.muted}>Puedes apagar la pantalla: la aplicación mantiene el sonido. Si el teléfono interrumpe el audio, pulsa Reanudar. Para cambiar capas, detén la sesión y guarda o descarta su registro.</p>
+      <p className={styles.muted}>Escuchar composición aplica todas las capas activas. Para cambiar la mezcla durante una sesión, usa Guardar tramo y editar capas; el siguiente inicio comienza desde cero. Puedes apagar la pantalla: la aplicación mantiene el sonido. Si el teléfono interrumpe el audio, pulsa Reanudar.</p>
     </FHSurface>
 
     {(status === 'completed' || status === 'stopped') && <FHSurface className="p-5 md:p-7"><h2>Experiencia de la composición</h2>{recipe.actionPlan && <ComposerActionReview plan={recipe.actionPlan} review={practiceReview} onChange={setPracticeReview} />}<label className={styles.field}>Lo que observé<textarea maxLength={6000} value={experience} onChange={event => setExperience(event.target.value)} /></label><div className={styles.actions}><button type="button" className="fh-action fh-action--primary" onClick={saveSession}>Guardar experiencia del compositor</button><button type="button" className="fh-action fh-action--secondary" onClick={resetSession}>Continuar sin guardar experiencia</button></div></FHSurface>}
