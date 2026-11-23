@@ -16,6 +16,7 @@ import { emptyPracticeReview, validateActionPlan } from '@/lib/marina/actionPrac
 import { ComposerActionPlanEditor, ComposerActionGuide, ComposerActionReview, ComposerActionDiary } from './ComposerActionPractice';
 
 const ComposerCymatics = dynamic(() => import('./ComposerCymatics'), { ssr: false, loading: () => <p>Calculando cimática de las capas…</p> });
+const ComposerAccount = dynamic(() => import('./ComposerAccount'), { ssr: false });
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'completed' | 'stopped';
 const time = (ms: number) => `${String(Math.floor(ms / 60000)).padStart(2, '0')}:${String(Math.floor(ms % 60000 / 1000)).padStart(2, '0')}`;
@@ -167,6 +168,10 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   });
 
   return <>
+    <ComposerAccount onRefresh={() => {
+      try { setSaved(readCompositions(localStorage)); setSessions(readComposerSessions(localStorage)); }
+      catch (error) { setStorageError(true); setMessage((error as Error).message); }
+    }} />
     <ComposerActionPlanEditor plan={recipe.actionPlan} disabled={locked} focusBefore={focusBefore} onFocusBefore={setFocusBefore}
       onChange={actionPlan => setRecipe(current => ({ ...current, actionPlan }))}
       onPrepare={() => { setRecipe(actionPracticeComposition()); setSelectedId(null); setFocusBefore(null); setMessage('Práctica de 8 minutos preparada. Completa tu plan y pulsa Escuchar composición cuando estés listo.'); }}
@@ -182,7 +187,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
           setRecipe(structuredClone(starter)); setSelectedId(null); setFocusBefore(null); setMessage('Receta incluida cargada. Toca Escuchar composición cuando estés listo.');
         }}>Usar receta</button>
       </article>)}
-      <p className={styles.muted}>Si personalizas una receta, guarda tu copia en Mis recetas. Esas copias y tu diario se conservan sólo en este dispositivo; los cambios no se sincronizan entre teléfonos.</p>
+      <p className={styles.muted}>Si personalizas una receta, guarda tu copia en Mis recetas. Activa Mi cuenta y sincronización para combinar esas copias y el diario del compositor entre tus dispositivos.</p>
       <a href="/marina-punto-cero/compositor">Enlace directo al compositor</a>
     </FHSurface>
     <FHSurface className="p-5 md:p-7">

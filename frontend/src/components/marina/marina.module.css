@@ -64,3 +64,4 @@
 .actionGuide li { margin-block: .75rem; }
 .practiceSources { margin-top: 1rem; }
 .practiceSources p { margin-block: .75rem; color: var(--fh-text-muted); }
+.syncStatus { color: var(--fh-accent); overflow-wrap: anywhere; margin-block: .75rem; }

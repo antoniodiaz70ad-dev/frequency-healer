@@ -29,6 +29,7 @@ export type ComposerSession = {
   practiceReview?: PracticeReview; actionFollowUps?: ActionFollowUp[];
 };
 type Store = Pick<Storage, 'getItem' | 'setItem'>;
+function notifyComposerChange() { if (typeof window !== 'undefined') window.dispatchEvent(new Event('fh:composer-changed')); }
 
 export function defaultComposition(): ComposerRecipe {
   return { version: COMPOSER_VERSION, name: 'Mi composición', intention: '', durationMinutes: 12, transitionSeconds: 2, visual: true, layers: [
@@ -121,6 +122,7 @@ export function saveComposition(store: Store, row: SavedComposition) {
   const rows = readCompositions(store);
   const next = [...rows.filter(item => item.id !== row.id), row];
   store.setItem(COMPOSER_RECIPES_KEY, JSON.stringify(next));
+  notifyComposerChange();
   return next;
 }
 function validDate(value: unknown): value is string { return typeof value === 'string' && Number.isFinite(Date.parse(value)); }
@@ -141,6 +143,7 @@ export function saveComposerSession(store: Store, row: ComposerSession) {
   const rows = readComposerSessions(store);
   const next = [...rows.filter(item => item.id !== row.id), row];
   store.setItem(COMPOSER_SESSIONS_KEY, JSON.stringify(next));
+  notifyComposerChange();
   return next;
 }
 /** Read the latest stored session and append; never replace its original observation. */
