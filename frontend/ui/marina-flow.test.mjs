@@ -28,7 +28,8 @@ test('Marina: legacy diary, local recording, 12-minute flow, phase speech and da
     await page.getByLabel('Mi frase', { exact: true }).fill('Presento con claridad');
     await page.getByLabel('La escena que elijo').fill('Una conversación serena');
     await page.getByLabel('El sentimiento que acompaña').fill('Calma');
-    await page.getByLabel('Voz del navegador', { exact: true }).check();
+    await page.getByLabel('Voz de la guía', { exact: true }).selectOption('device');
+    await page.getByLabel('Leer instrucciones con voz', { exact: true }).check();
     await page.evaluate(() => {
       window.__speechCount = 0;
       window.speechSynthesis.speak = () => { window.__speechCount++; };

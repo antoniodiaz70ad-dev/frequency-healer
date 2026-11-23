@@ -15,6 +15,8 @@ import styles from './marina.module.css';
 import MarinaPhrase from './MarinaPhrase';
 import MarinaComposer from './MarinaComposer';
 import { useMarinaMediaSession } from './useMarinaMediaSession';
+import { guideCues } from '@/lib/narration/arthur';
+import { arthurGuide } from '@/lib/narration/manifest';
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'finished' | 'stopped';
 type Tab = 'guided' | 'free' | 'composer' | 'study' | 'journal';
@@ -33,6 +35,7 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
   const [config, setConfig] = useState<MarinaAudioConfig>({ ...DEFAULT_MARINA_CONFIG });
   const [sound, setSound] = useState(true);
   const [voice, setVoice] = useState(false);
+  const [voiceSource, setVoiceSource] = useState<'arthur' | 'device'>('arthur');
   const [voiceVolume, setVoiceVolume] = useState(.7);
   const [volume, setVolume] = useState(.15);
   const [protocol, setProtocol] = useState<MarinaProtocol>('classic24');
@@ -79,6 +82,7 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
     return () => { window.clearTimeout(timer); invalidatePending(); audioRef.current?.dispose(); stopSpeech(); };
   }, [invalidatePending, stopSpeech]);
   useEffect(() => { volumeRef.current = volume; audioRef.current?.setVolume(volume); }, [volume]);
+  useEffect(() => { audioRef.current?.setNarrationVolume(voiceVolume); }, [voiceVolume]);
   useEffect(() => {
     if (status !== 'playing') return;
     const id = window.setInterval(() => {
@@ -94,7 +98,7 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
     return () => window.clearInterval(id);
   }, [status, stopSpeech]);
   useEffect(() => {
-    if (status !== 'playing' || !voice || !phaseGuide || phrasePlayback) return;
+    if (status !== 'playing' || !voice || voiceSource !== 'device' || !phaseGuide || phrasePlayback) return;
     if (!('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(phaseGuide);
     utterance.lang = 'es-MX'; utterance.rate = .88; utterance.volume = voiceVolume;
@@ -105,7 +109,7 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
     };
     window.speechSynthesis.speak(utterance);
     return () => { utterance.onerror = null; stopSpeech(); };
-  }, [phaseGuide, status, voice, voiceVolume, phrasePlayback, stopSpeech]); // A guide speaks once per phase.
+  }, [phaseGuide, status, voice, voiceSource, voiceVolume, phrasePlayback, stopSpeech]); // A guide speaks once per phase.
 
   async function start(resume = false) {
     const ticket = ++operation.current;
@@ -133,16 +137,18 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
       const steps = session.kind === 'guided'
         ? marinaPhases(session.protocol).map(item => ({ seconds: item.seconds, config: { mode: session.soundEnabled ? item.mode : 'silence', hz: item.hz, carrierHz: session.config.carrierHz } as MarinaAudioConfig }))
         : [{ seconds: (clockRef.current?.durationMs ?? 0) / 1000, config: session.soundEnabled ? session.config : { ...session.config, mode: 'silence' as const } }];
-      const started = await audioRef.current.playTimeline(steps, volumeRef.current, clockRef.current?.elapsedMs ?? 0);
+      const narration = voice && voiceSource === 'arthur' && session.kind === 'guided'
+        ? { cues: guideCues(marinaPhases(session.protocol), 'marina', hasPhrase ? ['express'] : []), volume: voiceVolume } : undefined;
+      const started = await audioRef.current.playTimeline(steps, volumeRef.current, clockRef.current?.elapsedMs ?? 0, narration);
       if (!started || ticket !== operation.current) return;
-      clockRef.current?.resume(performance.now()); setStatus('playing');
-      if (voice && !('speechSynthesis' in window)) setMessage('La voz no está disponible en este navegador. Las instrucciones siguen visibles.');
+      clockRef.current?.resume(); setStatus('playing');
+      if (voice && voiceSource === 'device' && !('speechSynthesis' in window)) setMessage('La voz del dispositivo no está disponible. Las instrucciones siguen visibles.');
     } catch (error) {
       if (ticket === operation.current) { audioRef.current?.stop(); setStatus(sessionRef.current ? 'paused' : 'idle'); setMessage((error as Error).message); }
     }
   }
   function finish() {
-    operation.current++; clockRef.current?.pause(performance.now()); audioRef.current?.stop(); stopSpeech();
+    operation.current++; clockRef.current?.pause(); audioRef.current?.stop(); stopSpeech();
     setElapsed(clockRef.current?.elapsedMs ?? 0); setStatus('stopped'); setMessage('Sesión detenida. Puedes guardar lo que experimentaste.');
   }
   function save() {
@@ -181,9 +187,10 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
             {tab === 'free' && <label>Duración (minutos)<input disabled={active} type="number" min="1" max="240" step="1" value={minutes} onChange={e => setMinutes(Number(e.target.value))} /></label>}
             <label>Volumen del sonido · {Math.round(volume * 100)} %<input type="range" min="0" max=".6" step=".01" value={volume} onChange={e => setVolume(Number(e.target.value))} /></label>
             <label className={styles.check}><input disabled={active} type="checkbox" checked={sound} onChange={e => setSound(e.target.checked)} /> Acompañamiento sonoro</label>
-            {tab === 'guided' && <><label className={styles.check}><input type="checkbox" checked={voice} onChange={e => { setVoice(e.target.checked); if (!e.target.checked) stopSpeech(); }} /> Voz del navegador</label><label>Volumen de voz · {Math.round(voiceVolume * 100)} %<input disabled={active} type="range" min="0" max="1" step=".05" value={voiceVolume} onChange={e => setVoiceVolume(Number(e.target.value))} /></label></>}
+            {tab === 'guided' && <><label className={styles.check}><input type="checkbox" disabled={active} checked={voice} onChange={e => { setVoice(e.target.checked); if (!e.target.checked) stopSpeech(); }} /> Leer instrucciones con voz</label><label>Voz de la guía<select disabled={active} value={voiceSource} onChange={e => setVoiceSource(e.target.value as 'arthur' | 'device')}><option value="arthur">Arthur · español · ElevenLabs</option><option value="device">Voz del dispositivo</option></select></label><label>Volumen de voz · {Math.round(voiceVolume * 100)} %<input type="range" min="0" max="1" step=".05" value={voiceVolume} onChange={e => setVoiceVolume(Number(e.target.value))} /></label></>}
           </div>
-          <p className={styles.muted}>Binaural: usa audífonos estéreo. Los tonos directos muy graves pueden sentirse débiles o no oírse; conserva un volumen cómodo. La voz depende de las voces instaladas en tu dispositivo.</p>
+          <p className={styles.muted}>Binaural: usa audífonos estéreo. Los tonos directos muy graves pueden sentirse débiles o no oírse; conserva un volumen cómodo. Arthur usa grabaciones guardadas; la alternativa del dispositivo depende de sus voces instaladas.</p>
+          {tab === 'guided' && voiceSource === 'arthur' && <p className={styles.muted}>Arthur disponible en {guideCues(phases, 'marina').length} de {phases.length} fases de este recorrido. Las demás conservan su guía escrita.</p>}
           <label className={styles.field}>Mi intención<textarea maxLength={6000} value={notes.intention} placeholder="¿Qué deseo explorar o crear?" onChange={e => setNotes(n => ({ ...n, intention: e.target.value }))} /></label>
           {tab === 'guided' && <>
             <div className={styles.fields}>{(['statement', 'scene', 'feeling'] as const).map(key => <label className={styles.field} key={key}>{({ statement: 'Mi frase', scene: 'La escena que elijo', feeling: 'El sentimiento que acompaña' })[key]}<textarea disabled={status !== 'idle'} maxLength={6000} value={practice[key]} onChange={e => setPractice(p => ({ ...p, [key]: e.target.value }))} /></label>)}</div>
@@ -204,9 +211,9 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
             {status === 'starting' && <span role="status">Preparando audio…</span>}
             {active && <button type="button" className="fh-action fh-action--danger" onClick={finish}>Detener</button>}
           </div>
-          <p className={styles.muted}>Puedes apagar la pantalla: la aplicación mantiene la secuencia sonora. La voz del navegador depende del dispositivo. Si el teléfono interrumpe el audio, pulsa Reanudar.</p>
+          <p className={styles.muted}>Si el teléfono interrumpe el audio, pulsa Reanudar. Arthur se programa junto a los tonos; la alternativa del dispositivo depende de su navegador.</p>
         </FHSurface>
-        {tab === 'guided' && <FHSurface className="p-5 md:p-7"><h2>El recorrido</h2><ol className={styles.phases}>{phases.map(p => <li key={p.id}><strong>{p.name}</strong><span>{p.seconds / 60} min · {p.mode === 'silence' ? 'silencio' : `${p.hz} Hz · ${p.mode === 'binaural' ? 'diferencia binaural' : 'pulso'}`}</span><p>{p.guide}</p></li>)}</ol></FHSurface>}
+        {tab === 'guided' && <FHSurface className="p-5 md:p-7"><h2>El recorrido</h2><ol className={styles.phases}>{phases.map(p => <li key={p.id}><strong>{p.name}</strong><span>{p.seconds / 60} min · {p.mode === 'silence' ? 'silencio' : `${p.hz} Hz · ${p.mode === 'binaural' ? 'diferencia binaural' : 'pulso'}`}{voiceSource === 'arthur' && ` · ${arthurGuide(`marina-${p.id}`)?.src ? 'Arthur disponible' : 'Arthur pendiente · guía escrita'}`}</span><p>{p.guide}</p></li>)}</ol></FHSurface>}
       </>}
       {tab === 'study' && <>
         <FHSurface className="p-5 md:p-7"><p className={styles.eyebrow}>The Scientific Download · lectura del libro</p><h2>Principios y referencias originales</h2><p className={styles.muted}>Páginas del contador PDF. Conservamos las propuestas de Marina y explicamos la adaptación utilizada aquí.</p><div className={styles.studyGrid}>{MARINA_BOOK_CARDS.map(card => <article key={card.page}><h3>{card.title}</h3><p>{card.original}</p><p><strong>En esta aplicación:</strong> {card.application}</p><a href={`${MARINA_SOURCES.scientific}#page=${card.page}`} target="_blank" rel="noreferrer">Leer página {card.page} del PDF</a></article>)}</div></FHSurface>

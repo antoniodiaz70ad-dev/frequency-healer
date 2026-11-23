@@ -13,6 +13,8 @@ import {
 } from '@/lib/crystals/model';
 import { useMarinaMediaSession } from '@/components/marina/useMarinaMediaSession';
 import styles from './crystals.module.css';
+import { guideCues } from '@/lib/narration/arthur';
+import { arthurGuide } from '@/lib/narration/manifest';
 
 type Status = 'idle' | 'starting' | 'playing' | 'paused' | 'completed' | 'stopped';
 type Tab = 'prepare' | 'practice' | 'notebook';
@@ -34,6 +36,7 @@ export default function CrystalModule() {
   const [elapsed, setElapsed] = useState(0);
   const [volume, setVolume] = useState(.12);
   const [voice, setVoice] = useState(false);
+  const [voiceSource, setVoiceSource] = useState<'arthur' | 'device'>('arthur');
   const [voiceVolume, setVoiceVolume] = useState(.7);
   const [notes, setNotes] = useState(blankNotes);
   const [followUps, setFollowUps] = useState<Record<string, string>>({});
@@ -70,6 +73,7 @@ export default function CrystalModule() {
     return () => { clearTimeout(timer); invalidate(); audio.current?.dispose(); stopVoice(); };
   }, [invalidate, stopVoice]);
   useEffect(() => { volumeRef.current = volume; audio.current?.setVolume(volume); }, [volume]);
+  useEffect(() => { audio.current?.setNarrationVolume(voiceVolume); }, [voiceVolume]);
   useEffect(() => {
     if (status !== 'playing') return;
     const timer = window.setInterval(() => {
@@ -83,7 +87,7 @@ export default function CrystalModule() {
     return () => clearInterval(timer);
   }, [status, durationMs, stopVoice]);
   useEffect(() => {
-    if (status !== 'playing' || !voice || coils || !spoken || document.hidden || !('speechSynthesis' in window)) return;
+    if (status !== 'playing' || !voice || voiceSource !== 'device' || coils || !spoken || document.hidden || !('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(spoken);
     utterance.lang = 'es-MX'; utterance.rate = .88; utterance.volume = voiceVolume;
     const spanish = window.speechSynthesis.getVoices().find(v => v.lang.startsWith('es'));
@@ -91,7 +95,7 @@ export default function CrystalModule() {
     utterance.onerror = event => { if (!['canceled', 'interrupted'].includes(event.error)) setMessage('La voz no está disponible. La guía escrita sigue visible.'); };
     window.speechSynthesis.speak(utterance);
     return () => { utterance.onerror = null; stopVoice(); };
-  }, [spoken, status, voice, voiceVolume, coils, stopVoice]);
+  }, [spoken, status, voice, voiceSource, voiceVolume, coils, stopVoice]);
   useEffect(() => {
     const hidden = () => { if (document.hidden) stopVoice(); };
     document.addEventListener('visibilitychange', hidden);
@@ -110,10 +114,12 @@ export default function CrystalModule() {
       if (!snapshot.current) return;
       setStatus('starting'); setTab('practice'); setMessage('');
       audio.current ??= new CrystalAudio(undefined, () => getAudioEngine().stop(), () => { pause(); setMessage('El dispositivo interrumpió el audio. La sesión se pausó; puedes reanudarla.'); });
-      const started = await audio.current.play(snapshot.current.preparation, volumeRef.current, elapsedRef.current);
+      const narration = voice && voiceSource === 'arthur' && snapshot.current.preparation.exposure !== 'coils'
+        ? { cues: guideCues(crystalPhases(snapshot.current.preparation.duration), 'crystals'), volume: voiceVolume } : undefined;
+      const started = await audio.current.play(snapshot.current.preparation, volumeRef.current, elapsedRef.current, narration);
       if (!started || ticket !== operation.current) return;
       setStatus('playing');
-      if (voice && snapshot.current.preparation.exposure !== 'coils' && !('speechSynthesis' in window)) setMessage('La voz no está disponible en este navegador. Utiliza la guía escrita.');
+      if (voice && voiceSource === 'device' && snapshot.current.preparation.exposure !== 'coils' && !('speechSynthesis' in window)) setMessage('La voz del dispositivo no está disponible. Utiliza la guía escrita.');
     } catch (error) {
       if (ticket === operation.current) { audio.current?.stop(); setStatus(snapshot.current ? 'paused' : 'idle'); setMessage((error as Error).message); }
     }
@@ -180,7 +186,9 @@ export default function CrystalModule() {
             if (active) volumeChanges.current.push({ elapsedMs: audio.current?.elapsedMs() ?? elapsedRef.current, level: value });
             volumeRef.current = value; audio.current?.setVolume(value); setVolume(value);
           }} /></label>
-          <label className={styles.check}><input type="checkbox" disabled={coils} checked={voice && !coils} onChange={e => { setVoice(e.target.checked); if (!e.target.checked) stopVoice(); }} /> Leer instrucciones con voz</label>
+          <label className={styles.check}><input type="checkbox" disabled={coils || active} checked={voice && !coils} onChange={e => { setVoice(e.target.checked); if (!e.target.checked) stopVoice(); }} /> Leer instrucciones con voz</label>
+          <label>Voz de la guía<select disabled={active || coils} value={voiceSource} onChange={e => setVoiceSource(e.target.value as 'arthur' | 'device')}><option value="arthur">Arthur · español · ElevenLabs</option><option value="device">Voz del dispositivo</option></select></label>
+          {voiceSource === 'arthur' && <p>Arthur disponible en {guideCues(crystalPhases(current.duration), 'crystals').length} de 5 fases. Las demás conservan su guía escrita. Puedes ajustar el volumen de voz durante la práctica.</p>}
           <label className={styles.field}>Volumen de guía · {Math.round(voiceVolume * 100)} %<input type="range" disabled={coils} min="0" max="1" step=".05" value={voiceVolume} onChange={e => setVoiceVolume(Number(e.target.value))} /></label>
         </div>
         {coils && <p className={styles.message}><strong>Mis coils:</strong> conecta el controlador de tus coils a la salida de audio según sus instrucciones y elige la salida cableada o USB en tu teléfono o computadora. Empieza con el nivel mínimo del controlador. La aplicación genera la misma secuencia de tonos; no detecta ni selecciona físicamente el equipo. La guía permanece escrita para que la narración no se envíe a las bobinas.</p>}
@@ -194,8 +202,8 @@ export default function CrystalModule() {
           {status === 'starting' && <span role="status">Preparando audio…</span>}
           {active && <button type="button" className="fh-action fh-action--danger" onClick={stop}>Detener</button>}
         </div>
-        <p className={styles.muted}>Las transiciones sonoras están programadas para continuar si el navegador mantiene el audio al bloquear la pantalla. Si el dispositivo lo interrumpe, reanuda aquí. La guía de voz se detiene al ocultar la página.</p>
-        <ol className={styles.score}>{crystalPhases(current.duration).map(p => <li key={p.id} aria-current={phase?.id === p.id ? 'step' : undefined}><strong>{p.title}</strong><span>{p.seconds / 60} min</span></li>)}</ol>
+        <p className={styles.muted}>Las transiciones y Arthur se programan junto a los tonos para continuar si el navegador mantiene el audio al bloquear la pantalla. Si el dispositivo lo interrumpe, reanuda aquí. La voz del dispositivo se detiene al ocultar la página.</p>
+        <ol className={styles.score}>{crystalPhases(current.duration).map(p => <li key={p.id} aria-current={phase?.id === p.id ? 'step' : undefined}><strong>{p.title}</strong><span>{p.seconds / 60} min{voiceSource === 'arthur' && !coils && ` · ${arthurGuide(`crystals-${p.id}`)?.src ? 'Arthur disponible' : 'Arthur pendiente · guía escrita'}`}</span></li>)}</ol>
       </FHSurface>}
       {(status === 'completed' || status === 'stopped') && <FHSurface className="p-5 md:p-7"><h2>Conserva tu experiencia</h2>{(['experience', 'interpretation', 'action'] as const).map(key => <label key={key} className={styles.field}>{({ experience: 'Lo que observé o sentí', interpretation: 'Mi interpretación y preguntas abiertas', action: 'Acción que corresponde a mi intención' })[key]}<textarea maxLength={6000} value={notes[key]} onChange={e => setNotes(n => ({ ...n, [key]: e.target.value }))} /></label>)}<div className={styles.actions}><button type="button" className="fh-action fh-action--primary" onClick={saveSession}>Guardar sesión en el cuaderno</button><button type="button" className="fh-action fh-action--secondary" onClick={() => { reset(); setMessage('Tramo descartado. Las sesiones guardadas se conservan.'); }}>Descartar tramo sin guardar</button></div></FHSurface>}
       {tab === 'notebook' && <FHSurface className="p-5 md:p-7"><div className={styles.heading}><h2>Mi cuaderno · {notebook.sessions.length} sesiones</h2><button type="button" className="fh-action fh-action--secondary" onClick={() => { try { download(readCrystalNotebook(localStorage), 'resonance-lab-cristales.json'); } catch (error) { setMessage((error as Error).message); } }}>Exportar cuaderno</button></div>

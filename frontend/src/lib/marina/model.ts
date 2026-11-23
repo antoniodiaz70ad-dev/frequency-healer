@@ -69,7 +69,7 @@ export class MarinaClock {
   elapsedMs = 0;
   private last: number | null = null;
   constructor(readonly durationMs: number) {}
-  resume(now: number) { this.last = now; }
+  resume(now = performance.now()) { this.last = now; }
   tick(now: number) {
     if (this.last !== null) {
       this.elapsedMs = Math.min(this.durationMs, this.elapsedMs + Math.max(0, now - this.last));
@@ -77,7 +77,7 @@ export class MarinaClock {
     }
     return this.elapsedMs;
   }
-  pause(now: number) { this.tick(now); this.last = null; }
+  pause(now = performance.now()) { this.tick(now); this.last = null; }
 }
 export type MarinaNotes = { intention: string; experience: string; interpretation: string; events: string; action: string };
 export type MarinaFollowUp = { id: string; at: string; text: string };

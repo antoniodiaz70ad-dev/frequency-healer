@@ -1,5 +1,6 @@
 import { acquirePlaybackSession } from '../marina/backgroundPlayback';
 import { crystalTimeline, validatePreparation, type CrystalPreparation } from './model';
+import { ArthurNarration, type GuideTimeline } from '../narration/arthur';
 
 function browserContext(): AudioContext {
   const browser = globalThis as typeof globalThis & { webkitAudioContext?: typeof AudioContext };
@@ -19,8 +20,10 @@ export class CrystalAudio {
   private endsAt = 0;
   private durationMs = 0;
   private releasePlayback = () => {};
+  private narration = new ArthurNarration();
+  private narrationAbort: AbortController | null = null;
   constructor(private readonly factory = browserContext, private readonly stopExternal = () => {}, private readonly onInterrupted = () => {}) {}
-  async play(preparation: CrystalPreparation, volume: number, elapsedMs = 0) {
+  async play(preparation: CrystalPreparation, volume: number, elapsedMs = 0, guide?: GuideTimeline) {
     this.stop(); validatePreparation(preparation, true);
     const level = this.level(volume), durationMs = preparation.duration * 60000;
     if (!Number.isFinite(elapsedMs) || elapsedMs < 0 || elapsedMs >= durationMs) throw new Error('El punto de reanudación no es válido.');
@@ -37,12 +40,17 @@ export class CrystalAudio {
       };
       if (ctx.state !== 'running') await ctx.resume();
       if (ticket !== this.generation) return false;
+      const narration = preparation.exposure === 'coils' ? undefined : guide;
+      const controller = new AbortController(); this.narrationAbort = controller;
+      const buffers = narration ? await this.narration.prepare(ctx, narration, controller.signal) : new Map<string, AudioBuffer>();
+      if (ticket !== this.generation) return false;
       if (ctx.state !== 'running') throw new Error('El dispositivo pausó el audio. Toca Reanudar para continuar.');
       const now = ctx.currentTime;
       this.startedAt = now; this.durationMs = durationMs; this.endsAt = now + (durationMs - elapsedMs) / 1000;
       const master = ctx.createGain(); this.master = master; this.nodes.push(master);
       master.gain.setValueAtTime(level, now); master.gain.setValueAtTime(0, this.endsAt);
       master.connect(ctx.destination);
+      if (narration) this.narration.schedule(ctx, narration, buffers, elapsedMs, now);
       let boundary = 0;
       for (const step of steps) {
         const startSeconds = boundary; boundary += step.seconds;
@@ -75,12 +83,14 @@ export class CrystalAudio {
     if (now < this.endsAt) master.gain.linearRampToValueAtTime(level, Math.min(now + .05, this.endsAt));
     master.gain.setValueAtTime(0, Math.max(now, this.endsAt));
   }
+  setNarrationVolume(volume: number) { this.narration.setVolume(volume); }
   private level(v: number) {
     if (!Number.isFinite(v)) throw new Error('El volumen no es válido.');
     return Math.max(0, Math.min(.6, v));
   }
   stop() {
     this.generation++;
+    this.narrationAbort?.abort(); this.narrationAbort = null; this.narration.stop();
     this.releasePlayback(); this.releasePlayback = () => {};
     const ctx = this.context, master = this.master, sources = this.sources, nodes = this.nodes;
     if (master) this.offsetMs = this.elapsedMs();
