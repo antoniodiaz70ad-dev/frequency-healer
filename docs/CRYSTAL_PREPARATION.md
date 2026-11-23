@@ -37,7 +37,7 @@ The module has its own JSON export/import; it is not silently added to the exist
 
 ## Validation
 
-- `npm test`: 317 passing tests, including 10 new cases for crystal score timing, normalization, silence, validation, audio graph scheduling, pause/resume, pending-start cancellation, interruption, snapshot isolation, append/import and corruption handling.
+- `npm test`: 318 passing tests, including 11 new cases for crystal score timing, normalization, silence, validation, audio graph scheduling, pause/resume, pending-start cancellation, interruption, snapshot isolation, append/import and corruption handling.
 - `npm run typecheck` and scoped ESLint: pass.
 - Production build: the ordinary Turbopack build was blocked by Google Fonts network access. A Webpack production build passed using a temporary Next font-response fixture with a local font. The fixture is outside the repository; production font configuration is unchanged. This validates code/build integration, not fetching the real fonts.
 - HTTP smoke against the production build returned 200 and the module heading, preparation form and notebook.
