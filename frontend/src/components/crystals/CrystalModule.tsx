@@ -187,7 +187,7 @@ export default function CrystalModule() {
             volumeRef.current = value; audio.current?.setVolume(value); setVolume(value);
           }} /></label>
           <label className={styles.check}><input type="checkbox" disabled={coils || active} checked={voice && !coils} onChange={e => { setVoice(e.target.checked); if (!e.target.checked) stopVoice(); }} /> Leer instrucciones con voz</label>
-          <label>Voz de la guía<select disabled={active || coils} value={voiceSource} onChange={e => setVoiceSource(e.target.value as 'arthur' | 'device')}><option value="arthur">Arthur · español · ElevenLabs</option><option value="device">Voz del dispositivo</option></select></label>
+          <label>Voz de la guía<select aria-label="Voz de la guía" disabled={active || coils} value={voiceSource} onChange={e => setVoiceSource(e.target.value as 'arthur' | 'device')}><option value="arthur">Arthur · español · ElevenLabs</option><option value="device">Voz del dispositivo</option></select></label>
           {voiceSource === 'arthur' && <p>Arthur disponible en {guideCues(crystalPhases(current.duration), 'crystals').length} de 5 fases. Las demás conservan su guía escrita. Puedes ajustar el volumen de voz durante la práctica.</p>}
           <label className={styles.field}>Volumen de guía · {Math.round(voiceVolume * 100)} %<input type="range" disabled={coils} min="0" max="1" step=".05" value={voiceVolume} onChange={e => setVoiceVolume(Number(e.target.value))} /></label>
         </div>
