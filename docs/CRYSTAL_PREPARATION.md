@@ -41,7 +41,8 @@ The module has its own JSON export/import; it is not silently added to the exist
 - `npm run typecheck` and scoped ESLint: pass.
 - Production build: the ordinary Turbopack build was blocked by Google Fonts network access. A Webpack production build passed using a temporary Next font-response fixture with a local font. The fixture is outside the repository; production font configuration is unchanged. This validates code/build integration, not fetching the real fonts.
 - HTTP smoke against the production build returned 200 and the module heading, preparation form and notebook.
-- The browser flow could not launch Chromium: this execution environment denied its Unix socket creation. No UI-flow pass or physical-listening result is claimed.
+- The standalone browser flow could not launch Chromium: this execution environment denied its Unix socket creation. A subsequent manual UI check through connected Chrome on the Vercel preview verified preparation save, 10-minute selection, invalid-frequency rejection, start (master volume zero), pause time preservation, resume/stop, stopped-session save, dated follow-up and persistence after reload. This is not a full automated UI-suite pass or a physical-listening result.
+- The Vercel preview deployed successfully using its normal build environment.
 - Added `node --test ui/crystals-flow.test.mjs` for preparation, invalid input, native audio lifecycle, stopped-session save, reload, dated follow-up, JSON download and transfer into a second isolated browser context. Browser execution does not establish physical listening or energetic effects.
 
 Default volume is conservative app gain, not calibrated sound pressure. No control applies electricity to a mineral or to a body.

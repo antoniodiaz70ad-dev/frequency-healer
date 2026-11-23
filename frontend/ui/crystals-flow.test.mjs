@@ -14,15 +14,15 @@ test('crystals: prepare, play, pause, save, reload, follow-up and portable expor
     await page.goto(server.origin + '/preparacion-cristales');
     await page.getByRole('heading', { name: 'Preparación de cristales', exact: true }).waitFor();
     await page.getByLabel('Nombre de mi cristal').fill('Mi cuarzo');
-    await page.getByLabel('Recorrido', { exact: true }).selectOption('10');
+    await page.getByRole('combobox', { name: 'Recorrido', exact: true }).selectOption('10');
     await page.getByRole('button', { name: 'Usar frase de partida' }).click();
     await page.getByLabel('Escena que representa mi intención').fill('Una conversación clara');
     await page.getByRole('button', { name: 'Guardar preparación', exact: true }).click();
     await page.getByText('Preparación guardada en este navegador.', { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Revisar sonido y comenzar' }).click();
-    await page.getByLabel('Tono base (Hz)', { exact: true }).fill('0');
+    await page.getByRole('spinbutton', { name: 'Tono base (Hz)', exact: true }).fill('0');
     assert.equal(await page.getByRole('button', { name: 'Comenzar preparación' }).isEnabled(), false);
-    await page.getByLabel('Tono base (Hz)', { exact: true }).fill('256');
+    await page.getByRole('spinbutton', { name: 'Tono base (Hz)', exact: true }).fill('256');
     await page.getByRole('button', { name: 'Comenzar preparación' }).click();
     await page.getByRole('button', { name: 'Pausar', exact: true }).waitFor();
     await page.waitForTimeout(700);
