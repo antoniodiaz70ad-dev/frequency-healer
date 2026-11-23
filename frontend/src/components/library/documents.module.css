@@ -1,0 +1,23 @@
+.root { display: grid; gap: 1rem; min-width: 0; }
+.root h2 { font-size: 1.2rem; font-weight: 650; margin: .25rem 0 .75rem; }
+.root h3 { font-size: 1rem; font-weight: 600; margin: .5rem 0; }
+.root p { margin: .5rem 0; line-height: 1.65; }
+.root label { display: grid; gap: .4rem; margin: .75rem 0; font-size: .85rem; }
+.root input:not([type=checkbox]), .root textarea { width: 100%; min-width: 0; border: 1px solid #334155; border-radius: .6rem; padding: .65rem; background: #111827; color: #f1f5f9; }
+.root button, .toolbar a { border: 1px solid #475569; border-radius: .65rem; padding: .65rem .85rem; color: #e2e8f0; background: #172337; font-size: .85rem; cursor: pointer; }
+.root button:disabled { opacity: .45; cursor: not-allowed; }
+.root button:focus-visible, .root a:focus-visible, .root summary:focus-visible { outline: 2px solid #93c5fd; outline-offset: 3px; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .65rem; margin: .6rem 0; }
+.toolbar > label:first-child { flex: 1; min-width: min(14rem,100%); }
+.root .check { display: flex; gap: .5rem; align-items: center; }
+.hint { color: #94a3b8; font-size: .8rem; }
+.file { max-width: 100%; }
+.preview { background: #132239; border: 1px solid #426080; border-radius: .8rem; padding: 1rem; margin: 1rem 0; overflow-wrap: anywhere; }
+.list { list-style: none; padding: 0; display: grid; gap: .65rem; }
+.root .document { display: grid; text-align: left; gap: .4rem; width: 100%; overflow-wrap: anywhere; }
+.document span { color: #94a3b8; font-size: .75rem; }
+.sections { margin: 1.2rem 0; }
+.root details { padding: .75rem 0; border-bottom: 1px solid #253349; min-width: 0; }
+.root summary { cursor: pointer; font-weight: 600; line-height: 1.6; overflow-wrap: anywhere; }
+.original { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .9rem; }
+.sources { padding-left: 1rem; font-size: .8rem; overflow-wrap: anywhere; color: #93c5fd; }

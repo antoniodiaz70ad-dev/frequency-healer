@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { FREQUENCY_DATABASE, CATEGORY_INFO, DOMAIN_INFO, WAVEFORM_INFO, searchFrequencies } from "@/lib/frequencies";
 import { getAudioEngine } from "@/lib/audioEngine";
 import { CommandCard, CommandPhase, FrequencyEntry } from "@/lib/types";
@@ -10,8 +10,9 @@ import { CLAIM_CLASSIFICATION_LABELS, frequencyClaimClassification } from "@/lib
 import { FHEvidenceBadge } from "@/components/ui/FHBadges";
 import { FHEmptyState, FHPageHeader, FHPageShell, FHSurface } from "@/components/ui/FHLayout";
 import { playbackWakeLockMessage, usePlaybackWakeLock } from "@/lib/playbackLifecycle";
+import DocumentLibrary from "@/components/library/DocumentLibrary";
 
-type Tab = "frecuencias" | "comandos";
+type Tab = "frecuencias" | "comandos" | "documentos";
 
 const EVIDENCE_INFO: Record<string, { label: string; color: string; icon: string }> = {
   verificada: { label: "Clasificación heredada: verificada", color: "#fbbf24", icon: "~" },
@@ -21,6 +22,10 @@ const EVIDENCE_INFO: Record<string, { label: string; color: string; icon: string
 
 export default function BibliotecaPage() {
   const [tab, setTab] = useState<Tab>("frecuencias");
+  useEffect(() => {
+    const timer = setTimeout(() => { if (new URLSearchParams(window.location.search).get('tab') === 'documentos') setTab('documentos'); }, 0);
+    return () => clearTimeout(timer);
+  }, []);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterDomain, setFilterDomain] = useState<string>("all");
@@ -90,6 +95,7 @@ export default function BibliotecaPage() {
 
       {/* Tabs */}
       <div className="legacy-tabs" aria-label="Secciones del atlas">
+        <button onClick={() => setTab("documentos")} className={`px-4 py-2 text-xs rounded-lg transition-colors ${tab === "documentos" ? "bg-[#1f2937] text-white" : "text-gray-500 hover:text-white"}`}>Mis documentos</button>
         <button
           onClick={() => setTab("frecuencias")}
           className={`px-4 py-2 text-xs rounded-lg transition-colors ${
@@ -108,7 +114,7 @@ export default function BibliotecaPage() {
         </button>
       </div>
 
-      {tab === "comandos" ? (
+      {tab === "documentos" ? <DocumentLibrary /> : tab === "comandos" ? (
         <>
           {/* Phase intro */}
           <div className="mb-6 bg-[#0d1117] border border-[#1f2937] rounded-xl p-4">

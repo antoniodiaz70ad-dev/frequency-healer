@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { chromium } from 'playwright-core';
+import { startLocalServer } from '../scripts/local-test-server.mjs';
+
+test('documents: file preview, private save, favorite, notes, duplicate, reload and portable restore', { timeout: 60000 }, async () => {
+  const server = await startLocalServer(false); let browser;
+  try {
+    browser = await chromium.launch({ headless: true, timeout: 15000, ...(process.env.FH_UI_BROWSER_PATH ? { executablePath: process.env.FH_UI_BROWSER_PATH } : process.env.FH_UI_BROWSER === 'chromium' ? {} : { channel: 'chrome' }), args: ['--no-sandbox', '--mute-audio', '--disable-audio-output'] });
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, acceptDownloads: true });
+    const page = await context.newPage(); page.setDefaultTimeout(8000);
+    const content = '# Cristales de prueba\n\n## Fuente original\nCuarzo e intención, 220 Hz, 12 minutos.\n<script>window.documentLibraryInjected=true</script>\n';
+    const errors = []; page.on('pageerror', e => errors.push(e.message));
+    await page.goto(server.origin + '/biblioteca?tab=documentos');
+    await page.getByRole('button', { name: 'Importar documento', exact: true }).click();
+    await page.getByLabel('Seleccionar archivo MD o TXT', { exact: true }).setInputFiles({ name: 'fuente.md', mimeType: 'text/markdown', buffer: Buffer.from(content) });
+    await page.getByRole('heading', { name: 'Vista previa: Cristales de prueba', exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => localStorage.getItem('fh.library.documents.v1')), null);
+    await page.getByRole('button', { name: 'Guardar documento en mi biblioteca', exact: true }).click();
+    await page.getByText('Documento importado y guardado en este navegador.', { exact: true }).waitFor();
+    assert.equal(await page.evaluate(() => window.documentLibraryInjected), undefined);
+    await page.getByRole('button', { name: 'Guardar en favoritos', exact: true }).click();
+    await page.getByLabel('Mis notas sobre este documento', { exact: true }).fill('Conservar la receta alternativa sin sustituir mi preparación.');
+    await page.getByRole('button', { name: 'Guardar mis notas', exact: true }).click();
+    await page.getByText('Notas guardadas en este navegador.', { exact: true }).waitFor();
+    assert.equal(await page.getByRole('link', { name: 'Abrir preparación de cristales' }).getAttribute('href'), '/preparacion-cristales');
+    const original = await page.evaluate(() => JSON.parse(localStorage.getItem('fh.library.documents.v1')));
+    assert.equal(original.documents[0].content, content); assert.equal(original.documents[0].favorite, true);
+    await page.getByRole('button', { name: 'Importar documento', exact: true }).click();
+    await page.getByText('O pegar el contenido', { exact: true }).click();
+    await page.getByLabel('Contenido del documento', { exact: true }).fill(content);
+    await page.getByRole('button', { name: 'Revisar importación', exact: true }).click();
+    await page.getByText('Este contenido ya existe. Se abrirá sin duplicarlo.', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Guardar documento en mi biblioteca', exact: true }).click();
+    assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem('fh.library.documents.v1')).documents), original.documents);
+    const downloadPending = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Exportar documentos', exact: true }).click();
+    assert.equal((await downloadPending).suggestedFilename(), 'resonance-lab-documentos.json');
+    const otherContext = await browser.newContext(); const other = await otherContext.newPage();
+    await other.goto(server.origin + '/biblioteca?tab=documentos');
+    await other.getByLabel('Restaurar respaldo', { exact: true }).setInputFiles({ name: 'respaldo.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(original)) });
+    await other.getByText('Respaldo integrado. Se conservaron los documentos y notas existentes.', { exact: true }).waitFor();
+    assert.deepEqual(await other.evaluate(() => JSON.parse(localStorage.getItem('fh.library.documents.v1'))), original);
+    await otherContext.close();
+    await page.reload(); await page.getByLabel('Buscar en mis documentos').fill('intencion');
+    await page.getByRole('button', { name: /Cristales de prueba.*fuente.md/ }).click();
+    assert.equal(await page.getByLabel('Mis notas sobre este documento').inputValue(), original.documents[0].notes);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    assert.deepEqual(errors, []); await context.close();
+  } finally { await browser?.close(); await server.close(); }
+});
