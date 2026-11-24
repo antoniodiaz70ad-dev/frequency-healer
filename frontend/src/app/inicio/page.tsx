@@ -11,6 +11,9 @@ import FHMetric from "@/components/ui/FHMetric";
 import UnifiedDataExport from "@/components/data/UnifiedDataExport";
 
 const explore = [
+  { href: "/marina-punto-cero/compositor", title: "Mi compositor", text: "Abre tus recetas, escucha sus capas y consulta su cimática. Vincula tu cuenta para llevarlas entre dispositivos." },
+  { href: "/preparacion-cristales", title: "Preparación de cristales", text: "Prepara tu intención, elige tonos y salida de sonido, y conserva tu experiencia." },
+  { href: "/laboratorio-cimatico", title: "Laboratorio Cimático", text: "Explora la respuesta de una placa o membrana virtual al sonido." },
   { href: "/laboratorio-armonico", title: "Laboratorio Armónico", text: "Construye, escucha y comprende relaciones armónicas exactas.", gated: true },
   { href: "/respiracion-atencion", title: "Respiración y atención", text: "Practica respiración guiada, explora el péndulo educativo y registra tu experiencia." },
   { href: "/biblioteca", title: "Atlas de frecuencias", text: "Consulta el archivo histórico y exploratorio con su clasificación." },
