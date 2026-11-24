@@ -10,7 +10,7 @@ import type { ParsedIntentionV1, SelfRatingV1, VoiceSessionProposalV1, VoiceSess
 import type { ProposalEdits } from '@/lib/voice/rules';
 import { getAudioEngine } from '@/lib/audioEngine';
 import { IntentFields, RatingFields, goalLabels, stateLabels } from './Fields';
-import { VoiceStore, SESSIONS_KEY, loadSettings, saveSettings } from '@/lib/voice/storage';
+import { validateRecord, VoiceStore, SESSIONS_KEY, loadSettings, saveSettings } from '@/lib/voice/storage';
 import { SETTINGS_KEY } from '@/lib/voice/privacy';
 import VoiceHistory, { exportJSON } from './VoiceHistory';
 import VoiceCapture from './VoiceCapture';
@@ -25,14 +25,19 @@ import { DiscoveryStore, DISCOVERY_KEY } from '@/lib/discovery/storage';
 import type { ProtocolDiscoveryPlanV1 } from '@/lib/discovery/model';
 import { discoverySeedEvidence, evidenceFingerprint, personalSeedEvidence } from '@/lib/voice/seedSelection';
 import { buildProposal } from '@/lib/voice/rules';
+import { createDailyAction, dailyIntent, DAILY_GOALS, DAILY_GOAL_LABELS, type DailyGoal } from '@/lib/voice/dailyPractice';
 import { playbackWakeLockMessage, usePlaybackWakeLock } from '@/lib/playbackLifecycle';
 
-export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled = false, buildCommit = 'local' }: { transcriptionEnabled?: boolean; aiEnabled?: boolean; buildCommit?: string }) {
+export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled = false, buildCommit = 'local', dailyMode = false }: { transcriptionEnabled?: boolean; aiEnabled?: boolean; buildCommit?: string; dailyMode?: boolean }) {
   const [flow] = useState(() => new VoiceOrchestrator(isIOSLike() ? new MediaHarmonicEngine() : new HarmonicEngine()));
   const state = useSyncExternalStore(flow.subscribe, flow.getState, () => 'idle');
   const [records, setRecords] = useState<VoiceSessionRecordV1[]>([]); const [memory, setMemory] = useState<VoiceSessionRecordV1[]>([]); const [storageError, setStorageError] = useState(''); const [keepOriginal, setKeepOriginal] = useState(false);
   const [discoveryPlans,setDiscoveryPlans]=useState<ProtocolDiscoveryPlanV1[]>([]);
   const [marker, setMarker] = useState(''); const [markerMessage, setMarkerMessage] = useState(''); const [liveVolume, setLiveVolume] = useState<number | null>(null);
+  const [dailyGoal, setDailyGoal] = useState<DailyGoal>('clarity');
+  const [actionText, setActionText] = useState('');
+  const saving = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [useAI, setUseAI] = useState(false);
   const [words, setWords] = useState(''); const [intent, setIntent] = useState<ParsedIntentionV1 | null>(null);
   const [edits, setEdits] = useState<ProposalEdits>({}); const [experimental, setExperimental] = useState(false);
@@ -61,7 +66,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
     const timer = setInterval(() => setElapsed(flow.elapsedMs()), 250);
     return () => clearInterval(timer);
   }, [flow, active]);
-  const reset = () => { flow.cancel(); setConfirmationFor(null); setWords(''); setIntent(null); setEdits({}); setBefore({}); setAfter({}); setReflection(''); setError(''); setExperimental(false); setElapsed(0); setMarker(''); setMarkerMessage(''); };
+  const reset = () => { flow.cancel(); setConfirmationFor(null); setWords(''); setIntent(null); setEdits({}); setBefore({}); setAfter({}); setReflection(''); setActionText(''); setDailyGoal('clarity'); setError(''); setExperimental(false); setElapsed(0); setMarker(''); setMarkerMessage(''); };
   const proposal = flow.proposal;
   const evidence = useMemo(() => proposal ? personalEvidence(proposal, storageError ? null : records) : null, [proposal, records, storageError]);
   const confirming = proposal !== null && confirmationFor === proposal;
@@ -72,11 +77,31 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
   const evidenceLabel = !evidence?.available ? 'Evidencia personal no disponible' : ({ none: 'Evidencia personal insuficiente', insufficient: 'Evidencia personal insuficiente', preliminary: 'Señal personal preliminar', descriptive: 'Patrón personal descriptivo' })[evidence.evidenceLevel];
   const sessionStyle = proposal?.harmonicConfig.mode === 'simultaneous' ? 'Tonos simultáneos' : 'Secuencia de tonos';
   return <FHPageShell width="narrow"><div className={`${styles.workspace} ${styles.guided}`}>
-    <FHPageHeader eyebrow="Exploración sonora · reglas locales" title="Sesión guiada" description="Una intención, una propuesta revisable y una observación personal." />
+    <FHPageHeader eyebrow="Exploración sonora · reglas locales" title={dailyMode ? "Sintonizar mi día" : "Sesión guiada"} description={dailyMode ? "Reconoce cómo llegas, elige una intención y llévala a una acción cotidiana." : "Una intención, una propuesta revisable y una observación personal."} />
     {step < 7 && <div className={styles.journeyProgress} aria-label={`Paso ${step} de 6`}><span>{String(step).padStart(2, '0')} / 06</span><i style={{ width: `${Math.min(100, step / 6 * 100)}%` }} /></div>}
     <details className={styles.technicalInfo}><summary>Información técnica</summary><p>Build: {buildCommit}</p><p>Rules: voice-rules-v2</p></details>
     {(error || flow.error) && <p role="alert" className={styles.error}>{error || flow.error}</p>}
-    {['idle', 'review_transcript', 'interpretation_error', 'requesting_permission', 'listening', 'transcribing', 'permission_denied', 'unsupported', 'transcription_error'].includes(state) && <section><h2 ref={heading} tabIndex={-1}>¿Qué quieres explorar hoy?</h2><p>Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p><form onSubmit={async e => { e.preventDefault(); const boundary = guidanceBoundary(words); if (boundary) { setError(boundary); return; } setError(''); if (state === 'idle' || state === 'interpretation_error') flow.move('review_transcript'); if (useAI) await flow.interpretRemote(words); else flow.interpret(words); setIntent(flow.intent); }}><label>¿Qué quieres explorar?<textarea maxLength={500} value={words} onChange={e => setWords(e.target.value)} placeholder="Quiero explorar una decisión con claridad durante veinte minutos." required /></label>{aiEnabled && <label className={styles.check}><input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />Enviar este texto al asistente remoto (opcional)</label>}<button type="submit" disabled={!['idle', 'review_transcript', 'interpretation_error'].includes(state)}>Interpretar intención</button><button type="button" onClick={reset}>Cancelar</button></form><details><summary>Usar voz · opcional</summary><VoiceCapture kind="intention" remoteEnabled={transcriptionEnabled} onPhase={p => flow.move(p)} onCancel={() => { flow.cancel(); flow.move('review_transcript'); }} onText={result => { if (result) setWords(result); if (flow.state !== 'review_transcript') { flow.cancel(); flow.move('review_transcript'); } }} /></details></section>}
+    {['idle', 'review_transcript', 'interpretation_error', 'requesting_permission', 'listening', 'transcribing', 'permission_denied', 'unsupported', 'transcription_error'].includes(state) && <section>
+      <h2 ref={heading} tabIndex={-1}>{dailyMode ? '¿Cómo llegas hoy?' : '¿Qué quieres explorar hoy?'}</h2>
+      {dailyMode && <><p>Observa tu punto de partida. Puedes omitir estas valoraciones.</p><RatingFields title="Antes de empezar" value={before} onChange={setBefore} /></>}
+      <p>Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.</p>
+      <form onSubmit={async e => {
+        e.preventDefault(); const boundary = guidanceBoundary(words); if (boundary) { setError(boundary); return; }
+        setError(''); if (state === 'idle' || state === 'interpretation_error') flow.move('review_transcript');
+        try {
+          if (dailyMode) flow.reviewIntent(dailyIntent(words, dailyGoal));
+          else if (useAI) await flow.interpretRemote(words); else flow.interpret(words);
+          setIntent(flow.intent);
+        } catch (e) { setError((e as Error).message); }
+      }}>
+        {dailyMode && <label>¿Qué quieres practicar?<select value={dailyGoal} onChange={e => setDailyGoal(e.target.value as DailyGoal)}>{DAILY_GOALS.map(goal => <option key={goal} value={goal}>{DAILY_GOAL_LABELS[goal]}</option>)}</select></label>}
+        <label>{dailyMode ? 'Mi intención para hoy' : '¿Qué quieres explorar?'}<textarea maxLength={500} value={words} onChange={e => setWords(e.target.value)} placeholder={dailyMode ? "Hoy quiero responder con calma antes de tomar una decisión." : "Quiero explorar una decisión con claridad durante veinte minutos."} required /></label>
+        {dailyMode && <p className={styles.muted}>Escucha inicial de 5 minutos. Podrás revisar la duración y los ajustes antes de comenzar.</p>}
+        {aiEnabled && !dailyMode && <label className={styles.check}><input type="checkbox" checked={useAI} onChange={e => setUseAI(e.target.checked)} />Enviar este texto al asistente remoto (opcional)</label>}
+        <button type="submit" disabled={!['idle', 'review_transcript', 'interpretation_error'].includes(state)}>{dailyMode ? 'Revisar mi intención' : 'Interpretar intención'}</button><button type="button" onClick={reset}>Cancelar</button>
+      </form>
+      <details><summary>Usar voz · opcional</summary><VoiceCapture kind="intention" remoteEnabled={transcriptionEnabled} onPhase={p => flow.move(p)} onCancel={() => { flow.cancel(); flow.move('review_transcript'); }} onText={result => { if (result) setWords(result); if (flow.state !== 'review_transcript') { flow.cancel(); flow.move('review_transcript'); } }} /></details>
+    </section>}
     {state === 'interpreting' && <section><p role="status">Estructurando la intención…</p><button onClick={reset}>Cancelar</button></section>}
     {state === 'review_intent' && intent && <section><h2 ref={heading} tabIndex={-1}>Entendimos</h2><p>{intent.intention}</p><p>Objetivo: {goalLabels[intent.goal]}</p><p>Estado buscado: {intent.desiredStates.map(s => stateLabels[s]).join(", ") || "No indicado"} · {intent.durationMinutes} minutos</p>{intent.requiresReview.length > 0 && <p role="status">Revisa y ajusta la interpretación antes de continuar.</p>}<form onSubmit={e => { e.preventDefault(); const boundary = guidanceBoundary(intent.intention); if (boundary) { setError(boundary); return; } setError(''); setExperimental(false);const baseline=buildProposal(intent,edits); flow.propose(intent, edits,{personal:personalSeedEvidence(intent,baseline.harmonicConfig,records),discovery:discoverySeedEvidence(intent,baseline.harmonicConfig,discoveryPlans),fingerprint:evidenceFingerprint(localStorage.getItem(SESSIONS_KEY),localStorage.getItem(DISCOVERY_KEY))}); }}>
       <details><summary>Cambiar interpretación</summary><IntentFields value={intent} onChange={setIntent} /></details>
@@ -112,6 +137,7 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
         {isIOSLike() && <p className={styles.muted}>Modo iPhone: esta sesión se reproduce como audio del navegador para mejorar la continuidad con pantalla bloqueada. Si iOS la suspende, mantén la pantalla activa.</p>}
         <details><summary>Detalles armónicos</summary><SessionPlan config={proposal.harmonicConfig} schedule={proposal.schedule} /></details>
         <details><summary>Cómo te sientes antes · opcional</summary><RatingFields title="Antes de empezar" value={before} onChange={setBefore} /></details>
+        {dailyMode && <details><summary>Una pausa antes de comenzar · opcional</summary><p>Respira cómodamente a tu ritmo, sin forzar ni retener el aire. Imagina una situación de hoy en la que quieras practicar tu intención. Continúa cuando estés listo.</p></details>}
         {proposal.requiresExplicitExperimentalConsent && <label className={styles.check}><input type="checkbox" checked={experimental} onChange={e => setExperimental(e.target.checked)} />Acepto explorar la cascada o intensidad experimental, sin promesas de resultados.</label>}
       <button className={styles.primary} disabled={proposal.requiresExplicitExperimentalConsent && !experimental} onClick={async () => { setError(''); try { if (state === 'audio_error') flow.move('review_session'); getAudioEngine().stopProtocol(); await flow.start(experimental, before,evidenceFingerprint(localStorage.getItem(SESSIONS_KEY),localStorage.getItem(DISCOVERY_KEY))); setLiveVolume(flow.engine.getVolume()); } catch (e) { setError((e as Error).message); } }}>Iniciar sesión</button>
         <button onClick={() => setConfirmationFor(null)}>Volver</button>
@@ -126,13 +152,23 @@ export default function VoiceJourney({ transcriptionEnabled = false, aiEnabled =
       {parseCommand(marker).type === 'stop_session' && <button onClick={() => flow.applyMarker(marker, true)}>Confirmar detención por voz</button>}
       <p role="status">{markerMessage}</p><p>Marcadores: {flow.record?.markers.length ?? 0} · volumen {flow.engine.getVolume()}/100</p></details>}
       <button className={styles.stop} onClick={() => flow.stop('user')}>Detener sesión</button></section>}
-    {['reflection', 'storage_error'].includes(state) && <section><h2 ref={heading} tabIndex={-1}>¿Cómo te sentiste?</h2><p>La sesión aún no está guardada. Las valoraciones son opcionales.</p><RatingFields title="Después de la sesión" value={after} onChange={setAfter} /><details><summary>Reflexión y opciones · opcional</summary><VoiceCapture kind="reflection" remoteEnabled={transcriptionEnabled} onText={result => { if (result) setReflection(result); }} /><label>Reflexión opcional<textarea maxLength={500} value={reflection} onChange={e => setReflection(e.target.value)} /></label><p>Estas escalas describen tu percepción personal. Al guardar se conserva la intención revisada, las escalas, los marcadores y esta reflexión; nunca el audio.</p>
+    {['reflection', 'storage_error'].includes(state) && <section><h2 ref={heading} tabIndex={-1}>¿Cómo te sentiste?</h2><p>La sesión aún no está guardada. Las valoraciones son opcionales.</p><RatingFields title="Después de la sesión" value={after} onChange={setAfter} />{dailyMode && <label>¿Qué harás hoy para llevarlo a tu vida? · opcional<textarea maxLength={280} value={actionText} onChange={e => setActionText(e.target.value)} placeholder="Antes de responder, escribiré las tres preguntas que necesito aclarar." /><span className={styles.muted}>Elige una acción pequeña y concreta. Solo se conservará al guardar esta sesión.</span></label>}<details><summary>Reflexión y opciones · opcional</summary><VoiceCapture kind="reflection" remoteEnabled={transcriptionEnabled} onText={result => { if (result) setReflection(result); }} /><label>Reflexión opcional<textarea maxLength={500} value={reflection} onChange={e => setReflection(e.target.value)} /></label><p>Estas escalas describen tu percepción personal. Al guardar se conserva la intención revisada, las escalas, los marcadores y esta reflexión; nunca el audio.</p>
       <label className={styles.check}><input type="checkbox" checked={keepOriginal} onChange={e => { setKeepOriginal(e.target.checked); try { saveSettings(localStorage, e.target.checked); } catch (error) { setStorageError((error as Error).message); } }} />Guardar también mis palabras originales de intención (opcional)</label></details>
-      <button className={styles.primary} onClick={async () => {
-        const record = flow.finishRecord(after, reflection, keepOriginal ? words : undefined);
-        try { setRecords(await new VoiceStore(localStorage).save(record)); setMemory(rows => rows.filter(r => r.id !== record.id)); setStorageError(''); flow.move('saved'); setWords(''); }
-        catch (e) { setMemory(rows => [record, ...rows.filter(r => r.id !== record.id)]); setStorageError(`No se guardó en el dispositivo. Sesión disponible en memoria para exportar. ${(e as Error).message}`); flow.move('storage_error'); }
-      }}>Guardar sesión</button><button onClick={() => { if (flow.record) setMemory(rows => rows.filter(r => r.id !== flow.record!.id)); reset(); }}>Terminar sin guardar</button></section>}
+      <button className={styles.primary} disabled={isSaving} onClick={async () => {
+        if (saving.current) return;
+        saving.current = true; setIsSaving(true);
+        let record: VoiceSessionRecordV1 | undefined;
+        try {
+          record = validateRecord({ ...flow.finishRecord(after, reflection, keepOriginal ? words : undefined), ...(dailyMode && actionText.trim() ? { dailyAction: createDailyAction(actionText) } : {}) });
+          const savedId = record.id;
+          setRecords(await new VoiceStore(localStorage).save(record)); setMemory(rows => rows.filter(r => r.id !== savedId)); setStorageError(''); flow.move('saved'); setWords(''); }
+        catch (e) {
+          const unsaved = record;
+          if (unsaved) setMemory(rows => [unsaved, ...rows.filter(r => r.id !== unsaved.id)]);
+          setStorageError(`No se guardó en el dispositivo. ${unsaved ? 'Sesión disponible en memoria para exportar. ' : ''}${(e as Error).message}`); flow.move('storage_error');
+        }
+        finally { saving.current = false; setIsSaving(false); }
+      }}>{isSaving ? 'Guardando…' : 'Guardar sesión'}</button><button disabled={isSaving} onClick={() => { if (flow.record) setMemory(rows => rows.filter(r => r.id !== flow.record!.id)); reset(); }}>Terminar sin guardar</button></section>}
     {state === 'saved' && <section><h2 ref={heading} tabIndex={-1}>Sesión guardada</h2><p role="status">Sesión guardada en este dispositivo.</p><Link href="/inicio">Volver al inicio</Link><button onClick={showHistory}>Ver historial</button><button onClick={reset}>Nueva sesión</button></section>}
     {storageError && <p role="alert" className={styles.error}>{storageError}</p>}
     {!active && <details ref={history}><summary>Historial de sesiones</summary><VoiceHistory records={[...memory, ...records.filter(r => !memory.some(m => m.id === r.id))]} rawExport={() => { try { exportJSON({ key: SESSIONS_KEY, original: localStorage.getItem(SESSIONS_KEY) }, 'frequency-healer-voice-original.json'); } catch { setStorageError('No se puede leer el almacenamiento. Exporta las sesiones visibles.'); } }} onDelete={async id => {

@@ -18,6 +18,8 @@ export interface VoiceSessionProposalV1 {
   proposalIdentity?: { ruleVersion:'voice-rules-v2';seedRegistryVersion:'seed-registry-v1';seedSelectionVersion:'seed-selection-v1';intent:ParsedIntentionV1;effectiveProgression:readonly string[];selectedSeed:number;finalHarmonicConfig:HarmonicConfig };
 }
 export interface SelfRatingV1 { clarity: number; stress: number; focus: number }
+export interface DailyActionRevisionV1 { text: string; status: 'pending' | 'done'; changedAt: string }
+export interface DailyActionV1 { schemaVersion: 1; revisions: DailyActionRevisionV1[] }
 export interface SessionMarkerV1 {
   id: string; offsetMs: number; wallClockCreatedAt: string; kind: 'insight' | 'observation' | 'command' | 'custom';
   transcript?: string; note?: string;
@@ -28,5 +30,6 @@ export interface VoiceSessionRecordV1 {
   intent: ParsedIntentionV1; proposal: VoiceSessionProposalV1;
   before?: Partial<SelfRatingV1>; after?: Partial<SelfRatingV1>; markers: SessionMarkerV1[]; reflection?: string;
   originalWords?: string;
+  dailyAction?: DailyActionV1;
   technical: { appVersion?: string; actualDurationMs: number; stopReason?: string };
 }

@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { VoiceSessionRecordV1 } from '@/lib/voice/types';
+import { currentDailyAction } from '@/lib/voice/dailyPractice';
 import { n1Summary } from '@/lib/voice/analytics';
 import { FHEvidenceBadge, FHStateBadge } from '@/components/ui/FHBadges';
 import FHDisclosure from '@/components/ui/FHDisclosure';
@@ -28,6 +29,7 @@ export default function VoiceHistory({ records, onDelete, rawExport }: { records
       <p>{r.intent.intention}</p>
       <div className={styles.historyMetrics}>{(['clarity', 'stress', 'focus'] as const).map(k => <div key={k}><span>{metricLabel[k]}</span><strong>{r.before?.[k] ?? 'No registrado'} → {r.after?.[k] ?? 'No registrado'}</strong>{r.before?.[k] !== undefined && r.after?.[k] !== undefined && <small>Cambio {r.after[k]! - r.before[k]!}</small>}</div>)}</div>
       <p className={styles.muted}>{r.reflection || 'Sin reflexión registrada.'}</p>
+      {r.dailyAction && <div><p><strong>Acción cotidiana · {currentDailyAction(r.dailyAction).status === 'done' ? 'Hecha' : 'Pendiente'}</strong></p><p className="[overflow-wrap:anywhere]">{currentDailyAction(r.dailyAction).text}</p><FHDisclosure summary="Cambios de mi acción">{r.dailyAction.revisions.map((revision, index) => <p key={index}><time dateTime={revision.changedAt}>{new Date(revision.changedAt).toLocaleString('es-MX')}</time> · {revision.status === 'done' ? 'Hecha' : 'Pendiente'} · {revision.text}</p>)}</FHDisclosure></div>}
       <FHDisclosure summary="Configuración y auditoría"><p>ID: <code>{r.id}</code></p><p>Sesión guiada · {(r.technical.actualDurationMs / 60000).toFixed(1)} min de escucha · {r.proposal.harmonicConfig.baseHz} Hz de base</p>{r.markers.map(m => <p key={m.id}>{(m.offsetMs / 1000).toFixed(1)} s · {m.note} · tonos {m.harmonicSnapshot.activeHz.map(f => f.toFixed(2)).join(', ')} Hz (coincidencia temporal)</p>)}</FHDisclosure>
       <button onClick={() => setPending(r.id)}>Borrar esta sesión</button>
     </article>)}</div>
