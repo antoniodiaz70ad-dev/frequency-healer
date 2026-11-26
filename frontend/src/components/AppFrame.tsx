@@ -1,20 +1,15 @@
 "use client";
-
 import { usePathname } from "next/navigation";
-import Sidebar from "./Sidebar";
-
-/** Public landing routes opt out of the existing application frame. */
+import Link from "next/link";
+import Navigation from "./Navigation";
+import { navigationGroup, primaryNavigation } from "@/lib/navigation";
 export default function AppFrame({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const landing = pathname === "/" || pathname === "/landing";
-  return landing ? (
-    <main>{children}</main>
-  ) : (
-    <>
-      <Sidebar />
-      <main className="md:ml-64 p-4 pt-16 md:p-8 md:pt-8 min-h-screen">
-        {children}
-      </main>
-    </>
-  );
+ const pathname=usePathname();
+ if(pathname==="/"||pathname==="/landing")return <main>{children}</main>;
+ const parent=primaryNavigation.find(n=>n.href===navigationGroup(pathname));
+ const hub=primaryNavigation.some(n=>n.href===pathname)||pathname==="/ajustes";
+ return <div className="rl-frame"><a href="#contenido" className="rl-skip">Ir al contenido</a><Navigation/>
+ <main id="contenido" className={`rl-main ${hub?"rl-main--hub":"rl-main--module"}`}>
+ {!hub&&parent&&<div className="rl-module-location"><Link href={parent.href}>Volver a {parent.label.toLocaleLowerCase("es")}</Link></div>}
+ {children}</main></div>;
 }
