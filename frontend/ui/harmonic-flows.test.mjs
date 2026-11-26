@@ -202,7 +202,8 @@ test('navigation during audio: closes native graph, never completed, never autos
   await clean(page); const data = await probe(page);
   assert.ok(data.statuses.some(s=>s.includes('En curso'))); assert.ok(data.statuses.every(s=>!s.includes('Completado')));
   assert.deepEqual(data.writes,[]); assert.deepEqual(await storage(page),{});
-  await page.getByRole('complementary').getByRole('link',{name:'Laboratorio Armónico',exact:true}).click();
+  await page.getByRole('link',{name:'Experimentar',exact:true}).click();
+  await page.getByRole('link',{name:/Laboratorio Armónico/}).click();
   await page.getByText('Experimentos guardados (0)',{exact:true}).waitFor();
   assert.equal(await page.getByRole('status').filter({hasText:'Experimento:'}).count(),0);
   assert.deepEqual(await storage(page),{});
