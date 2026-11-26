@@ -799,28 +799,29 @@ test('Adaptive zero evidence keeps deterministic original order without inventin
   const {page,raw}=await adaptiveFixtureUI(t,rows=>rows.forEach(p=>{p.assignments=p.assignments.map(a=>({index:a.index,candidateId:a.candidateId,status:'skipped',resolvedAt:a.resolvedAt}));}));const region=page.getByRole('region',{name:'Exploración adaptativa',exact:true});assert.match(await region.innerText(),/no establece aún una mejor señal/);assert.match(await region.innerText(),/Protocolo A · N = 0/);assert.match(await region.innerText(),/no-personal-evidence/);assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),{[DISCOVERY_KEY]:raw});
 });
 
-for (const mobile of [false,true]) test(`3B.1 ${mobile?'mobile':'desktop'}: guided primary entry, separate Lab, unchanged URLs and no storage/audio side effects`,async t=>{
+for (const mobile of [false,true]) test(`editorial ${mobile?'mobile':'desktop'}: five destinations preserve tools and keep navigation read-only`,async t=>{
   const page=await fixture(t);if(mobile)await page.setViewportSize({width:390,height:844});await page.goto(harness.origin+'/inicio');
-  const entry=page.getByRole('navigation',{name:'Formas de explorar',exact:true});assert.equal(await entry.getByRole('link',{name:'Comenzar sesión guiada',exact:true}).getAttribute('href'),'/voz');
-  assert.match(await entry.innerText(),/Describe lo que quieres explorar y Resonance Lab te propondrá una sesión\./);assert.match(await entry.innerText(),/El micrófono es opcional/);
-  if(mobile)await button(page,'Menu').click();
   const nav=page.getByRole('navigation',{name:'Navegación principal',exact:true});
-  const expected=[['Inicio','/inicio'],['Sesión guiada','/voz'],['Laboratorio Armónico','/laboratorio-armonico'],['Atlas de frecuencias','/biblioteca'],['Protocolos históricos','/protocolos'],['Generador manual','/generador'],['Diario OBE','/diario'],['Exploración OBE','/sesion-nueva']];
-  for(const [name,path] of expected)assert.equal(await nav.getByRole('link',{name,exact:true}).getAttribute('href'),path);
-  await nav.getByRole('link',{name:'Sesión guiada',exact:true}).click();await page.waitForURL(harness.origin+'/voz');await page.getByRole('heading',{name:'Sesión guiada · tu privacidad',exact:true}).waitFor();assert.match(await page.locator('main').innerText(),/Puedes completar toda la sesión escribiendo/);
+  for(const [name,path] of [['Inicio','/inicio'],['Practicar','/practicar'],['Estudiar','/estudiar'],['Experimentar','/experimentar'],['Mis registros','/mis-registros']])assert.equal(await nav.getByRole('link',{name,exact:true}).getAttribute('href'),path);
+  assert.equal(await nav.getByRole('link').count(),5);
+  await page.getByRole('radio',{name:'Practicar Preparar una sesión de sonido y atención',exact:true}).check();
+  await page.getByRole('link',{name:'Elegir una práctica',exact:true}).click();await page.waitForURL(harness.origin+'/practicar');
+  assert.equal(await page.getByRole('link',{name:/^Marina · Punto Cero/}).getAttribute('href'),'/marina-punto-cero');
+  assert.equal(await page.getByRole('link',{name:/^Preparación de cristales/}).getAttribute('href'),'/preparacion-cristales');
+  await page.getByRole('link',{name:'Sesión guiada Parte de una intención y revisa una propuesta antes de escuchar.',exact:true}).click();await page.waitForURL(harness.origin+'/voz');await page.getByRole('heading',{name:'Sesión guiada · tu privacidad',exact:true}).waitFor();
+  assert.match(await page.locator('main').innerText(),/Puedes completar toda la sesión escribiendo/);
   assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
-  if(mobile){assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await button(page,'Menu').click();}
-  await nav.getByRole('link',{name:'Laboratorio Armónico',exact:true}).click();await page.waitForURL(harness.origin+'/laboratorio-armonico');await field(page,'Base (Hz)').waitFor();
+  if(mobile)assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await nav.getByRole('link',{name:'Experimentar',exact:true}).click();await page.waitForURL(harness.origin+'/experimentar');
+  assert.equal(await page.getByRole('link',{name:/^Laboratorio de Cimática/}).getAttribute('href'),'/laboratorio-cimatico');
+  await page.getByRole('link',{name:/^Laboratorio Armónico Escucha/}).click();await page.waitForURL(harness.origin+'/laboratorio-armonico');await field(page,'Base (Hz)').waitFor();
   assert.equal(await page.getByRole('heading',{name:'¿Qué quieres explorar hoy?',exact:true}).count(),0);
-  assert.equal(await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).count(),0);
-  await button(page,'Vista avanzada').click();
-  await page.getByRole('heading',{name:'¿Qué quieres explorar hoy?',exact:true}).waitFor();
-  await page.getByText('Constructor de constelaciones · construir, validar y guardar',{exact:true}).waitFor();
+  await button(page,'Vista avanzada').click();await page.getByRole('heading',{name:'¿Qué quieres explorar hoy?',exact:true}).waitFor();
   assert.deepEqual(await storage(page),{});assert.equal((await probe(page)).contexts.length,0);
 });
 test('3B.1 text-only guided session works with microphone unavailable and keeps the existing proposal/storage contract',async t=>{
   const page=await fixture(t);await page.addInitScript(()=>{window.__micRequests=0;navigator.mediaDevices.getUserMedia=async()=>{window.__micRequests++;throw new DOMException('Microphone unavailable','NotAllowedError');};});
-  await page.goto(harness.origin+'/inicio');await page.getByRole('link',{name:'Comenzar sesión guiada',exact:true}).click();await button(page,'Entendido, continuar').click();await page.getByRole('heading',{name:'Sesión guiada',exact:true}).waitFor();await page.getByText('Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.',{exact:true}).waitFor();
+  await page.goto(harness.origin+'/inicio');await page.getByRole('radio',{name:'Practicar Preparar una sesión de sonido y atención',exact:true}).check();await page.getByRole('link',{name:'Elegir una práctica',exact:true}).click();await page.getByRole('link',{name:'Sesión guiada Parte de una intención y revisa una propuesta antes de escuchar.',exact:true}).click();await button(page,'Entendido, continuar').click();await page.getByRole('heading',{name:'Sesión guiada',exact:true}).waitFor();await page.getByText('Puedes escribir tu intención o usar voz si lo prefieres. El micrófono es opcional.',{exact:true}).waitFor();
   const consent=await storage(page);assert.deepEqual(Object.keys(consent),['fh:voice-consent-v1']);await page.getByRole('textbox',{name:'¿Qué quieres explorar?',exact:true}).fill('Quiero concentrarme durante cinco minutos');await button(page,'Interpretar intención').click();await page.getByText('Cambiar interpretación',{exact:true}).click();await page.getByRole('combobox',{name:'Intensidad',exact:true}).selectOption('deep');await page.getByText('Ajustes armónicos avanzados',{exact:true}).click();await field(page,'Volumen inicial (0–100)').fill('0');await button(page,'Generar recomendación').click();assert.equal((await probe(page)).contexts.length,0);assert.deepEqual(await storage(page),consent);
   await button(page,'Continuar').click();await button(page,'Iniciar sesión').click();await button(page,'Detener sesión').waitFor();assert.deepEqual(await sessionFrequencies(page),[224,336,224,336]);await button(page,'Detener sesión').click();await clean(page);assert.deepEqual(await storage(page),consent);await button(page,'Guardar sesión').click();await page.getByRole('status').filter({hasText:'Sesión guardada en este dispositivo.'}).waitFor();
   const saved=await storage(page);assert.deepEqual(Object.keys(saved).sort(),['fh:voice-consent-v1','fh:voice-sessions-v1'].sort());assert.equal(saved['fh:voice-consent-v1'],consent['fh:voice-consent-v1']);const [record]=JSON.parse(saved['fh:voice-sessions-v1']);assert.equal(record.schemaVersion,1);assert.equal(record.status,'stopped');assert.equal(record.proposal.ruleVersion,'voice-rules-v2');assert.equal(record.proposal.ruleId,'voice-focus-deep');assert.deepEqual(record.proposal.harmonicConfig,{baseHz:224,uiVolume:0,mode:'sequence',ratioId:'fifth',increments:3,direction:'return',waveform:'sine',durationSeconds:300,progression:['root','fifth','root','fifth']});assert.equal(record.proposal.seedSelection.seedRegistryVersion,'seed-registry-v1');assert.equal(record.proposal.proposalIdentity.seedSelectionVersion,'seed-selection-v1');assert.equal(await page.evaluate(()=>window.__micRequests),0);

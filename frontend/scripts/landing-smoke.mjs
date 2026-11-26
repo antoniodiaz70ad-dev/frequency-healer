@@ -36,7 +36,11 @@ assert.ok(!(await home.text()).includes('<aside'), 'root renders the public land
 const dashboard = await fetch(origin + '/inicio');
 assert.equal(dashboard.status, 200);
 const dashboardHtml = await dashboard.text();
-assert.ok(dashboardHtml.includes('<aside'), 'existing dashboard sidebar preserved');
-assert.ok(dashboardHtml.includes('Respiración y atención'), 'dashboard exposes breathing and attention');
-assert.ok(dashboardHtml.includes('href="/respiracion-atencion"'), 'dashboard links to breathing and attention');
+assert.ok(dashboardHtml.includes('Navegación principal'), 'dashboard retains accessible application navigation');
+assert.ok(dashboardHtml.includes('href="/practicar"'), 'dashboard links to the practice collection');
+const practices = await fetch(origin + '/practicar');
+assert.equal(practices.status, 200);
+const practicesHtml = await practices.text();
+assert.ok(practicesHtml.includes('Respiración y atención'), 'practice collection exposes breathing and attention');
+assert.ok(practicesHtml.includes('href="/respiracion-atencion"'), 'practice collection preserves the original breathing route');
 console.log(`PASS root landing, alias, fallback, gated CTA, media ranges and dashboard frame (${enabled ? 'ON' : 'OFF'})`);

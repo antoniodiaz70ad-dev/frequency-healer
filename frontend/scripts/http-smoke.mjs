@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 const origin = process.argv[2] ?? 'http://127.0.0.1:4319';
 const enabled = process.argv[3] === 'enabled';
-for (const path of ['/', '/inicio', '/generador', '/protocolos', '/biblioteca', '/sesion-nueva', '/diario']) {
+for (const path of ['/', '/inicio', '/practicar', '/estudiar', '/experimentar', '/mis-registros', '/ajustes', '/marina-punto-cero', '/preparacion-cristales', '/laboratorio-cimatico', '/generador', '/protocolos', '/biblioteca', '/sesion-nueva', '/diario']) {
   const response = await fetch(origin + path);
   assert.equal(response.status, 200, path);
   const body = await response.text();
   if (path === '/') { assert.ok(body.includes('No busques la')); assert.ok(!body.includes('<aside')); }
-  if (path === '/inicio') { assert.equal(body.includes('href="/voz"'), enabled, 'voice navigation flag'); assert.equal(body.includes('href="/laboratorio-armonico"'), enabled, 'lab navigation flag'); }
-  if (path === '/inicio') { assert.equal(body.includes('Comenzar sesión guiada'), enabled); assert.ok(body.includes('Generador manual')); assert.ok(body.includes('Navegación principal')); }
+  if (path === '/inicio') { for (const href of ['/inicio','/practicar','/estudiar','/experimentar','/mis-registros']) assert.ok(body.includes(`href="${href}"`)); assert.ok(body.includes('Una pregunta.')); assert.ok(body.includes('Abrir mi biblioteca')); assert.ok(body.includes('Navegación principal')); }
+  if (path === '/practicar') { assert.equal(body.includes('href="/voz"'), enabled, 'voice navigation flag'); assert.ok(body.includes('href="/marina-punto-cero"')); assert.ok(body.includes('href="/preparacion-cristales"')); }
+  if (path === '/experimentar') { assert.equal(body.includes('href="/laboratorio-armonico"'), enabled, 'lab navigation flag'); assert.ok(body.includes('href="/laboratorio-cimatico"')); assert.ok(body.includes('href="/generador"')); }
   console.log(`PASS ${path} 200`);
 }
 for (const path of ['/voz', '/laboratorio-armonico']) {

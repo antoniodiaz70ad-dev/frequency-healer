@@ -1,0 +1,7 @@
+import Link from "next/link";
+import UnifiedDataExport from "@/components/data/UnifiedDataExport";
+export default function Page(){return <div className="rl-collection"><header className="rl-collection-header"><p className="rl-kicker">Tu espacio</p><h1>Ajustes y datos</h1><p>Consulta cómo se conservan tus registros y prepara una copia cuando la necesites.</p></header>
+<section className="rl-settings-section"><h2>Tus registros, en este navegador</h2><p>Los diarios y recetas personales siguen guardados en el navegador donde los creaste. Esta reorganización no los traslada ni activa sincronización.</p><Link href="/mis-registros" className="rl-text-link">Abrir mis registros</Link></section>
+<section className="rl-settings-section"><h2>Tu guía de voz</h2><p>Las prácticas de Marina y Cristales conservan las grabaciones Arthur aprobadas. Cada recorrido indica qué fases tienen voz y cuáles conservan la guía escrita.</p><p>Elige y ajusta el sonido dentro de la práctica que vayas a realizar.</p></section>
+<section className="rl-settings-section"><h2>Copias de tus datos</h2><p>El respaldo general conserva su cobertura actual. Los diarios de Marina, Cristales, Geometría y el Compositor tienen además sus propias opciones de exportación dentro de cada módulo.</p><UnifiedDataExport/></section>
+<section className="rl-settings-section"><h2>Reproducción en el teléfono</h2><p>El comportamiento al apagar la pantalla depende del recorrido y del navegador. La prueba con pantalla bloqueada en tu teléfono sigue pendiente.</p></section></div>;}

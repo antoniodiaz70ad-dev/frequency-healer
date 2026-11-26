@@ -26,8 +26,8 @@ function download(value: unknown, name: string, raw = false) {
   const link = document.createElement('a'); link.href = url; link.download = name; link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-export default function CrystalModule() {
-  const [tab, setTab] = useState<Tab>('prepare');
+export default function CrystalModule({ initialTab = 'prepare' }: { initialTab?: Tab } = {}) {
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [preparation, setPreparation] = useState(defaultCrystalPreparation);
   const [baseText, setBaseText] = useState('256');
   const [notebook, setNotebook] = useState<CrystalNotebook>({ schemaVersion: 1, preparation: null, sessions: [] });
