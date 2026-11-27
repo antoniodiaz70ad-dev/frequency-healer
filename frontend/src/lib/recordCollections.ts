@@ -1,3 +1,4 @@
+import { readQuickRecords } from "./marina/quickRecords";
 import { VoiceStore } from "./voice/storage";
 import { readMarinaRecords } from "./marina/model";
 import { readCrystalNotebook } from "./crystals/model";
@@ -13,6 +14,8 @@ type Reader = Pick<Storage,"getItem">;
 export type RecordCollection = {id:string;title:string;description:string;href:string;type:"diarios"|"experimentos"|"recetas";count?:number;error?:string;gated?:"voice"|"harmonic"};
 type Source = Omit<RecordCollection,"count"|"error"> & {count?:(store:Storage)=>number|Promise<number>};
 const sources:Source[]=[
+ {id:"practicas-rapidas",title:"Mis prácticas rápidas",description:"Configuración inicial, observaciones y versiones de tus prácticas.",href:"/practicar#practicas-guardadas",type:"diarios",count:s=>readQuickRecords(s).sessions.length},
+ {id:"versiones-rapidas",title:"Mis versiones de práctica",description:"Recetas guardadas para volver a cargar sin iniciar audio.",href:"/practicar#practicas-guardadas",type:"recetas",count:s=>readQuickRecords(s).versions.length},
  {id:"marina",title:"Diario de Marina",description:"Prácticas, intenciones y observaciones posteriores.",href:"/marina-punto-cero/diario",type:"diarios",count:s=>readMarinaRecords(s).length},
  {id:"cristales",title:"Cuaderno de cristales",description:"Preparaciones, sesiones y seguimiento de tus piezas.",href:"/preparacion-cristales/cuaderno",type:"diarios",count:s=>readCrystalNotebook(s).sessions.length},
  {id:"geometria",title:"Diario de geometría e intención",description:"Experiencias, emociones y decisiones de tus recorridos.",href:"/laboratorio-cimatico?area=geometria#diario-geometrico",type:"diarios",count:s=>readGeometryJournal(s).length},
