@@ -16,7 +16,7 @@ export default function QuickPractice(){
  const busy=state==='voice'||state==='starting'||state==='preview'||state==='playing'||state==='paused';
  const recipe:ComposerRecipe=starterCompositions()[choice==='focus'?2:0]; recipe.durationMinutes=minutes;
  const total=state==='preview'?15000:minutes*60000;
- useEffect(()=>()=>{ticket.current++;engine.current?.dispose();},[]);
+ useEffect(()=>{const audio=voiceAudio.current;return ()=>{ticket.current++;audio?.pause();engine.current?.dispose();};},[]);
  useEffect(()=>{
   if(state!=='playing'&&state!=='preview')return;
   const timer=setInterval(()=>{const now=engine.current?.elapsedMs()??0;setElapsed(now);if(now>=total){engine.current?.stop();setState(mode==='preview'?'idle':'finished');setMessage(mode==='preview'?'Muestra terminada. Puedes comenzar desde el inicio.':'Práctica terminada. No se ha guardado un registro.');}},100);
