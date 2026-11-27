@@ -23,8 +23,9 @@ export class MarinaComposerAudio {
   private releasePlayback = () => {};
   constructor(private readonly factory = createContext, private readonly stopExternal = () => {}, private readonly onInterrupted = () => {}) {}
 
-  async play(recipe: ComposerRecipe, volume: number, elapsedMs = 0): Promise<boolean> {
+  async play(recipe: ComposerRecipe, volume: number, elapsedMs = 0, previewSeconds?: number): Promise<boolean> {
     this.stop();
+    if (previewSeconds !== undefined && (!Number.isFinite(previewSeconds) || previewSeconds < 1 || previewSeconds > 15)) throw new Error('La muestra debe durar entre 1 y 15 segundos.');
     validateComposition(recipe);
     const level = this.level(volume);
     if (!Number.isFinite(elapsedMs) || elapsedMs < 0 || elapsedMs >= recipe.durationMinutes * 60000) throw new Error('La composición ya terminó o tiene un tiempo inválido.');
@@ -43,12 +44,12 @@ export class MarinaComposerAudio {
       if (ctx.state !== 'running') await ctx.resume();
       if (ticket !== this.generation) return false;
       if (ctx.state !== 'running') throw new Error('El navegador pausó el audio. Toca Reanudar para continuar.');
-      const now = ctx.currentTime, remaining = recipe.durationMinutes * 60 - elapsedMs / 1000;
+      const now = ctx.currentTime, remaining = Math.min(recipe.durationMinutes * 60 - elapsedMs / 1000, previewSeconds ?? Infinity);
       const fade = Math.min(recipe.transitionSeconds, remaining / 2);
       const master = ctx.createGain();
       this.master = master; this.nodes.push(master);
       this.offsetMs = elapsedMs; this.startedAt = now;
-      this.durationMs = recipe.durationMinutes * 60000;
+      this.durationMs = elapsedMs + remaining * 1000;
       this.endsAt = now + remaining; this.transition = fade;
       master.gain.setValueAtTime(0, now);
       master.gain.linearRampToValueAtTime(level, now + fade);

@@ -1,2 +1,3 @@
 import CollectionPage from "@/components/navigation/CollectionPage";
-export default function Page(){return <CollectionPage group="practicar" title="Practicar" description="Elige una práctica. Sus controles y tu guía aparecen al abrirla."/>;}
+import QuickPractice from "@/components/practice/QuickPractice";
+export default function Page(){return <CollectionPage group="practicar" title="Practicar" description="Elige, escucha una muestra y practica a tu ritmo."><QuickPractice/></CollectionPage>;}
