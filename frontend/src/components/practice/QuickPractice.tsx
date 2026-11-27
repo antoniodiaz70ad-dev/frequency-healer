@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import SessionDownload from '../sessionExport/SessionDownload';
+import { composerScore } from '@/lib/sessionExport/score';
 import {guideCues} from '@/lib/narration/arthur';
 import {MARINA_PHASES} from '@/lib/marina/model';
 import QuickRecordsPanel from './QuickRecordsPanel';
@@ -58,6 +60,7 @@ export default function QuickPractice(){
   <p role="status">{state==='starting'?'Preparando audio…':state==='preview'?`Muestra · ${clock(Math.max(0,15000-elapsed))} restantes`:state==='playing'||state==='paused'?`${state==='paused'?'Pausada':'Práctica'} · ${clock(Math.max(0,total-elapsed))} restantes`:message||'Lista para escuchar. La muestra no crea registros.'}</p>
   <label>Volumen · {Math.round(volume*100)} %<input aria-label="Volumen de práctica rápida" type="range" min="0" max=".6" step=".01" value={volume} onChange={e=>{const v=Number(e.target.value);setVolume(v);if(state==='playing'||state==='paused'){const atMs=engine.current?.elapsedMs()??elapsed;run.current?.volumeChanges.push({atMs,volume:v});}else setVersionId(undefined);engine.current?.setVolume(v);}}/></label>
   <details><summary>Detalles acústicos</summary><p>Duración: {minutes} minutos. Transición: {recipe.transitionSeconds} segundos. La muestra reproduce los primeros 15 segundos de la misma mezcla.</p><ul>{recipe.layers.filter(l=>l.enabled).map(l=><li key={l.id}>{layerLabel(l)}</li>)}</ul></details>
+  <SessionDownload disabled={busy} score={()=>composerScore(recipe,volume)}/>
   <QuickRecordsPanel recipe={recipe} volume={volume} busy={busy} draft={draft} onDiscard={()=>setDraft(null)} onLoad={(r,v,id)=>{stop();setLoaded(r);setMinutes(r.durationMinutes);setVolume(v);setVersionId(id);}}/>
   <aside><h3>¿Prefieres una práctica guiada?</h3><p>Marina · 24 minutos: Arthur {guideCues(MARINA_PHASES, 'marina').length === MARINA_PHASES.length ? 'completo' : 'parcial'}, {guideCues(MARINA_PHASES, 'marina').length} de {MARINA_PHASES.length} fases. Activa «Leer instrucciones con voz» dentro del módulo. Las otras fases conservan su guía escrita.</p><audio ref={voiceAudio} controls preload="none" aria-label="Muestra disponible de Arthur para Marina" src="/audio/arthur-es-v1/marina-zero.mp3" onPlay={()=>{finishRecord('stopped',engine.current?.elapsedMs()??elapsed);ticket.current++;engine.current?.dispose();engine.current=null;setElapsed(0);setState('voice');setMessage('Muestra de Arthur: instrucción inicial de Marina.');}} onPause={()=>{if(state==='voice')setState('idle');}} onEnded={()=>setState('idle')} onError={()=>{setState('idle');setMessage('No se pudo cargar la muestra de Arthur. Reintenta dentro de Marina.');}}/><Link href="/marina-punto-cero" onClick={stop}>Abrir práctica guiada de Marina</Link></aside>
  </section>;

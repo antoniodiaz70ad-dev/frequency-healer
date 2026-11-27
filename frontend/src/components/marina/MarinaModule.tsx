@@ -1,5 +1,7 @@
 'use client';
 
+import SessionDownload from '../sessionExport/SessionDownload';
+import { marinaScore } from '@/lib/sessionExport/score';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FHPageHeader, FHPageShell, FHSurface } from '@/components/ui/FHLayout';
 import { getAudioEngine } from '@/lib/audioEngine';
@@ -213,6 +215,7 @@ export default function MarinaModule({ initialTab = 'guided' }: { initialTab?: T
           </div>
           <p className={styles.muted}>Si el teléfono interrumpe el audio, pulsa Reanudar. Arthur se programa junto a los tonos; la alternativa del dispositivo depende de su navegador.</p>
         </FHSurface>
+        <SessionDownload disabled={active || phraseBusy} score={()=>marinaScore(sessionView?.config ?? config, guided ? selectedProtocol : null, total/60000, sessionView?.soundEnabled ?? sound, volume, {enabled:voice,source:voiceSource,volume:voiceVolume},hasPhrase)}/>
         {tab === 'guided' && <FHSurface className="p-5 md:p-7"><h2>El recorrido</h2><ol className={styles.phases}>{phases.map(p => <li key={p.id}><strong>{p.name}</strong><span>{p.seconds / 60} min · {p.mode === 'silence' ? 'silencio' : `${p.hz} Hz · ${p.mode === 'binaural' ? 'diferencia binaural' : 'pulso'}`}{voiceSource === 'arthur' && ` · ${arthurGuide(`marina-${p.id}`)?.src ? 'Arthur disponible' : 'Arthur pendiente · guía escrita'}`}</span><p>{p.guide}</p></li>)}</ol></FHSurface>}
       </>}
       {tab === 'study' && <>
