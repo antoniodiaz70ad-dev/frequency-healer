@@ -27,9 +27,9 @@ const timeline = (): GuideTimeline => ({ volume: .7, cues: [{ key: 'crystals-pre
 test('assets retain exact public guide wording and explicitly expose available coverage', () => {
   const phases = [...crystalPhases(10).map(p => ({ ...p, key: `crystals-${p.id}` })), ...MARINA_PHASES.map(p => ({ ...p, key: `marina-${p.id}` })), ...MARINA_CREATION_PHASES.map(p => ({ ...p, key: `marina-${p.id}` }))];
   for (const guide of ARTHUR_GUIDES) assert.equal(guide.text, phases.find(p => p.key === guide.key)?.guide);
-  assert.equal(ARTHUR_GUIDES.filter(g => g.src).length, 4);
-  assert.deepEqual(guideCues(crystalPhases(10), 'crystals').map(c => c.atMs), [0, 120000, 540000]);
-  assert.equal(guideCues(MARINA_PHASES, 'marina', ['zero']).length, 0);
+  assert.equal(ARTHUR_GUIDES.filter(g => g.src).length, 9);
+  assert.deepEqual(guideCues(crystalPhases(10), 'crystals').map(c => c.atMs), [0, 120000, 180000, 420000, 540000]);
+  assert.equal(guideCues(MARINA_PHASES, 'marina', ['zero']).length, 3);
   assert.equal(guideCues(MARINA_CREATION_PHASES, 'marina').length, 0);
 });
 test('same-origin files decode once per context, independent voice gain and native offsets survive resume', async () => {

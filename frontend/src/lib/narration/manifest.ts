@@ -14,12 +14,12 @@ export const ARTHUR_GUIDES = [
   {
     "key": "crystals-program",
     "text": "Mantén juntos tu frase, la escena y el sentimiento. Puedes decir la frase suavemente tres veces, dejando espacio entre repeticiones. Observa sin forzar una sensación.",
-    "src": null
+    "src": "/audio/arthur-es-v1/crystals-program.mp3"
   },
   {
     "key": "crystals-stabilize",
     "text": "Deja de añadir instrucciones. Las capas se retiran progresivamente. Permanece con la intención elegida sin aumentar su intensidad.",
-    "src": null
+    "src": "/audio/arthur-es-v1/crystals-stabilize.mp3"
   },
   {
     "key": "crystals-close",
@@ -34,17 +34,17 @@ export const ARTHUR_GUIDES = [
   {
     "key": "marina-emotion",
     "text": "Evoca una experiencia de alegría, amor o gratitud. Observa cómo se siente en ti. Dale espacio antes de construir la imagen.",
-    "src": null
+    "src": "/audio/arthur-es-v1/marina-emotion.mp3"
   },
   {
     "key": "marina-blueprint",
     "text": "Construye la escena que deseas explorar. Añade entorno, sensaciones y relaciones. Mantén la emoción mientras desarrollas sus detalles.",
-    "src": null
+    "src": "/audio/arthur-es-v1/marina-blueprint.mp3"
   },
   {
     "key": "marina-intensify",
     "text": "Profundiza en la emoción y la escena de una manera cómoda. Observa qué cambia. Puedes permanecer simplemente con la imagen.",
-    "src": null
+    "src": "/audio/arthur-es-v1/marina-intensify.mp3"
   },
   {
     "key": "marina-hold",
