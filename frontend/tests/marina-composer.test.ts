@@ -152,3 +152,15 @@ test('a failed new unlock cannot inherit elapsed time from the preceding session
   await assert.rejects(audio.play(defaultComposition(), .15), /unlock denied/);
   assert.equal(audio.elapsedMs(), 0); audio.dispose();
 });
+
+test('15-second preview retains exact recipe and frequencies, caps native duration and rejects invalid limits', async () => {
+ const recipe=starterCompositions()[2], original=JSON.stringify(recipe), ctx=new Context();
+ const engine=new MarinaComposerAudio(()=>ctx.audio());
+ assert.equal(await engine.play(recipe,.15,0,15),true);
+ assert.equal(JSON.stringify(recipe),original);
+ assert.deepEqual(ctx.oscillators.map(o=>o.frequency.value),[220,235]);
+ assert.ok(ctx.oscillators.every(o=>o.stops[0]===25.01));
+ ctx.currentTime=25;assert.equal(engine.elapsedMs(),15000);engine.stop();
+ await assert.rejects(()=>engine.play(recipe,.15,0,16),/muestra/);
+ await assert.rejects(()=>engine.play(recipe,.15,0,NaN),/muestra/);
+});
