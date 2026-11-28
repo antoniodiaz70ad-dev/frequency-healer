@@ -1,5 +1,7 @@
 'use client';
 
+import SessionDownload from '../sessionExport/SessionDownload';
+import { composerScore } from '@/lib/sessionExport/score';
 import type { CymaticsPalette } from '@/lib/cymatics/palettes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -240,6 +242,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
       <p className={styles.muted}>Escuchar composición aplica todas las capas activas. Para cambiar la mezcla durante una sesión, usa Guardar tramo y editar capas; el siguiente inicio comienza desde cero. Puedes apagar la pantalla: la aplicación mantiene el sonido. Si el teléfono interrumpe el audio, pulsa Reanudar.</p>
     </FHSurface>
 
+    <SessionDownload disabled={active} score={()=>composerScore(recipe,volume)}/>
     {(status === 'completed' || status === 'stopped') && <FHSurface className="p-5 md:p-7"><h2>Experiencia de la composición</h2>{recipe.actionPlan && <ComposerActionReview plan={recipe.actionPlan} review={practiceReview} onChange={setPracticeReview} />}<label className={styles.field}>Lo que observé<textarea maxLength={6000} value={experience} onChange={event => setExperience(event.target.value)} /></label><div className={styles.actions}><button type="button" className="fh-action fh-action--primary" onClick={saveSession}>Guardar experiencia del compositor</button><button type="button" className="fh-action fh-action--secondary" onClick={resetSession}>Continuar sin guardar experiencia</button></div></FHSurface>}
 
     <FHSurface className="p-5 md:p-7"><div className={styles.titleRow}><h2 id="mis-recetas">Mis recetas · {saved.length}</h2><button type="button" className="fh-action fh-action--secondary" onClick={() => {

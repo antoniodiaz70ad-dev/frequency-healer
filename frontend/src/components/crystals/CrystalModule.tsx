@@ -1,5 +1,7 @@
 'use client';
 
+import SessionDownload from '../sessionExport/SessionDownload';
+import { crystalScore } from '@/lib/sessionExport/score';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FHPageHeader, FHPageShell, FHSurface } from '@/components/ui/FHLayout';
@@ -203,6 +205,7 @@ export default function CrystalModule({ initialTab = 'prepare' }: { initialTab?:
           {active && <button type="button" className="fh-action fh-action--danger" onClick={stop}>Detener</button>}
         </div>
         <p className={styles.muted}>Las transiciones y Arthur se programan junto a los tonos para continuar si el navegador mantiene el audio al bloquear la pantalla. Si el dispositivo lo interrumpe, reanuda aquí. La voz del dispositivo se detiene al ocultar la página.</p>
+        <SessionDownload disabled={active || !ready || !baseValid} score={()=>crystalScore(current,volume,{enabled:voice,source:voiceSource,volume:voiceVolume})}/>
         <ol className={styles.score}>{crystalPhases(current.duration).map(p => <li key={p.id} aria-current={phase?.id === p.id ? 'step' : undefined}><strong>{p.title}</strong><span>{p.seconds / 60} min{voiceSource === 'arthur' && !coils && ` · ${arthurGuide(`crystals-${p.id}`)?.src ? 'Arthur disponible' : 'Arthur pendiente · guía escrita'}`}</span></li>)}</ol>
       </FHSurface>}
       {(status === 'completed' || status === 'stopped') && <FHSurface className="p-5 md:p-7"><h2>Conserva tu experiencia</h2>{(['experience', 'interpretation', 'action'] as const).map(key => <label key={key} className={styles.field}>{({ experience: 'Lo que observé o sentí', interpretation: 'Mi interpretación y preguntas abiertas', action: 'Acción que corresponde a mi intención' })[key]}<textarea maxLength={6000} value={notes[key]} onChange={e => setNotes(n => ({ ...n, [key]: e.target.value }))} /></label>)}<div className={styles.actions}><button type="button" className="fh-action fh-action--primary" onClick={saveSession}>Guardar sesión en el cuaderno</button><button type="button" className="fh-action fh-action--secondary" onClick={() => { reset(); setMessage('Tramo descartado. Las sesiones guardadas se conservan.'); }}>Descartar tramo sin guardar</button></div></FHSurface>}

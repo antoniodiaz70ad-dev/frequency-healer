@@ -275,3 +275,8 @@ input[type="range"]::-webkit-slider-thumb {
   0%, 100% { transform: scaleY(0.5); }
   50% { transform: scaleY(1); }
 }
+
+.rl-session-download { margin-block: 1.25rem; padding: 1rem; border: 1px solid var(--fh-border, #dce4df); border-radius: .75rem; background: var(--fh-surface, #fff); color: var(--fh-text, #183c35); }
+.rl-session-download summary { cursor: pointer; font-weight: 600; }
+.rl-session-download p { margin-block: .75rem; font-size: .9rem; line-height: 1.6; }
+.rl-session-download progress { width: 100%; margin-top: .75rem; }
