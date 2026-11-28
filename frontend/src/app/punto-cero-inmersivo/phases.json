@@ -7,21 +7,21 @@
     "cue": "Elige una acción concreta para hoy."
   },
   {
-    "end": 180,
+    "end": 120,
     "name": "Sonido y forma",
     "hz": 245.56,
     "color": "teal",
     "cue": "Sigue la figura. Si quieres, tararea suavemente."
   },
   {
-    "end": 240,
+    "end": 180,
     "name": "Visualización",
     "hz": 283.82,
     "color": "blue",
     "cue": "Imagina el primer paso y cómo superarías el obstáculo."
   },
   {
-    "end": 300,
+    "end": 240,
     "name": "Acción",
     "hz": 374.44,
     "color": "red",

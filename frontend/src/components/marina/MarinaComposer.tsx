@@ -171,7 +171,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
   });
 
   return <>
-    {!active && <a className="fh-action fh-action--secondary" href="/punto-cero-inmersivo">Abrir Punto Cero inmersivo · 5 min</a>}
+    {!active && <a className="fh-action fh-action--secondary" href="/punto-cero-inmersivo">Abrir Punto Cero inmersivo · 4 min</a>}
     <ComposerActionPlanEditor plan={recipe.actionPlan} disabled={locked} focusBefore={focusBefore} onFocusBefore={setFocusBefore}
       onChange={actionPlan => setRecipe(current => ({ ...current, actionPlan }))}
       onPrepare={() => { setRecipe(actionPracticeComposition()); setSelectedId(null); setFocusBefore(null); setMessage('Práctica de 8 minutos preparada. Completa tu plan y pulsa Escuchar composición cuando estés listo.'); }}
