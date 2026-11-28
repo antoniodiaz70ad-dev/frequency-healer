@@ -1,9 +1,11 @@
-export const paletteNames = { original: 'Original', amber: 'Ámbar', blue: 'Azul', gray: 'Gris' } as const;
+export const paletteNames = { original: 'Original', amber: 'Ámbar', blue: 'Azul', red: 'Rojo', teal: 'Azul verdoso', gray: 'Gris' } as const;
 export type CymaticsPalette = keyof typeof paletteNames;
 export const palettes = {
   original: {field:'#ab76e8',positive:'#32d8dc',negative:'#a45ee5',node:'#79f4dc',grainDark:'#bfae8a',grainLight:'#e9dcc0'},
   amber: {field:'#ffc36a',positive:'#ffe895',negative:'#c37744',node:'#ffe0a4',grainDark:'#c28638',grainLight:'#ffe0a2'},
   blue: {field:'#83caff',positive:'#a1eaff',negative:'#8d83dc',node:'#c5e6ff',grainDark:'#629fd0',grainLight:'#c6e9ff'},
+  teal: {field:'#76d7c6',positive:'#b5f7e4',negative:'#328f99',node:'#b9f0de',grainDark:'#469d97',grainLight:'#adecde'},
+  red: {field:'#f57470',positive:'#ffb5aa',negative:'#a84162',node:'#ffd1c5',grainDark:'#b74b50',grainLight:'#ffada0'},
   gray: {field:'#d5d5d5',positive:'#efefef',negative:'#262626',node:'#efefef',grainDark:'#999999',grainLight:'#e8e8e8'},
 };
 export function rgbChannels(hex:string) { return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)); }
