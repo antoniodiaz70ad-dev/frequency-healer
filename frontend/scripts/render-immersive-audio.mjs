@@ -28,4 +28,4 @@ for (const {hz, end} of phases) {
   }
   start = end * rate;
 }
-writeFileSync(new URL('../public/punto-cero-tonos-v2.wav', import.meta.url), wav);
+writeFileSync(new URL('../public/punto-cero-membrana-v1.wav', import.meta.url), wav);

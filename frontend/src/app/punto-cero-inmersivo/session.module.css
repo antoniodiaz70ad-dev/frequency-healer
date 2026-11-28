@@ -9,3 +9,4 @@
   .active{grid-template-columns:minmax(0,3fr) minmax(10rem,1fr);grid-template-rows:minmax(0,1fr)}
   .caption{text-align:left}
 }
+.reading{font:600 clamp(.9rem,2vw,1.2rem)/1.4 ui-monospace,monospace;letter-spacing:.03em}
