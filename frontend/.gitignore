@@ -46,3 +46,4 @@ next-env.d.ts
 
 # Isolated CI diagnostics (synthetic test contexts only)
 /artifacts/
+/public/punto-cero-tonos-v2.wav
