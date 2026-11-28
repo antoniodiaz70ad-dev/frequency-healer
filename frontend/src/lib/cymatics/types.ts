@@ -31,6 +31,7 @@ export interface CymaticsConfigV1 {
   simulationTimeSeconds: number;
   renderQuality: RenderQuality;
   view: CymaticsView;
+  palette?: import('./palettes').CymaticsPalette;
   journal?: CymaticsJournalV1;
 }
 
