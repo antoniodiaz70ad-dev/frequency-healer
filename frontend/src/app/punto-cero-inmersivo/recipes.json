@@ -1,0 +1,32 @@
+[
+  {
+    "name": "Ascenso",
+    "audio": "punto-cero-membrana-v2.wav",
+    "tones": [
+      227.04,
+      245.56,
+      283.82,
+      374.44
+    ]
+  },
+  {
+    "name": "Retorno",
+    "audio": "punto-cero-retorno-v1.wav",
+    "tones": [
+      227.04,
+      283.82,
+      374.44,
+      227.04
+    ]
+  },
+  {
+    "name": "Contraste",
+    "audio": "punto-cero-contraste-v1.wav",
+    "tones": [
+      227.04,
+      374.44,
+      227.04,
+      374.44
+    ]
+  }
+]
