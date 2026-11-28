@@ -2,28 +2,24 @@
   {
     "end": 60,
     "name": "Intención",
-    "hz": 227.04,
     "color": "amber",
     "cue": "Elige una acción concreta para hoy."
   },
   {
     "end": 120,
     "name": "Sonido y forma",
-    "hz": 245.56,
     "color": "teal",
     "cue": "Sigue la figura. Si quieres, tararea suavemente."
   },
   {
     "end": 180,
     "name": "Visualización",
-    "hz": 283.82,
     "color": "blue",
     "cue": "Imagina el primer paso y cómo superarías el obstáculo."
   },
   {
     "end": 240,
     "name": "Acción",
-    "hz": 374.44,
     "color": "red",
     "cue": "Cuando termine el sonido, empieza ese primer paso."
   }

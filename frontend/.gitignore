@@ -47,3 +47,5 @@ next-env.d.ts
 # Isolated CI diagnostics (synthetic test contexts only)
 /artifacts/
 /public/punto-cero-membrana-v2.wav
+/public/punto-cero-retorno-v1.wav
+/public/punto-cero-contraste-v1.wav

@@ -3,11 +3,14 @@ import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {paletteNames,palettes,type CymaticsPalette} from '@/lib/cymatics/palettes';
 import CymaticsCanvas from '@/components/cymatics/CymaticsCanvas';
 import {computeModalField,defaultCymaticsConfig} from '@/lib/cymatics/physics';
-import phases from './phases.json';
+import stages from './phases.json';
+import recipes from './recipes.json';
 import styles from './session.module.css';
 
 export default function ImmersiveSession(){
   const [phase,setPhase]=useState(-1),[message,setMessage]=useState('');
+  const [recipe,setRecipe]=useState(recipes[0]);
+  const phases=useMemo(()=>stages.map((stage,index)=>({...stage,hz:recipe.tones[index]})),[recipe]);
   const stage=useRef<HTMLDivElement>(null), audio=useRef<HTMLAudioElement>(null);
   const mode=useRef<'session'|'preview'|null>(null), ticket=useRef(0), lock=useRef<WakeLockSentinel|null>(null);
   const release=useCallback(()=>{
@@ -65,11 +68,21 @@ export default function ImmersiveSession(){
     }
   }
   return <div ref={stage} className={phase>=0?styles.active:styles.intro}>
-    <audio ref={audio} src="/punto-cero-membrana-v2.wav" preload="metadata" playsInline onTimeUpdate={sync}
+    <audio key={recipe.audio} ref={audio} src={'/'+recipe.audio} preload="metadata" playsInline onTimeUpdate={sync}
       onError={()=>{if(mode.current)finish('No se pudo cargar el audio. Comprueba tu conexión y vuelve a intentarlo.');}}
       onPause={()=>{if(mode.current && audio.current?.paused && !audio.current.ended)finish('Audio interrumpido. Puedes volver a comenzar.');}}
       onEnded={()=>finish('Sesión completa. Haz ahora el primer paso que elegiste.')}/>
     {phase<0?<><h1>Punto Cero inmersivo</h1><p>4 minutos · Audífonos · Un minuto por etapa</p>
+      <fieldset className={styles.recipes}><legend>Elige tu receta</legend>
+        {recipes.map(option=><label key={option.name}>
+          <input type="radio" name="receta" checked={recipe===option} onChange={()=>{release();setMessage('');setRecipe(option);}}/>
+          {option.name}
+        </label>)}
+      </fieldset>
+      <ol className={styles.tones} aria-label="Secuencia por minuto">{phases.map((step,index)=><li key={step.end}>
+        <i aria-hidden="true" style={{backgroundColor:palettes[step.color as CymaticsPalette].field}}/>
+        <span>Min {index+1} · {paletteNames[step.color as CymaticsPalette]}</span><strong>{step.hz.toFixed(2)} Hz</strong>
+      </li>)}</ol>
       <p>Coloca la pantalla a una distancia cómoda. Puedes escuchar el tono de inicio y ajustar el volumen antes de comenzar.</p>
       <button onClick={()=>void start('preview')}>Comprobar sonido</button>{' '}
       <button onClick={()=>void start('session')}>Comenzar sesión inmersiva</button><p role="status">{message}</p><a href="/marina-punto-cero/compositor">Volver al compositor</a></>:
