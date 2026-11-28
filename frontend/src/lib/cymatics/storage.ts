@@ -1,3 +1,4 @@
+import { palettes } from './palettes';
 import type { CymaticsConfigV1 } from './types';
 import { AUDIO_MAX_HZ, AUDIO_MIN_HZ, CYMATICS_MODEL_VERSION } from './physics';
 
@@ -6,7 +7,8 @@ const finite=(v:unknown,min:number,max:number)=>typeof v==='number'&&Number.isFi
 const exactKeys=(value:object,keys:string[])=>Object.keys(value).length===keys.length&&Object.keys(value).every(key=>keys.includes(key));
 export function validateCymaticsConfig(v:unknown):CymaticsConfigV1 {
   if(!v||typeof v!=='object')throw new Error('Configuración cimática inválida.');const c=v as CymaticsConfigV1;
-  const keys=['schemaVersion','modelVersion','id','createdAt','title','surfaceType','boundaryCondition','dimensionsSI','materialSI','excitationPosition','excitationRelativeStrength','damping','audioMode','channelFrequenciesHz','waveform','modeledComponents','responseMethod','modeCutoff','visualScale','autoExposure','particleSeed','simulationTimeSeconds','renderQuality','view',...(c.journal===undefined?[]:['journal'])];
+  const keys=['schemaVersion','modelVersion','id','createdAt','title','surfaceType','boundaryCondition','dimensionsSI','materialSI','excitationPosition','excitationRelativeStrength','damping','audioMode','channelFrequenciesHz','waveform','modeledComponents','responseMethod','modeCutoff','visualScale','autoExposure','particleSeed','simulationTimeSeconds','renderQuality','view',...(c.palette===undefined?[]:['palette']),...(c.journal===undefined?[]:['journal'])];
+  if(c.palette!==undefined&&!(typeof c.palette==='string'&&Object.hasOwn(palettes,c.palette)))throw new Error('Paleta cimática inválida.');
   if(!exactKeys(c,keys))throw new Error('Configuración cimática con campos ausentes o desconocidos.');
   if(c.schemaVersion!==1||c.modelVersion!==CYMATICS_MODEL_VERSION)throw new Error('Versión de modelo no compatible; no puede reproducirse exactamente.');
   if(typeof c.id!=='string'||!c.id||typeof c.createdAt!=='string'||!Number.isFinite(Date.parse(c.createdAt))||new Date(c.createdAt).toISOString()!==c.createdAt||typeof c.title!=='string'||c.title.length>100)throw new Error('Identidad inválida.');

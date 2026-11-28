@@ -135,3 +135,14 @@ test('simplified mobile entry shows title, guided action and first resonance car
 test('guided cymatics animated pointer flow supports every step and opens the journal', {timeout:90000}, async t=>{
   const page=await fixture(t);assert.equal((await page.evaluate(()=>window.__fhUI.snapshot())).contexts.length,0);await page.getByRole('button',{name:'Iniciar sesión guiada (10 min)'}).click();await page.getByText('Preparación',{exact:true}).waitFor();assert.equal((await page.evaluate(()=>window.__fhUI.snapshot())).contexts.length,0);const skip=page.getByRole('button',{name:'Saltar paso'});for(const name of ['Anclaje','Barrido','Quietud','Registro','Cierre']){await skip.waitFor({state:'visible'});await skip.click({force:true,noWaitAfter:true});await page.getByText(name,{exact:true}).waitFor();}await page.getByRole('region',{name:'Registro de práctica'}).waitFor();await page.getByRole('button',{name:'Terminar'}).click({force:true,noWaitAfter:true});await page.getByRole('button',{name:'Escuchar tono'}).waitFor();
 });
+
+test('a saved figure restores its chosen palette', {timeout:45000}, async t=>{
+  const page=await fixture(t,{viewport:{width:390,height:844}});
+  const picker=page.getByRole('group',{name:'Color de la figura'});
+  await picker.getByText('Ámbar',{exact:true}).click();
+  await page.getByRole('button',{name:'Guardar figura',exact:true}).click();
+  await picker.getByText('Azul',{exact:true}).click();
+  await page.getByRole('button',{name:/Ámbar.*cargar/}).click();
+  assert.ok(await picker.getByRole('radio',{name:'Ámbar'}).isChecked());
+  assert.equal(await page.getByLabel('Frecuencia cimática',{exact:true}).inputValue(),'432');
+});

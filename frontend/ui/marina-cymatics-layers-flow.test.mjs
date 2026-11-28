@@ -17,6 +17,11 @@ test('mobile composer: unlock layers without losing the session and render the a
     await page.goto(server.origin + '/marina-punto-cero/compositor');
     await spectrum.filter({ hasText: /192.5 · 200 · 207.5 Hz/ }).waitFor();
     const firstImage = await page.getByRole('img', { name: /^Cimática ·/ }).evaluate(canvas => canvas.toDataURL());
+    const picker=page.getByRole('group',{name:'Color de la figura'});
+    await picker.getByText('Ámbar',{exact:true}).click();
+    assert.notEqual(await page.getByRole('img',{name:/^Cimática ·/}).evaluate(canvas=>canvas.toDataURL()),firstImage);
+    await picker.getByText('Original',{exact:true}).click();
+    assert.equal(await page.getByRole('img',{name:/^Cimática ·/}).evaluate(canvas=>canvas.toDataURL()),firstImage);
     await page.getByLabel('Activar capa 2', { exact: true }).check();
     await spectrum.filter({ hasText: /207.5 · 300 Hz/ }).waitFor();
     assert.notEqual(await page.getByRole('img', { name: /^Cimática ·/ }).evaluate(canvas => canvas.toDataURL()), firstImage);
