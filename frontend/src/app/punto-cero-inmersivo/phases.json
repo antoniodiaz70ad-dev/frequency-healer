@@ -1,6 +1,30 @@
 [
-  {"end":60,"name":"Intención","hz":136.1,"color":"teal","cue":"Elige una acción concreta para hoy."},
-  {"end":180,"name":"Sonido y forma","hz":136.1,"color":"teal","cue":"Sigue la figura. Si quieres, tararea suavemente."},
-  {"end":240,"name":"Visualización","hz":204.15,"color":"amber","cue":"Imagina el primer paso y cómo superarías el obstáculo."},
-  {"end":300,"name":"Acción","hz":136.1,"color":"red","cue":"Cuando termine el sonido, empieza ese primer paso."}
+  {
+    "end": 60,
+    "name": "Intención",
+    "hz": 227.04,
+    "color": "amber",
+    "cue": "Elige una acción concreta para hoy."
+  },
+  {
+    "end": 180,
+    "name": "Sonido y forma",
+    "hz": 245.56,
+    "color": "teal",
+    "cue": "Sigue la figura. Si quieres, tararea suavemente."
+  },
+  {
+    "end": 240,
+    "name": "Visualización",
+    "hz": 283.82,
+    "color": "blue",
+    "cue": "Imagina el primer paso y cómo superarías el obstáculo."
+  },
+  {
+    "end": 300,
+    "name": "Acción",
+    "hz": 374.44,
+    "color": "red",
+    "cue": "Cuando termine el sonido, empieza ese primer paso."
+  }
 ]
