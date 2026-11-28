@@ -39,7 +39,7 @@ test('mode map lists driven resonances in order, groups degenerate pairs and ski
 test('palette is optional and does not alter the simulated field',()=>{
   const base=defaultCymaticsConfig(),hz=base.channelFrequenciesHz[0];
   assert.equal(validateCymaticsConfig(base).palette,undefined);
-  for(const palette of ['original','amber','blue','gray'] as const){
+  for(const palette of ['original','amber','blue','red','gray'] as const){
     const result=parseCymaticsImport(JSON.stringify({...base,palette}));
     assert.equal(result.palette,palette);
     assert.deepEqual(computeModalField(result,hz,24).values,computeModalField(base,hz,24).values);
