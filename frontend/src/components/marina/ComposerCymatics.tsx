@@ -1,25 +1,28 @@
 'use client';
 
 import { memo, useMemo, useState } from 'react';
+import type {CymaticsPalette} from '@/lib/cymatics/palettes';
+import CymaticsPalettePicker from '@/components/cymatics/CymaticsPalettePicker';
 import CymaticsCanvas from '@/components/cymatics/CymaticsCanvas';
 import { defaultCymaticsConfig } from '@/lib/cymatics/physics';
 import { computeComposerCymatics, type ComposerChannel } from '@/lib/marina/composerCymatics';
 import type { ComposerRecipe } from '@/lib/marina/composer';
 import styles from './marina.module.css';
 
-function ComposerCymatics({ recipe }: { recipe: ComposerRecipe }) {
+function ComposerCymatics({recipe,palette,onPaletteChange}:{recipe:ComposerRecipe;palette:CymaticsPalette;onPaletteChange:(color:CymaticsPalette)=>void}) {
   const [channel, setChannel] = useState<ComposerChannel>('left');
   const config = useMemo(() => ({ ...defaultCymaticsConfig(), view: 'field' as const, autoExposure: true, renderQuality: 'low' as const }), []);
   const result = useMemo(() => {
     try { return { ...computeComposerCymatics(recipe, channel, config), error: '' }; }
     catch { return { components: [], field: null, notices: [], error: 'Completa los ajustes de las capas para calcular la cimática.' }; }
   }, [recipe, channel, config]);
-  const canvasConfig = useMemo(() => ({ ...config, channelFrequenciesHz: result.components.map(value => value.hz) }), [config, result.components]);
+  const canvasConfig = useMemo(() => ({ ...config, palette, channelFrequenciesHz: result.components.map(value => value.hz) }), [config, palette, result.components]);
   const stereo = recipe.layers.some(layer => layer.enabled && layer.level > 0 && layer.mode === 'binaural');
   return <section className={styles.composerCymatics} aria-label="Cimática del compositor">
     <p className={styles.eyebrow}>Tus capas → una placa virtual</p>
     <h3>Cimática de tu composición</h3>
     <p className={styles.muted}>La figura se recalcula al cambiar frecuencias, niveles o capas activas. Las zonas oscuras tienen menor vibración media.</p>
+    <CymaticsPalettePicker value={palette} onChange={onPaletteChange}/>
     {stereo && <label className={styles.field}>Canal de la simulación<select aria-label="Canal de la simulación" value={channel} onChange={event => setChannel(event.target.value as ComposerChannel)}><option value="left">Izquierdo</option><option value="right">Derecho</option></select></label>}
     {result.field && <CymaticsCanvas config={canvasConfig} field={result.field} label={`Cimática · ${stereo ? channel === 'left' ? 'izquierdo' : 'derecho' : 'mono'} · promedio RMS`} animateVibration={false} />}
     <p className={styles.muted} data-testid="composer-cymatics-spectrum">{result.components.length > 0 ? `Componentes del canal ${channel === 'left' ? 'izquierdo' : 'derecho'}: ${result.components.map(value => Number(value.hz.toFixed(6))).join(' · ')} Hz` : 'Sin componentes activos.'}</p>

@@ -1,5 +1,6 @@
 'use client';
 
+import type { CymaticsPalette } from '@/lib/cymatics/palettes';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { FHSurface } from '@/components/ui/FHLayout';
@@ -26,6 +27,7 @@ function exportJSON(value: unknown, filename: string) {
 }
 
 export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => void }) {
+  const [palette,setPalette]=useState<CymaticsPalette>('original');
   const [recipe, setRecipe] = useState<ComposerRecipe>(defaultComposition);
   const [starters] = useState(starterCompositions);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -220,7 +222,7 @@ export default function MarinaComposer({ onBusy }: { onBusy: (busy: boolean) => 
         <button type="button" className="fh-action fh-action--secondary" disabled={locked} onClick={() => { setRecipe(defaultComposition()); setSelectedId(null); setFocusBefore(null); setMessage('Nueva composición lista para editar.'); }}>Nueva composición</button>
       </div>
       <div className={styles.player} id="marina-composer-player">
-        {recipe.visual && visualVisible && <ComposerCymatics recipe={recipe} />}
+        {recipe.visual && visualVisible && <ComposerCymatics recipe={recipe} palette={palette} onPaletteChange={setPalette} />}
         {recipe.actionPlan && active && <ComposerActionGuide plan={recipe.actionPlan} elapsedMs={elapsed} durationMs={durationMs} />}
         <p className={styles.phase}>{({ idle: 'Lista para escuchar', starting: 'Preparando audio…', playing: 'Composición en curso', paused: 'Composición pausada', completed: 'Composición completa', stopped: 'Composición detenida' })[status]}</p>
         <p className={styles.timer} aria-label="Tiempo restante del compositor">{time(Math.max(0, durationMs - elapsed))}</p>
